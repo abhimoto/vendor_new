@@ -1,0 +1,30 @@
+export const AUTH_ROUTES = {
+  SPLASH: 'Splashscreen',
+  LOGIN: 'Login',
+  SIGNUP: 'Signup',
+  VENDORONBOARDING: 'VendorOnboarding',
+} as const;
+
+export const HOME_ROUTES = {
+  HOME_CONTROLLER: 'HomeController',
+  TEMP_DASHBOARD: 'TemporaryDashboard',
+  VEHICLE_SCREEN: 'VehicleScreen',
+  VERIFIEDVEHICLES_ONBOARD:'VerifiedVehicleDetails',
+  VALIDATE_VEHICLES: 'ValidateVehicles',
+  VERIFIES_VEHICLES: 'VerifiedVehicles',
+  ADDBANK_DETAILS: 'AddBankdetails',
+  DASHBOARD: 'Dashboard',
+  DRIVER_ONBOARDSCREEN: 'OnboardScreen',
+  DRIVERSCAN: 'DriverScan',
+  DRIVERINDEX: 'DriverIndex',
+  DISCONTINUEDRIVER: 'DiscontinueDriver',
+  DRIVERDISCONTINUELIST: 'DriverDiscontinueList',
+  ADDDRIVER: 'AddDriver',
+  LICENSEADD: 'LicenseAdd',
+  ASSIGNVEHICLE: 'AssignVehicle',
+  DISCONTINUEVEHICLE: 'DiscontinueVehicles',
+  VEHICLEDISCONTINUELIST: 'VehicleDiscontinueList',
+  VEHICLEEXPIRY: 'VehicleExpiry',
+  EDITVEHICLES:'EditVehicles',
+  TRACKING: 'Tracking',
+} as const;
