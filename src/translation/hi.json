@@ -1,0 +1,23 @@
+{
+  "welcome": "स्वागत है",
+  "select_language": "भाषा चुनें",
+  "continue": "जारी रखें",
+  "login": "लॉगिन",
+  "logout": "लॉगआउट",
+  "mobile_number": "मोबाइल नंबर",
+  "enter_mobile_number": "मोबाइल नंबर दर्ज करें",
+  "otp": "ओटीपी",
+  "enter_otp": "ओटीपी दर्ज करें",
+  "submit": "जमा करें",
+  "cancel": "रद्द करें",
+  "home": "होम",
+  "profile": "प्रोफाइल",
+  "settings": "सेटिंग्स",
+  "driver_dashboard": "ड्राइवर डैशबोर्ड",
+  "current_trip": "वर्तमान यात्रा",
+  "new_order": "नया ऑर्डर",
+  "accept": "स्वीकार करें",
+  "reject": "अस्वीकार करें",
+  "rating": "रेटिंग",
+  "reason": "कारण"
+}

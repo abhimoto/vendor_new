@@ -1,0 +1,23 @@
+{
+  "welcome": "Welcome",
+  "select_language": "Select Language",
+  "continue": "Continue",
+  "login": "Login",
+  "logout": "Logout",
+  "mobile_number": "Mobile Number",
+  "enter_mobile_number": "Enter Mobile Number",
+  "otp": "OTP",
+  "enter_otp": "Enter OTP",
+  "submit": "Submit",
+  "cancel": "Cancel",
+  "home": "Home",
+  "profile": "Profile",
+  "settings": "Settings",
+  "driver_dashboard": "Driver Dashboard",
+  "current_trip": "Current Trip",
+  "new_order": "New Order",
+  "accept": "Accept",
+  "reject": "Reject",
+  "rating": "Rating",
+  "reason": "Reason"
+}
