@@ -20,11 +20,13 @@ export default function RootNavigator() {
     vehicle_verified,
     kyc_verified,
   } = useAppSelector(state => state.auth);
+console.log(  isAuthenticated,
+    user,
+    vendor_onboarded,
+    vehicle_verified,
+    kyc_verified,'=========================================')
 
-  const onboardingCompleted =
-    vendor_onboarded &&
-    vehicle_verified &&
-    kyc_verified;
+
 
   useEffect(() => {
     if (isAuthenticated && user?.id) {
@@ -33,24 +35,24 @@ export default function RootNavigator() {
     }
   }, [isAuthenticated, user?.id]);
 
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {!isAuthenticated ? (
-        <Stack.Screen
-          name="AuthNavigator"
-          component={AuthNavigator}
-        />
-      ) : !onboardingCompleted ? (
-        <Stack.Screen
-          name="OnboardingNavigator"
-          component={OnboardingNavigator}
-        />
-      ) : (
-        <Stack.Screen
-          name="AppDrawer"
-          component={AppDrawer}
-        />
-      )}
-    </Stack.Navigator>
-  );
+ return (
+  <Stack.Navigator screenOptions={{ headerShown: false }}>
+    {!isAuthenticated || !vendor_onboarded ? (
+      <Stack.Screen
+        name="AuthNavigator"
+        component={AuthNavigator}
+      />
+    ) : !vehicle_verified || !kyc_verified ? (
+      <Stack.Screen
+        name="OnboardingNavigator"
+        component={OnboardingNavigator}
+      />
+    ) : (
+      <Stack.Screen
+        name="AppDrawer"
+        component={AppDrawer}
+      />
+    )}
+  </Stack.Navigator>
+);
 }

@@ -18,8 +18,9 @@ import { useGstverifyMutation } from '@app/redux/mutation/authApi';
 import { useGetpancardMutation } from '@app/redux/query/queryApi';
 import { Checkbox } from 'react-native-paper';
 import { GST_REGEX, PAN_REGEX } from '@utils/constants';
-import { moderateScale } from '@utils/responsive';
+import { moderateScale, normalizeFont, wp } from '@utils/responsive';
 import { useDuplicatevehicleMutation } from '@app/redux/mutation/authApi';
+import SecondaryButton from '@components/buttons/SecondaryButton';
 type Props = {
   onPrev: () => void;
 };
@@ -122,7 +123,10 @@ export default function LegalDocuments({ onPrev }: Props) {
   // ✅ GST Verify API
   const handleValidate = async (gstValue?: string) => {
     try {
-      const gst = (gstValue || values.legaldocuments.gstnumber)?.toUpperCase();
+      const gst = (
+        gstValue || values.legaldocuments.gstnumber
+      )?.toUpperCase();
+
       if (!GST_REGEX.test(gst)) {
         setGstStatus('error');
         setGstError('Invalid GST format');
@@ -134,34 +138,76 @@ export default function LegalDocuments({ onPrev }: Props) {
       setGstError('');
 
       const resp = await gstverify({
-        gstin_number: gst,
+        gstin: gst,
       }).unwrap();
-      if (resp.status === '00') {
+
+      if (resp?.status === '00') {
         setGstStatus('success');
 
-        const name =
-          resp.data?.tradeNam ||
-          resp.data?.lgnm ||
+        // Correct nested GST data
+        const gstData = resp.data?.data;
+
+        const companyName =
+          gstData?.tradeNam ||
+          gstData?.lgnm ||
           'GST Verified';
 
-        setGstname(name);
+        setGstname(companyName);
 
-        setFieldValue('legaldocuments.companyName', name);
+        // Company name
+        setFieldValue(
+          'legaldocuments.companyName',
+          companyName,
+        );
+
+        // Full address
+        const addr = gstData?.pradr?.addr;
+
+        const fullAddress = [
+          addr?.bno,
+          addr?.flno,
+          addr?.bnm,
+          addr?.st,
+          addr?.locality,
+          addr?.loc,
+        ]
+          .filter(Boolean)
+          .join(', ');
 
         setFieldValue(
           'legaldocuments.address',
-          resp.data?.pradr?.addr?.bnm ||
-          resp.data?.pradr?.addr?.st ||
-          '',
+          fullAddress,
+        );
+
+        // Optional: fill additional address fields
+        setFieldValue(
+          'legaldocuments.pincode',
+          addr?.pncd || '',
+        );
+
+        setFieldValue(
+          'legaldocuments.district',
+          addr?.dst || '',
+        );
+
+        setFieldValue(
+          'legaldocuments.state',
+          addr?.stcd || '',
+        );
+      } else {
+        setGstStatus('error');
+        setGstError(
+          resp?.message || 'GST verification failed',
         );
       }
-      else {
-        setGstStatus('error');
-        setGstError('GST verification failed');
-      }
-    } catch (error) {
+    } catch (error: any) {
+      console.log('GST Verify Error:', error);
+
       setGstStatus('error');
-      setGstError('Something went wrong');
+      setGstError(
+        error?.data?.message ||
+        'Something went wrong',
+      );
     } finally {
       setLoading(false);
     }
@@ -179,25 +225,44 @@ export default function LegalDocuments({ onPrev }: Props) {
 
       setLoading(true);
       setPanStatus('loading');
+      setPanError('');
 
-      const resp = await getPancard({ pan_number: pan }).unwrap();
+      const resp = await getPancard({
+        pan: pan,
+      }).unwrap();
 
-      if (resp.status === '00') {
+      if (resp?.status === '00') {
         setPanStatus('success');
+
+        // Correct nested PAN data
+        const panData = resp.data?.data;
+
         const name =
-          resp.data?.name_information?.pan_name_cleaned ||
-          resp.data?.full_name ||
+          panData?.name_information?.pan_name_cleaned ||
+          panData?.full_name ||
           'PAN Verified';
 
         setPanName(name);
-        setFieldValue('legaldocuments.companyName', name);
+
+        // Auto-fill company / owner name
+        setFieldValue(
+          'legaldocuments.companyName',
+          name,
+        );
       } else {
         setPanStatus('error');
-        setPanError('PAN verification failed');
+        setPanError(
+          resp?.message || 'PAN verification failed',
+        );
       }
-    } catch {
+    } catch (error: any) {
+      console.log('PAN Verify Error:', error);
+
       setPanStatus('error');
-      setPanError('Something went wrong');
+      setPanError(
+        error?.data?.message ||
+        'Something went wrong',
+      );
     } finally {
       setLoading(false);
     }
@@ -299,8 +364,8 @@ export default function LegalDocuments({ onPrev }: Props) {
               style={[
                 {
                   textTransform: 'uppercase',
-                  height: 42,
-                  width: 260
+                  height: moderateScale(42),
+                  width: '100%',
                 },
                 gstStatus === 'success'
                   ? { borderColor: colors.verify }
@@ -393,8 +458,8 @@ export default function LegalDocuments({ onPrev }: Props) {
               style={[
                 {
                   textTransform: 'uppercase',
-                  height: 42,
-                  width: 260
+                  height: moderateScale(42),
+                  width: '100%',
                 },
                 gstStatus === 'success'
                   ? { borderColor: colors.verify }
@@ -476,6 +541,7 @@ export default function LegalDocuments({ onPrev }: Props) {
             style={styles.validatebtn}
             title={loading ? 'Validating...' : 'Validate'}
           /> */}
+
         <CustomButton
           onPress={() => (checked ? handlePanValidate() : handleValidate())}
           style={styles.validatebtn}
@@ -515,6 +581,11 @@ export default function LegalDocuments({ onPrev }: Props) {
                   name={`legaldocuments.vehicles[${index}].registrationNumber`}
                   placeholder="eg MH02J123"
                   forceUppercase
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  autoComplete="off"
+                  importantForAutofill="no"
+                  keyboardType="default"
                   customError={vehicleErrors[index]}
                   onChangeText={(text: string) => {
                     const formatted = text
@@ -595,134 +666,164 @@ export default function LegalDocuments({ onPrev }: Props) {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   header: {
-    fontSize: 18,
+    fontSize: normalizeFont(18),
     fontWeight: '600',
     color: colors.primary,
-    marginBottom: 20,
+    marginBottom: moderateScale(20),
   },
+
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
+    marginTop: moderateScale(20),
   },
+
   backBtn: {
     flex: 1,
-    marginRight: 10,
+    marginRight: moderateScale(10),
     backgroundColor: '#FFFFFF',
-    width: 166,
-    height: 56,
+    width: wp(44),
+    height: moderateScale(56),
     borderWidth: 1,
     borderColor: colors.primary,
+    borderRadius: moderateScale(8),
   },
 
   backBtnText: {
     color: colors.primary,
     fontWeight: '600',
-    fontSize: 24
+    fontSize: normalizeFont(18),
   },
+
   submitBtn: {
     flex: 1,
-    marginLeft: 10,
-    width: 166,
-    height: 56,
+    marginLeft: moderateScale(10),
+    width: wp(44),
+    height: moderateScale(56),
     backgroundColor: colors.primary,
+    borderRadius: moderateScale(8),
+  },
 
-  },
   submitbuttontext: {
-    fontSize: 26
+    fontSize: normalizeFont(18),
+    color: colors.background,
+    fontWeight: '600',
   },
+
   validatebtn: {
     justifyContent: 'center',
     alignItems: 'center',
-    alignSelf: 'center', // ✅ center button horizontally
-    height: 56,
-    width: 213,
-    backgroundColor: colors.primary,
-    marginVertical: 16,
-    borderRadius: 10,
+    alignSelf: 'center',
+    height: moderateScale(50),
+    width: wp(40),
+    backgroundColor: colors.background,
+    marginVertical: moderateScale(16),
+    borderRadius: moderateScale(10),
   },
+
+  validatetext: {
+    fontSize: normalizeFont(18),
+    fontWeight: '600',
+  },
+
   vehicleCard: {
-    marginTop: 16,
-    paddingTop: 16,
+    marginTop: moderateScale(16),
+    paddingTop: moderateScale(16),
     borderTopWidth: 1,
     borderTopColor: '#eee',
   },
+
   cardTitle: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: normalizeFont(16),
+    fontWeight: '600',
     color: colors.primary,
-    marginBottom: 8,
+    marginBottom: moderateScale(12),
   },
 
   inputContainer: {
-    position: 'relative', // IMPORTANT
+    position: 'relative',
   },
+
   cancelIcon: {
     position: 'absolute',
-    top: -10,
-    right: -10,
+    top: moderateScale(-10),
+    right: moderateScale(-10),
     zIndex: 10,
     backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 2,
-    elevation: 4, // Android shadow
+    borderRadius: moderateScale(20),
+    padding: moderateScale(2),
+    elevation: 4,
   },
+
   GST: {
-    marginVertical: 7,
+    marginVertical: moderateScale(7),
     textAlign: 'center',
     color: '#2A2A2A',
-    fontSize: 14,
+    fontSize: normalizeFont(14),
     fontWeight: '500',
   },
+
+  /**
+   * Form Row
+   */
   fieldRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: moderateScale(14),
   },
 
+  /**
+   * Fixed width prevents labels from pushing inputs down
+   */
+
   labelBox: {
-    flex: 3, // 30%
+    width: wp(35), // 35–40% depending on your longest label
     justifyContent: 'center',
   },
 
+  /**
+   * Input takes remaining width
+   */
+
   inputBox: {
-    flex: 7,
-    marginRight: 30
+    flex: 1,
+    marginLeft: moderateScale(12),
   },
 
   labelText: {
-    fontSize: 16,
-    fontWeight: 'semibold',
+    fontSize: normalizeFont(16),
+    fontWeight: '600',
     color: colors.text,
-    marginBottom: 12
   },
 
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: moderateScale(10),
   },
+
   sectionTitle: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: '600',
-    marginVertical: 10,
+    marginVertical: moderateScale(10),
     color: colors.primary,
   },
 
   divider: {
     height: 1,
     backgroundColor: '#ddd',
-    marginVertical: 10,
+    marginVertical: moderateScale(10),
   },
 
   labelRow: {
-    marginBottom: 8,
+    marginBottom: moderateScale(8),
   },
 
   tableLabel: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: '700',
     color: '#000000',
   },
@@ -730,54 +831,53 @@ const styles = StyleSheet.create({
   rowContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
-    gap: 30
+    marginBottom: moderateScale(10),
+    gap: moderateScale(20),
   },
 
   input: {
-    height: 40,
+    height: moderateScale(40),
   },
 
   addBtn: {
-    height: 40,
-    width: 40,
+    width: moderateScale(40),
+    height: moderateScale(40),
     borderWidth: 1,
     borderColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 6,
+    borderRadius: moderateScale(6),
   },
 
   removeBtn: {
-    height: 40,
-    width: 40,
+    width: moderateScale(40),
+    height: moderateScale(40),
     backgroundColor: 'red',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 6,
+    borderRadius: moderateScale(6),
   },
 
   plus: {
-    fontSize: 20,
+    fontSize: normalizeFont(20),
     color: colors.primary,
     fontWeight: 'bold',
   },
+
   CompanyName: {
-    fontSize: 16,
+    fontSize: normalizeFont(16),
     fontWeight: '500',
     textAlign: 'center',
   },
+
   iconWrapper: {
-    width: 40,
-    height: 56,
+    width: moderateScale(40),
+    height: moderateScale(56),
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 5,
+    marginBottom: moderateScale(5),
     borderColor: colors.primary,
-    borderWidth: 2, // required
-    borderRadius: 8, // optional
+    borderWidth: moderateScale(2),
+    borderRadius: moderateScale(8),
   },
-  validatetext: {
-    fontSize: 24
-  }
 });

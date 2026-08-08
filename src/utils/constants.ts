@@ -173,8 +173,8 @@ type Option = {
   value: string;
 };
 export const Accounttypes = [
-  { label: 'Saving Account', value: 'saving' },
-  { label: 'Current Account', value: 'current' },
+  { label: 'Saving Account', value: 'Savings' },
+  { label: 'Current Account', value: 'Current' },
 ];
 
 export const GST_REGEX =

@@ -7,6 +7,7 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
+import { wp, hp, moderateScale } from '@utils/responsive';
 
 type Props = {
   title: string;
@@ -36,20 +37,23 @@ export default function CustomButton({
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: colors.primary,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    width: wp(35),           // ~148px on 428px base width
+    height: hp(5.5),         // ~50px on 926px base height
+    backgroundColor: '#FFFFFF',
+    borderRadius: moderateScale(10),
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 10,
+    borderWidth: 1,
+    borderColor: colors.primary,
   },
+
   text: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: colors.primary,
+    fontSize: moderateScale(16)
   },
+
   disabled: {
-    backgroundColor: '#B0B0B0',
+    backgroundColor: '#F2F2F2',
+    borderColor: '#D0D0D0',
   },
 });

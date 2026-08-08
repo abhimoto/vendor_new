@@ -25,51 +25,53 @@ export default function EditVehicles({
   // ✅ RTK Mutation
   const [editVehicle, { isLoading }] =
     useVehicleeditMutation();
+console.log('vehicle from edit',vehicle)
+const [registration, setRegistration] = useState(
+  vehicle?.VehicleNo || ''
+);
 
-  const [registration, setRegistration] = useState(
-    vehicle?.number ||
-    vehicle?.fullData?.vehicleDetails
-      ?.registration_no ||
-    '',
-  );
-
-  const [capacity, setCapacity] = useState(
-    vehicle?.fullData?.vehicleDetails
-      ?.vehicle_weight || '',
-  );
+const [capacity, setCapacity] = useState(
+  String(vehicle?.LoadingCapacity || '')
+);
 
 
 const handleSubmit = async () => {
   try {
     const payload = {
-      vendorid: vehicle?.fullData?.vendorid,
-      vehicles: [
-        {
-          vehicleid:
-            vehicle?.fullData?.vehicleId,
-          vehicleWeight: capacity,
-          registrationNo: registration,
-        },
-      ],
+      VehicleId: vehicle.VehicleId,
+      VehicleNo: registration,
+      LoadingCapacity: Number(capacity),
     };
 
-    const response = await editVehicle(
-      payload,
-    ).unwrap();
-console.log(response)
-    if (response.status === '00') {
+    const response = await editVehicle(payload).unwrap();
+
+    const result = response?.[0];
+
+    if (result?.Status === '00') {
       Alert.alert(
         'Success',
-        response.message,
+        result.Message,
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              onSuccess(); // Refresh list
+              onClose();   // Close modal
+            },
+          },
+        ],
+      );
+    } else {
+      Alert.alert(
+        'Error',
+        result?.Message || 'Failed to update vehicle.',
       );
     }
-
-    onSuccess();
-    onClose();
   } catch (error: any) {
     Alert.alert(
       'Error',
-      error?.message ||
+      error?.data?.message ||
+        error?.message ||
         'Something went wrong',
     );
   }

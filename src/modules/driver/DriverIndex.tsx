@@ -79,122 +79,90 @@ export default function DriverIndex() {
     'register',
   );
 
-  const scannedData = route.params?.scannedData || null;
-
-  const driverid = useMemo(() => {
-    try {
-      const parsed = scannedData ? JSON.parse(scannedData) : null;
-      return parsed?.driver_id || null;
-    } catch {
-      return null;
-    }
-  }, [scannedData]);
-
-  // ✅ API
-  const [getDriverData, { data, isLoading, isError }] =
-    useGetdriverdatabyscanMutation();
-
-  useEffect(() => {
-    if (driverid) {
-      getDriverData({ driver_id: driverid });
-    }
-  }, [driverid]);
-
-  // ✅ Extract driver
-  const driver = data?.data?.[0];
+const driver = route.params?.driverData || null;
 
   // ✅ Map API → Form
-  const mappedValues: FormValues = useMemo(() => {
-    if (!driver) return initialValues;
+const mappedValues: FormValues = useMemo(() => {
+  if (!driver) return initialValues;
 
-    // ✅ helper function
-    const getDocument = (type: string) => {
-      return (
-        driver?.documents?.find(
-          (item: any) => item.photo_type === type,
-        )?.photo_url || ''
-      );
-    };
+  return {
+    licenseNumber: driver.DrivingLicenseNo || '',
+    dateofbirth: driver.DOB || '',
+    mobileno: driver.Mobile || '',
+    fullname: driver.FullName || '',
+    nickname: driver.NickName || '',
+    email: driver.EmailId || '',
 
-    return {
-      licenseNumber: driver.driving_license_no || '',
-      dateofbirth: driver.DOB || '',
-      mobileno: driver.contact_no || '',
-      fullname: driver.full_name || '',
-      nickname: driver.nick_name || '',
-      email: driver.email_id || '',
-      building: driver.building || '',
-      street: driver.area || '',
-      pincode: driver.pincode || '',
-      taluka: driver.tahsil || '',
-      state: driver.state || '',
-      district: driver.district || '',
-      aadharNumber: driver.aadhar_no || '',
-      referenceName: driver.referred_person_name || '',
-      referencePhone: driver.referred_person_no || '',
-      relation: driver.relation || '',
+    building: driver.Building || '',
+    street: driver.Area || '',
+    pincode: driver.Pincode || '',
+    taluka: driver.Tahsil || '',
+    state: driver.State || '',
+    district: driver.District || '',
 
-      // ✅ DOCUMENT IMAGES
-      licensefront: getDocument('license_front'),
-      licenseback: getDocument('license_back'),
-      aadharfront: getDocument('aadhar_front'),
-      aadharback: getDocument('aadhar_back'),
-    };
-  }, [driver]);
+    aadharNumber: driver.AadharNo || '',
 
-  const submit = (values: FormValues) => {
-    navigation.navigate(HOME_ROUTES.LICENSEADD, {
-      driverData: values, // ✅ full form data
-      driverId: driverid, // ✅ optional (good practice)
-    });
+    referenceName: driver.ReferredPersonName || '',
+    referencePhone: driver.ReferredPersonContactNo || '',
+    relation: driver.Relation || '',
+
+    licensefront: driver.LicenseFrontImage || '',
+    licenseback: driver.LicenseBackImage || '',
+    aadharfront: driver.AadharFrontImage || '',
+    aadharback: driver.AadharBackImage || '',
   };
+}, [driver]);
 
-  if (isLoading) {
-    return <Text style={{ padding: 20 }}>Loading driver data...</Text>;
-  }
+console.log(mappedValues,'mappedvalues')
+const submit = (values: FormValues) => {
+  navigation.navigate(HOME_ROUTES.LICENSEADD, {
+    driverData: values,
+    driverId: driver?.UserId,
+      driverCode:driver?.DriverCode,
+    driverProfileId: driver?.DriverProfileId,
+  });
+};
 
-  if (isError) {
-    return <Text style={{ padding: 20 }}>Failed to fetch driver data</Text>;
-  }
+
 
   return (
     <View style={styles.container}>
       <AppHeader title="Onboard Driver" />
-    <View style={styles.tabRow}>
-  <TouchableOpacity
-    style={[
-      styles.tabBtn,
-      activeTab === 'register' && styles.activeTabBtn,
-    ]}
-    onPress={() => setActiveTab('register')}
-  >
-    <Text
-      style={[
-        styles.tabBtnText,
-        activeTab === 'register' && styles.activeTabText,
-      ]}
-    >
-      Personal Information
-    </Text>
-  </TouchableOpacity>
+      <View style={styles.tabRow}>
+        <TouchableOpacity
+          style={[
+            styles.tabBtn,
+            activeTab === 'register' && styles.activeTabBtn,
+          ]}
+          onPress={() => setActiveTab('register')}
+        >
+          <Text
+            style={[
+              styles.tabBtnText,
+              activeTab === 'register' && styles.activeTabText,
+            ]}
+          >
+            Personal Information
+          </Text>
+        </TouchableOpacity>
 
-  <TouchableOpacity
-    style={[
-      styles.tabBtn,
-      activeTab === 'document' && styles.activeTabBtn,
-    ]}
-    onPress={() => setActiveTab('document')}
-  >
-    <Text
-      style={[
-        styles.tabBtnText,
-        activeTab === 'document' && styles.activeTabText,
-      ]}
-    >
-      Address &  Details
-    </Text>
-  </TouchableOpacity>
-</View>
+        <TouchableOpacity
+          style={[
+            styles.tabBtn,
+            activeTab === 'document' && styles.activeTabBtn,
+          ]}
+          onPress={() => setActiveTab('document')}
+        >
+          <Text
+            style={[
+              styles.tabBtnText,
+              activeTab === 'document' && styles.activeTabText,
+            ]}
+          >
+            Address &  Details
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Tabs */}
       {/* <View style={styles.tabContainer}>
@@ -308,54 +276,54 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(10),
     alignSelf: 'center',
     marginBottom: wp(10),
-    height:56,
-    width:213
+    height: 56,
+    width: 213
   },
   button: {
     backgroundColor: colors.primary,
     color: colors.text,
-    paddingHorizontal:8,
-    paddingVertical:5
+    paddingHorizontal: 8,
+    paddingVertical: 5
   },
 
   buttonText: {
     color: '#fff',
     fontWeight: '600',
     fontSize: normalizeFont(24),
-    alignSelf:'center'
+    alignSelf: 'center'
   },
   tabRow: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  marginHorizontal: spacing.xl,
-  marginTop: spacing.md,
-},
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginHorizontal: spacing.xl,
+    marginTop: spacing.md,
+  },
 
 
-activeTabBtn: {
-  backgroundColor: colors.primary,
-},
+  activeTabBtn: {
+    backgroundColor: colors.primary,
+  },
 
-tabBtnText: {
-  color: colors.primary,
-  fontSize: normalizeFont(12),
-  fontWeight: 'semibold',
-  textAlign: 'center',
-},
+  tabBtnText: {
+    color: colors.primary,
+    fontSize: normalizeFont(12),
+    fontWeight: 'semibold',
+    textAlign: 'center',
+  },
 
-activeTabText: {
-  color: '#fff',
-},
-tabBtn: {
-  flex: 1,
-  marginHorizontal: 6,
-  width:160,
-  height: 38,
-  borderRadius:10,
-  borderWidth: 2,
-  borderColor: colors.primary,
-  justifyContent: 'center',
-  alignItems: 'center',
-  backgroundColor: '#fff',
-},
+  activeTabText: {
+    color: '#fff',
+  },
+  tabBtn: {
+    flex: 1,
+    marginHorizontal: 6,
+    width: 160,
+    height: 38,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
 });

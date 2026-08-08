@@ -16,6 +16,8 @@ import { useRoute } from './../../hooks/useRoute';
 import { Driver } from '@components/maps/types';
 import { colors } from '@utils/colors';
 import MapView, { Marker } from 'react-native-maps';
+import DashboardAppHeader from '@components/header/DashboardAppHeader';
+import DashboardQuickActions from '@components/header/DashboardQuickActions';
 
 const dashboardCards = [
   {
@@ -69,6 +71,7 @@ export default function Dashboard() {
   const socketDrivers = useSocketDrivers();
   const drivers = useAnimatedDrivers(socketDrivers);
   const [activeCard, setActiveCard] = useState<string | null>(null);
+    const [isOnline, setIsOnline] = useState(false);
   const searchHook = useMapboxSearch();
   const { route, eta, distance } = useRoute();
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
@@ -82,12 +85,21 @@ export default function Dashboard() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <DashboardAppheader
+      {/* <DashboardAppheader
         title="Tracking"
         notificationCount={3}
         onMenuPress={() => navigation.openDrawer()}
         onNotificationPress={() => { }}
+      /> */}
+           <DashboardAppHeader
+        isOnline={isOnline}
+        onToggle={setIsOnline}
+        driverName="Abhishek Vishwakarma"
+        vehicleNumber="MH46F5578"
+        profileImage="https://i.pravatar.cc/150?img=12"
+        onMenuPress={() => navigation.openDrawer()}
       />
+      <DashboardQuickActions />
 
       {/* Map (FULL SCREEN) */}
       <View style={styles.mapContainer}>

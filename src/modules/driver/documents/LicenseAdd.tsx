@@ -26,6 +26,7 @@ export default function LicenseAdd() {
   const driverData = route.params?.driverData;
   const driverid = route.params?.driverId;
   const licenseNo = driverData?.licenseNumber || '';
+  const driverCode = route.params?.driverCode;
   const dobString = driverData?.dateofbirth; // string from API
   const driverName = driverData?.fullname || '';
   const driverAddress =
@@ -43,38 +44,115 @@ export default function LicenseAdd() {
 
   console.log(tableData)
   const data = [
-  { code: '262603', issue: '19 - 09 - 2020', expire: '19 - 09 - 2025' },
-  { code: '262603', issue: '19 - 09 - 2020', expire: '19 - 09 - 2025' },
-  { code: '262603', issue: '19 - 09 - 2020', expire: '19 - 09 - 2025' },
-];
+    { code: '262603', issue: '19 - 09 - 2020', expire: '19 - 09 - 2025' },
+    { code: '262603', issue: '19 - 09 - 2020', expire: '19 - 09 - 2025' },
+    { code: '262603', issue: '19 - 09 - 2020', expire: '19 - 09 - 2025' },
+  ];
 
-  const createDriverPayload = (form: any, verifiedData: any) => {
+  const createDriverPayload = (
+    form: any,
+    verifiedData: any,
+  ) => {
+
     return {
-      driver_id: driverid || null,
-      vendorid: vendorid,
-      driving_license_no: form.licenseNo || '',
-      DOB: form.dob
-        ? new Date(form.dob).toISOString().split('T')[0]
-        : '',
 
-      full_name: form.name || '',
-      relatives_name: verifiedData?.relatives_name || '',
+      // Driver Mapping
+      DriverCode: driverCode || '',
 
-      address: form.address || '',
 
-      issuing_rto_name: verifiedData?.issuing_rto_name || '',
-      date_of_issue: verifiedData?.date_of_issue || '',
+      // License Details
+      LicenseNumber:
+        verifiedData?.licenseNumber ||
+        form.licenseNo,
 
-      nt_validity_from: verifiedData?.nt_validity_from || '',
-      nt_validity_to: verifiedData?.nt_validity_to || '',
 
-      t_validity_from: verifiedData?.t_validity_from || '',
-      t_validity_to: verifiedData?.t_validity_to || '',
+      DOB:
+        verifiedData?.dateOfBirth ||
+        (
+          form.dob
+            ? new Date(form.dob)
+              .toISOString()
+              .split('T')[0]
+            : ''
+        ),
 
-      status: verifiedData?.status || '',
-      source: verifiedData?.source || '',
 
-      onboarded_by: 'vendor',
+      FullName:
+        verifiedData?.fullName ||
+        form.name,
+
+
+      RelativeName:
+        verifiedData?.holder?.relativeName ||
+        '',
+
+
+      Address:
+        verifiedData?.address ||
+        form.address,
+
+
+      IssuingRTO:
+        verifiedData?.issuingRTO ||
+        '',
+
+
+      IssueDate:
+        verifiedData?.issueDate ||
+        '',
+
+
+
+      // Non Transport Validity
+      NTValidityFrom:
+        verifiedData?.validity?.nonTransport?.from ||
+        '',
+
+
+      NTValidityTo:
+        verifiedData?.validity?.nonTransport?.to ||
+        '',
+
+
+
+      // Transport Validity
+      TValidityFrom:
+        verifiedData?.validity?.transport?.from ||
+        '',
+
+
+      TValidityTo:
+        verifiedData?.validity?.transport?.to ||
+        '',
+
+
+
+      // Vehicle Class Details
+      VehicleClassCodes:
+        verifiedData?.vehicleClasses?.map(
+          (item: any) => item.class
+        ) || [],
+
+
+
+      VehicleClassIssueDates:
+        verifiedData?.vehicleClasses?.map(
+          (item: any) =>
+            item.issueDate ||
+            verifiedData?.issueDate ||
+            ''
+        ) || [],
+
+
+
+      VehicleClassExpiryDates:
+        verifiedData?.vehicleClasses?.map(
+          (item: any) =>
+            verifiedData?.validity?.transport?.to ||
+            verifiedData?.validity?.nonTransport?.to ||
+            ''
+        ) || [],
+
     };
   };
 
@@ -95,101 +173,148 @@ export default function LicenseAdd() {
 
 
   const handleSubmit = async () => {
+
     try {
-      const payload = createDriverPayload(values, verifiedData);
+
+      const payload = createDriverPayload(
+        values,
+        verifiedData
+      );
+
+      console.log(
+        "ONBOARD DRIVER PAYLOAD",
+        payload
+      );
+
 
       const resp = await driver_verification(payload).unwrap();
 
+
       if (resp?.status === '00') {
-        if (!vendorid || !driverid) {
-          Alert.alert('Missing vendor or driver id');
-          return;
-        }
 
-        socket.emit(SOCKET_EVENTS.VENDOR_ONBOARD_DRIVER, {
-          VendorID: vendorid,
-          DriverID: driverid,
-          MobileNo: verifiedData?.contact_no || '',
-          Driver_LPStatus: 'pending',
-        });
+        Alert.alert(
+          "Success",
+          resp.message || "Driver onboarded successfully"
+        );
 
-        console.log
-        Alert.alert('Success', 'Driver onboarded successfully');
 
         navigation.reset({
           index: 0,
           routes: [
             {
               name: 'Dashboard',
-              state: {
-                routes: [
-                  {
-                    name: 'Home',
-                    state: {
-                      routes: [
-                        {
-                          name: 'HomeController',
-                        },
-                      ],
-                    },
-                  },
-                ],
-              },
-            },
-          ],
+            }
+          ]
         });
-      } else {
-        Alert.alert('Error', resp?.message || 'Something went wrong');
+
       }
-    } catch (error) {
-      console.log(error);
-      Alert.alert('Error', 'Failed to onboard driver');
+      else {
+
+        Alert.alert(
+          "Error",
+          resp?.message || "Something went wrong"
+        );
+
+      }
+
+
+    } catch (error: any) {
+
+      console.log(
+        "Onboarding error:",
+        error
+      );
+
+
+      // RTK Query error handling
+      const message =
+        error?.data?.message ||
+        error?.message ||
+        "Failed to onboard driver";
+
+
+      Alert.alert(
+        "Error",
+        message
+      );
+
     }
+
   };
 
 
   // 🔹 Handle verify button
   const handleVerify = async () => {
-    // if (isVerified) return;
-
     if (!values.licenseNo || !values.dob) {
-      Alert.alert('Please enter license number and DOB');
+      Alert.alert(
+        'Please enter license number and DOB',
+      );
       return;
     }
+
     try {
       const resp = await licenseverify({
         dl_number: values.licenseNo,
         dob: formatDate(values.dob),
       }).unwrap();
-      if (resp?.status == '00') {
-        const data = resp?.data;
+
+      if (
+        resp?.status === '00' &&
+        resp?.data?.verified
+      ) {
+        const data = resp.data;
+
         setVerifiedData(data);
 
         setValues(prev => ({
           ...prev,
-          name: data?.name || '',
-          address: data?.address || '',
+          name: data.fullName || '',
+          address: data.address || '',
         }));
 
-        const formattedTable = (data?.cov_details || []).map(
-          (item: any, index: number) => ({
-            id: index.toString(),
-            cov: item.cov,
-            issueDate: item.issue_date,
-            expiryDate: data?.nt_validity_to,
-          }),
-        );
+        const formattedTable =
+          (data.vehicleClasses || [])
+            .map((item: any, index: number) => ({
+
+              id: index.toString(),
+
+              cov: item.class,
+
+              issueDate:
+                item.issueDate ||
+                data.issueDate ||
+                '',
+
+              expiryDate:
+                data.validity?.transport?.to ||
+                data.validity?.nonTransport?.to ||
+                ''
+
+            }));
 
         setTableData(formattedTable);
         setIsVerified(true);
-      } else {
-        console.log('License verification failed:', resp?.message || 'Unknown error');
-        Alert.alert('Verification Failed', resp?.message || 'Unable to verify license');
-      }
 
+        Alert.alert(
+          'Success',
+          'Driving license verified successfully',
+        );
+      } else {
+        Alert.alert(
+          'Verification Failed',
+          resp?.message ||
+          'Unable to verify license',
+        );
+      }
     } catch (error) {
-      Alert.alert('Verification Failed', 'Failed to verify license');
-      console.log('License verify error:', error);
+      console.log(
+        'License verify error:',
+        error,
+      );
+      Alert.alert(
+        'Verification Failed',
+        'Failed to verify license',
+      );
     }
   };
 
@@ -251,32 +376,32 @@ export default function LicenseAdd() {
           value={values.address}
           editable={false}
           multiline
-// numberOfLines={5}
+        // numberOfLines={5}
         //   onChangeText={text => handleChange('address', text)}
         />
       </View>
 
       {/* Table Section */}
       <View style={styles.tableContainer}>
-         <View style={styles.table}>
+        <View style={styles.table}>
 
-      {/* Header */}
-      <View style={[styles.row, styles.header]}>
-        <Text style={[styles.cell, styles.headerText]}>Code</Text>
-        <Text style={[styles.cell, styles.headerText]}>Date of Issue</Text>
-        <Text style={[styles.cell, styles.headerText]}>Date of Expire</Text>
-      </View>
+          {/* Header */}
+          <View style={[styles.row, styles.header]}>
+            <Text style={[styles.cell, styles.headerText]}>Code</Text>
+            <Text style={[styles.cell, styles.headerText]}>Date of Issue</Text>
+            <Text style={[styles.cell, styles.headerText]}>Date of Expire</Text>
+          </View>
 
-      {/* Rows */}
-      {tableData?.map((item, index) => (
-        <View key={index} style={styles.row}>
-          <Text style={styles.cell}>{item?.cov}</Text>
-          <Text style={styles.cell}>{item?.issueDate}</Text>
-          <Text style={styles.cell}>{item?.expiryDate}</Text>
+          {/* Rows */}
+          {tableData?.map((item, index) => (
+            <View key={index} style={styles.row}>
+              <Text style={styles.cell}>{item?.cov}</Text>
+              <Text style={styles.cell}>{item?.issueDate}</Text>
+              <Text style={styles.cell}>{item?.expiryDate}</Text>
+            </View>
+          ))}
+
         </View>
-      ))}
-
-    </View>
         {/* <Custumtable
           columns={columns}
           data={tableData}
@@ -334,7 +459,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   //====
-   table: {
+  table: {
     margin: 16,
     borderWidth: 1,
     borderColor: '#CFCFCF',

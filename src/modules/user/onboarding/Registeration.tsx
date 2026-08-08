@@ -11,7 +11,8 @@ import { VendorFormValues } from './types';
 import { companyTypes } from '@utils/constants';
 import { colors } from '@utils/colors';
 import { debounce } from '@utils/helpers';
-import { useGetPincodeMutation } from '@app/redux/mutation/authApi';
+import SecondaryButton from '@components/buttons/SecondaryButton';
+import { useLazyGetPincodeQuery } from '@app/redux/query/queryApi';
 
 type Props = {
   onNext: () => void;
@@ -20,7 +21,7 @@ type Props = {
 export default function VendorForm({ onNext }: Props) {
   const { setFieldValue, values } = useFormikContext<VendorFormValues>();
 
-  const [getPincode] = useGetPincodeMutation();
+const [getPincode] = useLazyGetPincodeQuery();
 
   const [snackbar, setSnackbar] = React.useState({
     visible: false,
@@ -29,38 +30,28 @@ export default function VendorForm({ onNext }: Props) {
   });
   const isSelf = values.companyType === 'Self';
 
-  const handlePincode = async (value: string) => {
-    if (!/^\d{6}$/.test(value)) return;
+const handlePincode = React.useCallback(async (value: string) => {
+  if (!/^\d{6}$/.test(value)) return;
 
-    try {
-      const res = await getPincode({ pincode: value }).unwrap();
+  try {
+    const res = await getPincode({ pincode: value }).unwrap();
 
-      const pincodeData = res?.data;
+    const pincodeData = res?.data;
 
-      if (!pincodeData) return;
+    setFieldValue('state', pincodeData?.state || '');
+    setFieldValue('district', pincodeData?.district || '');
+    setFieldValue('town', pincodeData?.office || '');
+  } catch (err) {
+    setFieldValue('state', '');
+    setFieldValue('district', '');
+    setFieldValue('town', '');
+  }
+}, [getPincode, setFieldValue]);
 
-      setFieldValue('state', pincodeData?.state || '');
-      setFieldValue('district', pincodeData?.district || '');
-      setFieldValue('town', pincodeData?.office_name || '');
-
-      setSnackbar({
-        visible: true,
-        message: 'Pincode details fetched successfully',
-        type: 'success',
-      });
-    } catch (err: any) {
-      setSnackbar({
-        visible: true,
-        message: err?.data?.message || 'Invalid pincode',
-        type: 'error',
-      });
-    }
-  };
-
-  const debouncedPincode = useMemo(
-    () => debounce(handlePincode, 500),
-    []
-  );
+const debouncedPincode = useMemo(
+  () => debounce(handlePincode, 500),
+  [handlePincode]
+);
 
   return (
     <View>
@@ -75,9 +66,9 @@ export default function VendorForm({ onNext }: Props) {
         onSelect={item =>
           setFieldValue('companyType', item.value)
         }
+      
       />
 
-      {/* Authorised Person */}
       {!isSelf && (
         <CustomInput
           name="ownerName"
@@ -85,19 +76,15 @@ export default function VendorForm({ onNext }: Props) {
         />
       )}
 
-
-      {/* Mobile */}
       <CustomInput
         name="mobileNumber"
         label="Mobile Number"
         keyboardType="phone-pad"
       />
 
-      {/* Address */}
       <CustomInput name="building" label="Building / Apartment / Plot No" />
       <CustomInput name="area" label="Area / Street / Sector / Village" />
 
-      {/* Pincode + State */}
       <View style={styles.row}>
         <View style={styles.flex1}>
           <CustomInput
@@ -161,12 +148,13 @@ export default function VendorForm({ onNext }: Props) {
       </View>
 
       {/* Next Button */}
-      <CustomButton
-        onPress={onNext}
-        title="Next"
+      {/* <CustomButton
+    
+     
         style={styles.button}
         textStyle={styles.nextText}
-      />
+      /> */}
+      <SecondaryButton     onPress={onNext}     title="Next"/>
 
       {/* Snackbar */}
       <AppSnackbar

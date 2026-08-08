@@ -69,6 +69,7 @@ export default function Login() {
 
   // ✅ Send OTP
   const handleSendOtp = async () => {
+  
     if (!mobile || mobile.length !== 10) {
       showSnackbar(
         'Enter valid mobile number',
@@ -81,7 +82,7 @@ export default function Login() {
 
     try {
       const res = await sendOtp({
-        mobile_number: mobile,
+        mobile: mobile,
       }).unwrap();
 
       if (res.status === '00') {
@@ -104,6 +105,7 @@ export default function Login() {
         );
       }
     } catch (err: any) {
+      console.log({err})
       showSnackbar(
         err?.data?.message ||
         'Failed to send OTP',
@@ -141,64 +143,43 @@ export default function Login() {
 
     try {
       const res = await verifyOtp({
-        mobile_number: mobile,
+        mobile,
         otp: enteredOtp,
+        Role: 'VENDOR',
       }).unwrap();
 
       console.log('Verify Response:', res);
 
-      if (res?.status === '00') {
-        const userDetails = res?.userDetails;
-        if (userDetails?.status === '01') {
-          showSnackbar(
-            res?.message || 'OTP verified successfully',
-            'success',
-          );
-
-          navigation.navigate(
-            AUTH_ROUTES.VENDORONBOARDING,
-          );
-
-          return;
-        }
-
-        // ✅ Existing Vendor Login
+      if (res.status === '00' || res.status === '01') {
         dispatch(
           setAuthData({
-            token: '',
-            refreshToken: null,
-
+            token: res.data.accessToken,
+            refreshToken: res.data.refreshToken,
             user: {
-              id: userDetails?.vendorid || '',
-              companyName:
-                userDetails?.companyName || '',
-              mobile:
-                userDetails?.mobileNo || '',
+              id: res.data.userId,
+              mobile: res.data.mobile,
+              role: res.data.role,
             },
-
-            vendor_onboarded:
-              userDetails?.vendor_onboarded ||
-              false,
-
-            kyc_verified:
-              userDetails?.kyc_verify || false,
-
-            vehicle_verified:
-              userDetails?.vehicle_verify_flag ===
-              'Y',
+            vendor_onboarded: false,
+            vehicle_verified: false,
+            kyc_verified: false,
           }),
         );
 
-        showSnackbar(
-          res?.message || 'Login successful',
-          'success',
-        );
-      } else {
-        showSnackbar(
-          res?.message || 'Login failed',
-          'error',
-        );
+        showSnackbar(res.message, 'success');
+
+        if (res.status === '01') {
+          // New vendor
+          navigation.replace(AUTH_ROUTES.VENDORONBOARDING);
+        } else {
+          // Existing vendor
+          navigation.replace(HOME_ROUTES.DASHBOARD);
+        }
+
+        return;
       }
+
+      showSnackbar(res.message || 'OTP verification failed', 'error');
     } catch (err: any) {
       console.log('Verify Error:', err);
 
@@ -368,10 +349,7 @@ const styles = StyleSheet.create({
   loginbtn: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.primary,
     marginTop: 15,
-    width: 213,
-    height: 56,
     alignSelf: 'center',
     borderRadius: 10,
     padding: 10

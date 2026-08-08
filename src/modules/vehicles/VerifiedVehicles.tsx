@@ -6,8 +6,8 @@ import { colors } from '@utils/colors';
 import { normalizeFont } from '@utils/responsive';
 import AppHeader from '@components/custumcomponents/AppHeader';
 import { useRoute } from '@react-navigation/native';
-import { verifiedvehicles } from '@utils/constants';
 import CustomFlatList from '@components/custumcomponents/CustomFlatList';
+import { useVehicledetailsQuery } from '@app/redux/query/queryApi';
 
 type RouteParams = {
   vehicleno: string;
@@ -15,12 +15,20 @@ type RouteParams = {
 
 export default function VehicleDetailsCard() {
   const route = useRoute<any>();
-  const vehicle = route.params?.vehicle;
 
+  const vehicle = route.params?.vehicle;
+// Extract VehicleId
+const vehicleId = vehicle?.VehicleId;
   console.log('Vehicle Data:', vehicle);
-  useEffect(() => {
-  console.log('Route Params:', route.params);
-}, [route.params]);
+
+const {
+  data,
+  isLoading,
+  error,
+} = useVehicledetailsQuery(vehicleId, {
+  skip: !vehicleId,
+});
+
 
   if (!vehicle) {
     return (
@@ -30,9 +38,23 @@ export default function VehicleDetailsCard() {
     );
   }
 
-  const details = vehicle?.fullData?.vehicleDetails;
+const details = data?.data?.[0];
+if (isLoading) {
+  return (
+    <View style={styles.center}>
+      <Text>Loading...</Text>
+    </View>
+  );
+}
+if (!details) {
+  return (
+    <View style={styles.center}>
+      <Text>No vehicle details available</Text>
+    </View>
+  );
+}
   console.log('vehicle details',details)
-  const dhalasize = `Length -${details?.length} ft x Width ${details?.width} ft x Height ${details?.height} ft`;
+const dhalasize = `Length - ${details.DhalaLength} ft x Width - ${details.DhalaWidth} ft x Height - ${details.DhalaHeight} ft`;
   if (!details) {
     return (
       <View style={styles.center}>
@@ -41,160 +63,234 @@ export default function VehicleDetailsCard() {
     );
   }
 
-  return (
-    <>
-      <AppHeader title="Vehicle Details" />
+ return (
+  <>
+    <AppHeader title="Validate Vehicles" />
 
-      <CustomFlatList
-        data={[details]} // ✅ use details
-        contentContainerStyle={styles.container}
-        renderItem={() => (
-       <>
-            {/* Vehicle Number */}
-            <Text style={styles.vehicleNo}>
-              Vehicle No : {details.registration_no}
+    <View style={styles.container}>
+      <Text style={styles.vehicleNo}>
+        Vehicle No : {details.VehicleNo}
+      </Text>
+
+      {/* Details Card */}
+      <View style={styles.card}>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Loading Capacity</Text>
+          <Text style={styles.value}>
+            {details.LoadingCapacity} kg
+          </Text>
+        </View>
+
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Make & Segment</Text>
+          <Text style={styles.value}>
+            {details.VehicleCategory || '-'}
+          </Text>
+        </View>
+
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Body Type</Text>
+          <Text style={styles.value}>
+            {details.BodyType}
+          </Text>
+        </View>
+
+        {/* Dhala Size */}
+        <View style={styles.dhalaContainer}>
+          <View style={styles.dhalaLabel}>
+            <Text style={styles.label}>
+              Dhala Size
             </Text>
+          </View>
 
-            {/* Owner */}
-            <View style={styles.row}>
-              <Text style={styles.label}>Loading Capacity ( Wt ) :</Text>
-              <Text style={styles.value}>{details?.vehicle_weight}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>Segment :</Text>
-              <Text style={styles.value}>{details?.vehiclecategory}</Text>
-            </View>
-
-            {/* Body Type */}
-            <View style={styles.row}>
-              <Text style={styles.label}>Body Type :</Text>
-              <Text style={styles.value}>{details.body_type}</Text>
-            </View>
-
-            {/* Manufacturer */}
-            <View style={styles.row}>
-              <Text style={styles.label}>Dhala Size :</Text>
-              <Text style={styles.value}>{dhalasize}</Text>
-            </View>
-
-            {/* Vehicle Images */}
-            <Text style={styles.imageTitle}>Real Image Of Vehicle</Text>
-
-            {vehicle?.fullData?.vehiclePhotos?.length > 0 ? (
-              <View style={styles.imageColumn}>
-                {vehicle.fullData.vehiclePhotos.map(
-                  (item: any, index: number) => (
-                    <View key={index} style={styles.imageWrapper}>
-                      <Text style={styles.imageLabel}>
-                        {item.photo_type
-                          ?.replace('_', ' ')
-                          ?.toUpperCase()}
-                      </Text>
-
-                      <Image
-                        source={{ uri: item.photo_url }}
-                        style={styles.image}
-                      />
-                    </View>
-                  ),
-                )}
-              </View>
-            ) : (
-              <Text style={styles.noImage}>
-                No vehicle images available
+          <View style={styles.dhalaTable}>
+            <View style={styles.tableHeader}>
+              <Text style={styles.tableHeading}>
+                Length
               </Text>
-            )}
-        </>
+              <Text style={styles.tableHeading}>
+                Width
+              </Text>
+              <Text style={styles.tableHeading}>
+                Height
+              </Text>
+            </View>
+
+            <View style={styles.tableRow}>
+              <Text style={styles.tableValue}>
+                {details.DhalaLength} ft
+              </Text>
+
+              <Text style={styles.tableValue}>
+                {details.DhalaWidth} ft
+              </Text>
+
+              <Text style={styles.tableValue}>
+                {details.DhalaHeight} ft
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* Images */}
+
+      <Text style={styles.imageTitle}>
+        Real Image Of Vehicle
+      </Text>
+
+      <View style={styles.imageGrid}>
+        {[
+          details.FrontImage,
+          details.BackImage,
+          details.LeftImage,
+          details.RightImage,
+        ]
+          .filter(Boolean)
+          .map((uri, index) => (
+            <Image
+              key={index}
+              source={{ uri }}
+              style={styles.image}
+            />
+          ))}
+      </View>
+
+      {!details.FrontImage &&
+        !details.BackImage &&
+        !details.LeftImage &&
+        !details.RightImage && (
+          <Text style={styles.noImage}>
+            No vehicle images available
+          </Text>
         )}
-      />
-    </>
-  );
+    </View>
+  </>
+);
 }
 
 /* ---------------- STYLES ---------------- */
 
 const styles = StyleSheet.create({
   container: {
-    padding: spacing.md,
-    paddingBottom: spacing.lg,
-    backgroundColor:'#ffff'
-  },
+  flex: 1,
+  backgroundColor: '#fff',
+  padding: 16,
+},
+center: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+  backgroundColor: '#fff',
+},
+vehicleNo: {
+  fontSize: 18,
+  fontWeight: '700',
+  color: colors.primary,
+  alignSelf: 'center',
+  marginBottom: 15,
+},
 
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+card: {
+  borderWidth: 1,
+  borderColor: '#D8D8D8',
+  borderRadius: 8,
+  overflow: 'hidden',
+},
 
+infoRow: {
+  flexDirection: 'row',
+  borderBottomWidth: 1,
+  borderBottomColor: '#D8D8D8',
+},
 
+label: {
+  width: 140,
+  padding: 12,
+  fontSize: 14,
+  fontWeight: '500',
+  color: '#222',
+},
 
-  vehicleNo: {
-    flex:1,
-    justifyContent:'center',
-    alignSelf:'center',
-    fontSize: normalizeFont(16),
-    fontWeight: '600',
-    color: colors.primary,
-    marginBottom: spacing.lg,
-  },
+value: {
+  flex: 1,
+  padding: 12,
+  borderLeftWidth: 1,
+  borderLeftColor: '#D8D8D8',
+  fontSize: 14,
+  color: '#222',
+},
 
-  row: {
-    flexDirection: 'row',
-    marginBottom: spacing.sm,
-  },
+dhalaContainer: {
+  flexDirection: 'row',
+},
 
-  label: {
-    width: 'auto',
-    color:'#2A2A2A',
-    fontSize: normalizeFont(16),
-    fontWeight: 'semibold',
-  },
+dhalaLabel: {
+  width: 140,
+  justifyContent: 'center',
+},
 
-  value: {
-    flex: 1,
-    fontSize: normalizeFont(16),
-    color: '#333',
-  },
+dhalaTable: {
+  flex: 1,
+  borderLeftWidth: 1,
+  borderLeftColor: '#D8D8D8',
+},
 
+tableHeader: {
+  flexDirection: 'row',
+  borderBottomWidth: 1,
+  borderBottomColor: '#D8D8D8',
+},
 
+tableHeading: {
+  flex: 1,
+  textAlign: 'center',
+  paddingVertical: 8,
+  borderRightWidth: 1,
+  borderRightColor: '#D8D8D8',
+  fontSize: 13,
+  fontWeight: '600',
+},
 
-  imageTitle: {
-    marginTop: spacing.lg,
-    marginBottom: spacing.md,
-    color: colors.primary,
-    fontWeight: 'semibold',
-    fontSize: normalizeFont(14),
+tableRow: {
+  flexDirection: 'row',
+},
 
-  },
+tableValue: {
+  flex: 1,
+  textAlign: 'center',
+  paddingVertical: 10,
+  borderRightWidth: 1,
+  borderRightColor: '#D8D8D8',
+  fontSize: 14,
+},
 
-  imageColumn: {
-    width: '100%',
-  },
-  imageWrapper: {
-    marginBottom: spacing.md,
-    alignItems: 'center',
-    padding:5
-  },
+imageTitle: {
+  marginTop: 22,
+  marginBottom: 12,
+  color: colors.primary,
+  fontWeight: '600',
+  fontSize: 15,
+},
 
-  imageLabel: {
-    marginBottom: spacing.xs,
-    fontSize: normalizeFont(13),
-    fontWeight: '500',
-    color: '#555',
-    alignSelf: 'flex-start',
-  },
+imageGrid: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  justifyContent: 'space-between',
+},
 
-  image: {
-    width:396,
-    height: 146,
-    borderRadius: spacing.sm,
-    resizeMode: 'cover',
-    backgroundColor: '#eee',
-  },
+image: {
+  width: '48%',
+  aspectRatio: 1.2,
+  borderRadius: 6,
+  marginBottom: 14,
+  borderWidth: 1,
+  borderColor: '#D8D8D8',
+},
 
-  noImage: {
-    textAlign: 'center',
-    color: '#999',
-    marginTop: 10,
-  },
+noImage: {
+  marginTop: 20,
+  textAlign: 'center',
+  color: '#999',
+},
 });

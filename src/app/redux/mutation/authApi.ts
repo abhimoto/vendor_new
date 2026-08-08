@@ -5,130 +5,167 @@ export const authApi = api.injectEndpoints({
   endpoints: builder => ({
     sendOtp: builder.mutation<LoginResponse, LoginRequest>({
       query: body => ({
-        url: 'sendOTP',
+        url: '/auth/send-otp',
         method: 'POST',
         body,
       }),
     }),
+
     verifyOtp: builder.mutation<any, any>({
       query: body => ({
-        url: 'validateOTP',
+        url: '/auth/verify-otp',
         method: 'POST',
         body,
       }),
     }),
+
     onboarding: builder.mutation<any, any>({
       query: body => ({
-        url: 'VendorOnboarding',
+        url: '/auth/vendor/register',
         method: 'POST',
         body,
       }),
     }),
-    getPincode: builder.mutation<any, { pincode: string }>({
+
+    addvehicle: builder.mutation<any, any>({
       query: body => ({
-        url: 'pincode',
+        url: '/vendor/add-vehicle',
         method: 'POST',
         body,
       }),
     }),
+
+
+
     bankdetails: builder.mutation<any, any>({
       query: body => ({
-        url: 'vendor_Bank_kyc',
+        url: '/vendor/bankdetails',
         method: 'POST',
         body,
       }),
     }),
+
     gstverify: builder.mutation<any, any>({
       query: body => ({
-        url: 'GST',
+        url: '/auth/kyc/gst',
         method: 'POST',
         body,
       }),
     }),
-    vehicleverify: builder.mutation<any, any>({
-      query: body => ({
-        url: 'Insert_Vehicle',
+
+    vehicleverify: builder.mutation<any, FormData>({
+      query: formData => ({
+        url: '/vendor/vehicle/verify-rc',
         method: 'POST',
-        body,
+        body: formData,
       }),
     }),
+
     vehicleedit: builder.mutation<any, EditRequest>({
       query: body => ({
-        url: 'update_vehicle',
-        method: 'POST',
+        url: '/vendor/editvehicles',
+        method: 'PUT',
         body,
       }),
     }),
+
     Licenseverify: builder.mutation<any, any>({
       query: body => ({
-        url: 'DrivingLicense',
+        url: '/auth/kyc/driving-license/verify',
         method: 'POST',
         body,
       }),
     }),
+
     Driver_verification: builder.mutation<any, any>({
       query: body => ({
-        url: 'Driver_verification',
+        url: '/vendor/driver-onboarding',
         method: 'POST',
         body,
       }),
     }),
-    Divervehicleassign: builder.mutation<any, any>({
+
+    AssignVehicle: builder.mutation<any, any>({
       query: body => ({
-        url: 'Insert_Driver_Vehicle_Assign',
+        url: '/vendor/assign-vehicle',
         method: 'POST',
         body,
       }),
     }),
-    deleteassignvehicle: builder.mutation<any, { DriverID: string, VendorID: string, VehicleID: string }>({
+        DessignVehicle: builder.mutation<any, any>({
       query: body => ({
-        url: 'delete_Driver_Vehicle_Assign',
+        url: '/vendor/deassign-vehicle',
         method: 'POST',
         body,
       }),
     }),
+
+    deleteassignvehicle: builder.mutation<any, {
+      DriverID: string;
+      VendorID: string;
+      VehicleID: string;
+    }>({
+      query: body => ({
+        url: '/delete_Driver_Vehicle_Assign',
+        method: 'POST',
+        body,
+      }),
+    }),
+
     updateassignvehicle: builder.mutation<any, any>({
       query: body => ({
-        url: 'update_Driver_Vehicle_Assign',
+        url: '/update_Driver_Vehicle_Assign',
         method: 'POST',
         body,
       }),
     }),
-    deletevehicle: builder.mutation<any, { vehicleid: string, vendorid: string, Remark: string, }>({
+
+    deletevehicle: builder.mutation<any, {
+      vehicleid: string;
+      vendorid: string;
+      Remark: string;
+    }>({
       query: body => ({
-        url: 'delete_vehicle',
+        url: '/delete_vehicle',
         method: 'POST',
         body,
-      })
+      }),
     }),
-    deletedriver: builder.mutation<any, { driverid: string, vendorid: string }>({
+
+    deletedriver: builder.mutation<any, {
+      driverid: string;
+      vendorid: string;
+    }>({
       query: body => ({
-        url: 'delete_driver',
+        url: '/delete_driver',
         method: 'POST',
         body,
-      })
+      }),
     }),
+
     updatevendordetails: builder.mutation<any, any>({
       query: body => ({
-        url: 'update_Vendor_Details',
+        url: '/update_Vendor_Details',
         method: 'POST',
         body,
-      })
+      }),
     }),
+
     updatevendorkyc: builder.mutation<any, any>({
       query: body => ({
-        url: 'update_vendor_kyc',
+        url: '/update_vendor_kyc',
         method: 'POST',
         body,
-      })
+      }),
     }),
-    duplicatevehicle:builder.mutation<any,any>({
-      query:body => ({
-        url:'Vendor_KYC_Check',
-        method:'POST',
+
+    duplicatevehicle: builder.mutation<any, any>({
+      query: body => ({
+        url: '/Vendor_KYC_Check',
+        method: 'POST',
         body,
-      })
-    })
+      }),
+    }),
   }),
 });
 
@@ -136,13 +173,12 @@ export const {
   useSendOtpMutation,
   useVerifyOtpMutation,
   useOnboardingMutation,
-  useGetPincodeMutation,
   useBankdetailsMutation,
   useGstverifyMutation,
   useVehicleverifyMutation,
   useLicenseverifyMutation,
   useDriver_verificationMutation,
-  useDivervehicleassignMutation,
+  useAssignVehicleMutation,
   useDeleteassignvehicleMutation,
   useUpdateassignvehicleMutation,
   useDeletevehicleMutation,
@@ -150,5 +186,7 @@ export const {
   useVehicleeditMutation,
   useUpdatevendordetailsMutation,
   useUpdatevendorkycMutation,
-  useDuplicatevehicleMutation
+  useDuplicatevehicleMutation,
+  useAddvehicleMutation,
+  useDessignVehicleMutation
 } = authApi;

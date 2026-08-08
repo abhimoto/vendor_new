@@ -19,9 +19,9 @@ export interface AuthState {
   refreshToken: string | null;
   user: User | null;
   isAuthenticated: boolean;
-  kyc_verified: boolean;      // ✅ Consistent naming
-  vehicle_verified: boolean;   // ✅ Consistent naming
-  vendor_onboarded: boolean;   // ✅ Consistent naming
+  kyc_verified: boolean;      
+  vehicle_verified: boolean;   
+  vendor_onboarded: boolean;  
 }
 
 export type DashboardState = {
@@ -71,7 +71,7 @@ export type BankFormState = {
 };
 //===============login ==================
 export interface LoginRequest {
-  mobile_number: string;
+  mobile: string;
 }
 
 export interface LoginResponse {

@@ -2,11 +2,19 @@ import { api } from './../../../config/api';
 
 export const queryApi = api.injectEndpoints({
   endpoints: builder => ({
-    getvehicle: builder.mutation<any, { vendorid: string }>({
-      query: (body) => ({
-        url: 'get_vehicle',
+    getvehicle: builder.mutation<any, void>({
+      query: () => ({
+        url: '/vendor/vehicles',
         method: 'POST',
-        body,
+        body: {},
+      }),
+    }),
+    vehicledetails: builder.query<any, string | void>({
+      query: (VehicleId) => ({
+        url: VehicleId
+          ? `/vendor/vehicle/details?VehicleId=${VehicleId}`
+          : '/vendor/vehicle/details',
+        method: 'GET',
       }),
     }),
     validateVehicle: builder.mutation<any, any>({
@@ -39,7 +47,7 @@ export const queryApi = api.injectEndpoints({
     }),
     getavailablevehicles: builder.mutation<any, { vendorId: string }>({
       query: (body) => ({
-        url: 'get_VehicleAvailable',
+        url: '/vehicles/unassigned',
         method: 'POST',
         body,
       }),
@@ -53,7 +61,7 @@ export const queryApi = api.injectEndpoints({
     }),
     getpancard: builder.mutation<any, { pan_number: string }>({
       query: (body) => ({
-        url: 'pancard',
+        url: '/auth/kyc/pan',
         method: 'POST',
         body,
       }),
@@ -91,38 +99,69 @@ export const queryApi = api.injectEndpoints({
       }),
       keepUnusedDataFor: 0
     }),
-    getunAssigned: builder.query<any, { vendorid: string }>({
-      query: (body) => ({
-        url: 'get_unassign_vehicle',
-        method: 'POST',
-        body
-      })
+    getPincode: builder.query<any, { pincode: string }>({
+      query: ({ pincode }) => ({
+        url: `/location/pincode?search=${pincode}`,
+        method: 'GET',
+      }),
+    }),
+    getunAssignedVehicles: builder.query<any, void>({
+      query: () => ({
+        url: '/vendor/vehicles/unassigned',
+        method: 'GET',
+      }),
+    }),
 
+    getunAssignedDrivers: builder.query<any, void>({
+      query: () => ({
+        url: '/vendor/drivers/unassigned',
+        method: 'GET',
+      }),
     }),
-    getunAssignedDrivers: builder.query<any, { vendorid: string }>({
-      query: (body) => ({
-        url: 'get_unassign_driver',
-        method: 'POST',
-        body
-      })
-    }),
-     getvendordetails: builder.query<any, { vendorid: string }>({
+    getvendordetails: builder.query<any, { vendorid: string }>({
       query: (body) => ({
         url: 'get_Vendor_Details ',
         method: 'POST',
         body
       })
     }),
-     getvendorkyc: builder.query<any, { vendorid: string }>({
+getassigneddetails: builder.query<any, void>({
+  query: () => ({
+    url: '/vendor/driver-vehicle-assignments',
+    method: 'GET',
+  }),
+}),
+    getvendorkyc: builder.query<any, { vendorid: string }>({
       query: (body) => ({
         url: 'get_vendor_kyc  ',
         method: 'POST',
         body
       })
+    }),
+    getState: builder.query<any, void>({
+      query: () => ({
+        url: '/location/states',
+        method: 'GET',
+      }),
+    }),
+
+    getDistricts: builder.query<any, { state: string }>({
+      query: ({ state }) => ({
+        url: `/location/districts?state=${encodeURIComponent(state)}`,
+        method: 'GET',
+      }),
+    }),
+    verifyDriverQr: builder.query<any, string>({
+      query: (qrUrl) => ({
+        url: qrUrl,
+        method: 'GET',
+      }),
+
     })
 
     //=====query for verification=====
   }),
+
 });
 
 export const {
@@ -138,9 +177,18 @@ export const {
   useGetAvailableVehiclessQuery,
   useGetVehicleAssignedQuery,
   useGetexpiryAlertsQuery,
-  useGetunAssignedQuery,
+  useGetunAssignedVehiclesQuery,
   useGetunAssignedDriversQuery,
   useGetvendordetailsQuery,
-  useGetvendorkycQuery
+  useGetvendorkycQuery,
+  useLazyGetvendordetailsQuery,
+  useVehicledetailsQuery,
+  useLazyVerifyDriverQrQuery,
+  useLazyGetPincodeQuery,
+  useGetStateQuery,
+  useLazyGetStateQuery,
+  useGetDistrictsQuery,
+  useLazyGetDistrictsQuery,
+  useGetassigneddetailsQuery
 
 } = queryApi;

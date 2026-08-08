@@ -3,8 +3,8 @@ import { Dimensions, PixelRatio } from 'react-native';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Base size (design reference — usually from Figma)
-const BASE_WIDTH = 375;
-const BASE_HEIGHT = 812;
+const BASE_WIDTH = 428;
+const BASE_HEIGHT = 926;
 
 // width percentage
 export const wp = (percentage: number) => {

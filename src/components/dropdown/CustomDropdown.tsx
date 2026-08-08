@@ -1,4 +1,10 @@
+import spacing from '@utils/spacing';
 import { colors } from '@utils/colors';
+import {
+  moderateScale,
+  normalizeFont,
+  verticalScale,
+} from '@utils/responsive';
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
@@ -17,14 +23,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 type Option = {
-  ifsc: string;
   label: string;
   value: string;
+  ifsc?: string;
 };
 
 type Props = {
   label?: string;
-  data: Option[];
+  data?: Option[]; // ✅ optional
   value?: string;
   placeholder?: string;
   onSelect: (item: Option) => void;
@@ -32,6 +38,7 @@ type Props = {
   disabled?: boolean;
   error?: boolean;
   errorText?: string;
+  compact?: boolean;
   style?: StyleProp<ViewStyle>;
   dropdownStyle?: StyleProp<ViewStyle>;
   modalStyle?: StyleProp<ViewStyle>;
@@ -41,13 +48,14 @@ type Props = {
 
 export default function CustomDropdown({
   label,
-  data,
+  data = [], // ✅ SAFE DEFAULT
   value,
   placeholder = 'Select option',
   onSelect,
   searchable = false,
   disabled = false,
   error = false,
+  compact = false, // ✅
   errorText,
   style,
   dropdownStyle,
@@ -58,26 +66,34 @@ export default function CustomDropdown({
   const [visible, setVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Selected item
+  // ✅ Safe selected item
   const selectedItem = useMemo(() => {
-    if (!value) return undefined;
+    if (!value || !data?.length) return undefined;
 
     const normalizedValue = value.toLowerCase().trim();
 
     return (
-      data.find(item => item.value.toLowerCase().trim() === normalizedValue) ||
-      data.find(item => item.label.toLowerCase().trim() === normalizedValue)
+      data.find(
+        item =>
+          item?.value?.toLowerCase?.().trim() === normalizedValue,
+      ) ||
+      data.find(
+        item =>
+          item?.label?.toLowerCase?.().trim() === normalizedValue,
+      )
     );
   }, [data, value]);
 
-  // Filter data
+  // ✅ Safe filter
   const filteredData = useMemo(() => {
-    if (!searchQuery) return data;
-    return data.filter(item =>
-      item.label.toLowerCase().includes(searchQuery.toLowerCase()),
+    if (!searchQuery) return data || [];
+
+    return (data || []).filter(item =>
+      item?.label?.toLowerCase?.().includes(searchQuery.toLowerCase()),
     );
   }, [data, searchQuery]);
 
+  // ✅ Select handler
   const handleSelect = useCallback(
     (item: Option) => {
       onSelect(item);
@@ -92,21 +108,34 @@ export default function CustomDropdown({
     setSearchQuery('');
   }, []);
 
+  const dropdownHeight = compact
+    ? verticalScale(40)
+    : verticalScale(56);
+
+  const horizontalPadding = compact
+    ? moderateScale(12)
+    : moderateScale(14);
+const fontSize = compact
+  ? normalizeFont(12)
+  : normalizeFont(14);
+  
+  // ✅ render item safe
   const renderItem = useCallback(
     ({ item }: { item: Option }) => (
       <TouchableOpacity
         style={[styles.item, itemStyle]}
         onPress={() => handleSelect(item)}
       >
-        <Text style={[styles.itemText, itemTextStyle]}>{item.label}</Text>
+        <Text style={[styles.itemText, itemTextStyle]}>
+          {item?.label || item?.value}
+        </Text>
 
-        {(item.value.toLowerCase().trim() === value?.toLowerCase().trim() ||
-          item.label.toLowerCase().trim() === value?.toLowerCase().trim()) && (
+        {selectedItem?.value === item?.value && (
           <MaterialIcons name="check" size={20} color={colors.primary} />
         )}
       </TouchableOpacity>
     ),
-    [handleSelect, value, itemStyle, itemTextStyle],
+    [handleSelect, selectedItem, itemStyle, itemTextStyle],
   );
 
   return (
@@ -117,6 +146,10 @@ export default function CustomDropdown({
       <TouchableOpacity
         style={[
           styles.dropdown,
+          {
+            height: dropdownHeight,
+            paddingHorizontal: horizontalPadding,
+          },
           dropdownStyle,
           disabled && styles.dropdownDisabled,
           error && styles.dropdownError,
@@ -127,12 +160,13 @@ export default function CustomDropdown({
         <Text
           style={[
             styles.text,
+            { fontSize },
             !selectedItem && styles.placeholder,
             disabled && styles.textDisabled,
           ]}
           numberOfLines={1}
         >
-          {selectedItem ? selectedItem.label : value ? value : placeholder}
+          {selectedItem?.label || value || placeholder}
         </Text>
 
         <MaterialIcons
@@ -142,7 +176,9 @@ export default function CustomDropdown({
         />
       </TouchableOpacity>
 
-      {error && errorText && <Text style={styles.errorText}>{errorText}</Text>}
+      {error && errorText && (
+        <Text style={styles.errorText}>{errorText}</Text>
+      )}
 
       {/* Modal */}
       <Modal
@@ -151,19 +187,19 @@ export default function CustomDropdown({
         animationType="slide"
         onRequestClose={handleClose}
       >
-        {/* Overlay */}
         <TouchableWithoutFeedback onPress={handleClose}>
           <View style={styles.overlay} />
         </TouchableWithoutFeedback>
 
-        {/* Bottom Sheet */}
         <SafeAreaView
           style={[styles.modalContainer, modalStyle]}
           edges={['bottom']}
         >
           {/* Header */}
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{label || 'Select option'}</Text>
+            <Text style={styles.modalTitle}>
+              {label || 'Select option'}
+            </Text>
 
             <TouchableOpacity onPress={handleClose}>
               <MaterialIcons name="close" size={24} color="#777" />
@@ -186,14 +222,18 @@ export default function CustomDropdown({
           {/* List */}
           <FlatList
             data={filteredData}
-            keyExtractor={item => item.value}
+            keyExtractor={(item, index) =>
+              item?.value?.toString() || index.toString()
+            }
             renderItem={renderItem}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContent}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>No options available</Text>
+                <Text style={styles.emptyText}>
+                  No options available
+                </Text>
               </View>
             }
           />
@@ -205,39 +245,38 @@ export default function CustomDropdown({
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 10,
-  },
+  marginTop: 0,
+  marginBottom: spacing.md,
+},
   label: {
-    marginBottom: 2,
+    marginBottom: 6,
     fontWeight: '600',
-    fontSize: 16,
+    fontSize: 14,
     color: '#333',
   },
-  dropdown: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-    borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.background,
-  },
+dropdown: {
+  borderWidth: 1,
+  borderColor: '#ccc',
+  borderRadius: moderateScale(8),
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  backgroundColor: colors.background,
+},
   dropdownDisabled: {
     backgroundColor: '#f5f5f5',
   },
   dropdownError: {
     borderColor: '#ff3b30',
   },
-  text: {
-    fontSize: 16,
-    color: '#000',
-    flex: 1,
-  },
+text: {
+  color: '#000',
+  flex: 1,
+  fontWeight: '500',
+},
   placeholder: {
     color: '#2A2A2A',
-    fontWeight:'600'
+    fontWeight: '600'
   },
   textDisabled: {
     color: '#aaa',

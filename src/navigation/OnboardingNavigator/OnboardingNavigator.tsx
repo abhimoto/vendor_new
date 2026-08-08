@@ -6,15 +6,15 @@ import AddVehicle from '@modules/vehicles/AddVehicle';
 import ValidateVehicles from '@modules/vehicles/ValidateVehicles';
 import Bankdetails from '@modules/payment/Bankdetails';
 import VerifiedVehicles from '@modules/vehicles/VerifiedVehicles';
+import { AUTH_ROUTES } from '@navigation/routes';
+import VendorOnboarding from '@modules/user/onboarding/VendorOnboarding';
 
 const Stack = createNativeStackNavigator();
 
 export default function OnboardingNavigator() {
   return (
-    <Stack.Navigator
-      initialRouteName="TemporaryDashboard"
-      screenOptions={{ headerShown: false }}
-    >
+   <Stack.Navigator screenOptions={{headerShown:false}}>
+    
       <Stack.Screen
         name="TemporaryDashboard"
         component={TemporaryDashboard}
