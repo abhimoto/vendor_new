@@ -17,7 +17,7 @@ type Props = {
   disabled?: boolean;
 };
 
-export default function CustomButton({
+export default function SecondaryButton({
   title,
   onPress,
   style,
@@ -37,23 +37,21 @@ export default function CustomButton({
 
 const styles = StyleSheet.create({
   button: {
-    width: wp(35),           // ~148px on 428px base width
+    width: wp(86),           // ~368px on 428px base width
     height: hp(5.5),         // ~50px on 926px base height
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.primary,
     borderRadius: moderateScale(10),
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.primary,
   },
 
   text: {
-    color: colors.primary,
-    fontSize: moderateScale(16)
+    color: '#FFFFFF',
+    fontSize: moderateScale(16),
+    fontWeight: '600',
   },
 
   disabled: {
-    backgroundColor: '#F2F2F2',
-    borderColor: '#D0D0D0',
+    backgroundColor: '#B0B0B0',
   },
 });

@@ -17,15 +17,24 @@ import {
 } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/Ionicons';
 
+interface ImageFile {
+  uri: string;
+  type: string;
+  fileName: string;
+}
 interface Props {
   label?: string;
-  onImageSelected?: (base64: string) => void;
+  returnType?: 'uri' | 'base64';
+  onImageSelected?: (
+    image: string | ImageFile,
+  ) => void;
   containerStyle?: any;
   imageStyle?: any;
 }
 
 export default function CustomImagePicker({
   label,
+  returnType = 'uri',
   onImageSelected,
   containerStyle,
   imageStyle,
@@ -59,29 +68,34 @@ export default function CustomImagePicker({
     const hasPermission = await requestCameraPermission();
     if (!hasPermission) return;
 
-    const result: ImagePickerResponse = await launchCamera({
-      mediaType: 'photo',
-      includeBase64: true,
-      quality: 0.1,
-      maxHeight: 150,
-      maxWidth: 150,
-      saveToPhotos: true,
-      presentationStyle: 'fullScreen' as const,
-    });
+ const result: ImagePickerResponse =
+  await launchCamera({
+    mediaType: 'photo',
+    includeBase64:
+      returnType === 'base64',
+    quality: 0.8,
+    maxHeight: 1500,
+    maxWidth: 1500,
+    presentationStyle:
+      'fullScreen' as const,
+  });
 
     handleResult(result);
   };
 
   /* ---------------- GALLERY ---------------- */
   const openGallery = async () => {
-    const result: ImagePickerResponse = await launchImageLibrary({
-      mediaType: 'photo',
-      includeBase64: true,
-      quality: 0.1,
-      maxHeight: 150,
-      maxWidth: 150,
-      presentationStyle: 'fullScreen' as const,
-    });
+ const result: ImagePickerResponse =
+  await launchCamera({
+    mediaType: 'photo',
+    includeBase64:
+      returnType === 'base64',
+    quality: 0.8,
+    maxHeight: 1500,
+    maxWidth: 1500,
+    presentationStyle:
+      'fullScreen' as const,
+  });
 
     handleResult(result);
   };
@@ -102,33 +116,58 @@ export default function CustomImagePicker({
   //     }
   //   }
   // };
-  const handleResult = (result: ImagePickerResponse) => {
+const handleResult = (
+  result: ImagePickerResponse,
+) => {
   setModalVisible(false);
 
-  if (result.assets && result.assets.length > 0) {
+  if (
+    result.assets &&
+    result.assets.length > 0
+  ) {
     const asset = result.assets[0];
 
     if (asset?.uri) {
       setImageUri(asset.uri);
     }
 
-    if (asset?.base64 && onImageSelected) {
-      // ✅ include prefix
-      const mimeType = asset.type || 'image/jpeg';
+    if (!onImageSelected) return;
+
+    if (returnType === 'base64') {
+      const mimeType =
+        asset.type || 'image/jpeg';
 
       const base64WithPrefix = `data:${mimeType};base64,${asset.base64}`;
 
       onImageSelected(base64WithPrefix);
+    } else {
+      onImageSelected({
+        uri: asset.uri!,
+        type:
+          asset.type || 'image/jpeg',
+        fileName:
+          asset.fileName ||
+          `image_${Date.now()}.jpg`,
+      });
     }
   }
 };
 
   /* ---------------- REMOVE ---------------- */
-  const handleRemove = () => {
-    setImageUri(null);
-    setModalVisible(false);
+const handleRemove = () => {
+  setImageUri(null);
+  setModalVisible(false);
+
+  if (returnType === 'base64') {
     onImageSelected?.('');
-  };
+  } else {
+    onImageSelected?.({
+      uri: '',
+      type: '',
+      fileName: '',
+    });
+  }
+};
 
   return (
     <>

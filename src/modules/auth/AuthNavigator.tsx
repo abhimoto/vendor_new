@@ -15,18 +15,12 @@ export default function AuthNavigator() {
       <Stack.Screen name={AUTH_ROUTES.SPLASH} component={Splashscreen} />
       <Stack.Screen name={AUTH_ROUTES.LOGIN} component={Login} />
       <Stack.Screen name={AUTH_ROUTES.SIGNUP} component={Signup} />
-      <Stack.Screen
+         <Stack.Screen
         name={AUTH_ROUTES.VENDORONBOARDING}
         component={VendorOnboarding}
       />
-      {/* <Stack.Screen name={AUTH_ROUTES.REGISTRATION} component={Registeration} />
-      <Stack.Screen name={AUTH_ROUTES.AUTHORITY} component={Authority} />
-      <Stack.Screen name={AUTH_ROUTES.AUTHORITYADD} component={AuthorityAdd} />
+     
 
-      <Stack.Screen
-        name={AUTH_ROUTES.LEGALDOCUMENTS}
-        component={LegalDocuments}
-      /> */}
     </Stack.Navigator>
   );
 }

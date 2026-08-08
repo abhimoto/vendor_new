@@ -33,7 +33,6 @@ const userDetailsSlice = createSlice({
 
   reducers: {
 
-    // Store complete user details object
     setUserDetails: (
       state,
       action: PayloadAction<UserDetails>,
@@ -41,7 +40,6 @@ const userDetailsSlice = createSlice({
       state.userDetails = action.payload;
     },
 
-    // Update specific fields dynamically
     updateUserDetails: (
       state,
       action: PayloadAction<Partial<UserDetails>>,
@@ -54,7 +52,6 @@ const userDetailsSlice = createSlice({
       }
     },
 
-    // Clear user details on logout
     resetUserDetails: state => {
       state.userDetails = null;
     },

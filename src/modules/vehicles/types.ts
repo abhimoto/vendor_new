@@ -1,5 +1,4 @@
 export type VehicleForm = {
-  vendorid: string;
   vehicleid: string;
   vehicleDetails: {
     registrationNo: string;

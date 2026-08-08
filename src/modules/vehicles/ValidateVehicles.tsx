@@ -18,16 +18,12 @@ import { VehicleForm } from './types';
 import CustomImagePicker from '@components/imagepicker/ImagePicker';
 import CustomButton from '@components/buttons/CustomButton';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { setVehicleAdded } from '@app/redux/slices/onboardingSlice';
 import { useAppDispatch } from '@app/hooks/hooks';
 import { wp, hp, moderateScale } from '@utils/responsive';
 import { useVehicleverifyMutation } from '@app/redux/mutation/authApi';
-import { useSelector } from 'react-redux';
-import { RootState } from '@app/redux';
-import { vehicleSegments } from '@utils/constants';
 import { setVehicleVerified } from '@app/redux/slices/AuthSlice';
 import { Alert } from 'react-native';
-import { HOME_ROUTES } from '@navigation/routes';
+import SecondaryButton from '@components/buttons/SecondaryButton';
 
 type RouteParams = {
   item: {
@@ -39,7 +35,6 @@ type RouteParams = {
 };
 
 export default function ValidateVehicles() {
-  const vendorid = useSelector((state: RootState) => state.auth.user?.id);
 
   const dispatch = useAppDispatch();
   const route = useRoute();
@@ -50,26 +45,31 @@ export default function ValidateVehicles() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
+
+  console.log(item, 'vehicle data')
+
   const headerTitle = from === 'dashboard'
     ? 'Add / Verified'
     : 'Validate Vehicles'
 
-  const [values, setValues] = useState<VehicleForm>({
-    vehicleid: item?.fullData?.vehicleId || '',
-    vendorid: vendorid || '',
+  const [values, setValues] = useState<any>({
+    vehicleid: item?.VehicleId || '',
+
     vehicleDetails: {
-      registrationNo: item?.number || '',
+      registrationNo: item?.VehicleNo || '',
       bodyType: '',
     },
+
     VehicleTypesDetails: {
-      VehicleWeight: item?.fullData?.vehicleDetails?.vehicle_weight
-        ? Number(item.fullData.vehicleDetails.vehicle_weight)
+      VehicleWeight: item?.LoadingCapacity
+        ? Number(item.LoadingCapacity)
         : 0,
       vehicleType: '',
       height: '',
       width: '',
       length: '',
     },
+
     vehiclePhotos: {
       front_img: '',
       back_img: '',
@@ -94,27 +94,6 @@ export default function ValidateVehicles() {
     }
   }, []);
 
-  const payload = {
-    vendorid: values.vendorid,
-    vehicleid: values.vehicleid,
-    vehicleDetails: {
-      registrationNo: values.vehicleDetails.registrationNo,
-      bodyType: values.vehicleDetails.bodyType,
-    },
-    VehicleTypesDetails: {
-      VehicleWeight: values.VehicleTypesDetails.VehicleWeight,
-      vehicleType: values.VehicleTypesDetails.vehicleType,
-      height: values.VehicleTypesDetails.height,
-      width: values.VehicleTypesDetails.width,
-      length: values.VehicleTypesDetails.length,
-    },
-    vehiclePhotos: {
-      front_img: values.vehiclePhotos.front_img,
-      back_img: values.vehiclePhotos.back_img,
-      right_img: values.vehiclePhotos.right_img,
-      left_img: values.vehiclePhotos.left_img,
-    }
-  };
 
   const getVehicleTypeByWeight = (weight: any) => {
     const w = Number(weight);
@@ -158,21 +137,21 @@ export default function ValidateVehicles() {
         return updated;
       });
     };
-
   const handleVehiclePhotoChange =
-    (key: keyof VehicleForm['vehiclePhotos']) => (value: string) => {
-      setValues(prev => ({
-        ...prev,
-        vehiclePhotos: {
-          ...prev.vehiclePhotos,
-          [key]: value,
-        },
-      }));
-    };
+    (key: keyof VehicleForm['vehiclePhotos']) =>
+      (image: any) => {
+        setValues(prev => ({
+          ...prev,
+          vehiclePhotos: {
+            ...prev.vehiclePhotos,
+            [key]: image,
+          },
+        }));
+      };
+
 
 
   const handleSubmit = async () => {
-
     try {
       const images = [
         values.vehiclePhotos.front_img,
@@ -180,26 +159,110 @@ export default function ValidateVehicles() {
         values.vehiclePhotos.right_img,
         values.vehiclePhotos.left_img,
       ];
+
       const uploadedImages = images.filter(
-        img => img && img.trim() !== '',
+        img => img && img.uri,
       );
-      if (uploadedImages.length < 2) {
+      console.log(values.vehiclePhotos);
+      if (uploadedImages.length < 1) {
         Alert.alert(
           'Validation',
-          'Please upload at least 2 vehicle images',
+          'Please upload at least 1 vehicle image',
         );
-
         return;
       }
+
+
+
       setLoading(true);
       setStatus('idle');
-      console.log(payload)
-      const resp = await vehicleverify(payload);
 
-      if (resp?.data?.status === '00') {
+      const formData = new FormData();
+
+      formData.append(
+        'rc_number',
+        values.vehicleDetails.registrationNo,
+      );
+
+      formData.append(
+        'LoadingCapacity',
+        String(values.VehicleTypesDetails.VehicleWeight),
+      );
+
+      formData.append(
+        'BodyType',
+        values.vehicleDetails.bodyType,
+      );
+
+      formData.append(
+        'DhalaLength',
+        String(values.VehicleTypesDetails.length),
+      );
+
+      formData.append(
+        'DhalaWidth',
+        String(values.VehicleTypesDetails.width),
+      );
+
+      formData.append(
+        'DhalaHeight',
+        String(values.VehicleTypesDetails.height),
+      );
+
+
+      // Images
+
+      const appendImage = (key: string, image: any) => {
+        if (!image?.uri) return;
+
+        formData.append(key, {
+          uri: image.uri,
+          type: image.type || 'image/jpeg',
+          name: image.fileName || `${key}.jpg`,
+        } as any);
+      };
+
+
+      appendImage(
+        'FrontImage',
+        values.vehiclePhotos.front_img,
+      );
+
+      appendImage(
+        'BackImage',
+        values.vehiclePhotos.back_img,
+      );
+
+      appendImage(
+        'LeftImage',
+        values.vehiclePhotos.left_img,
+      );
+
+      appendImage(
+        'RightImage',
+        values.vehiclePhotos.right_img,
+      );
+
+
+      // RTK Query unwrap
+      const resp = await vehicleverify(formData).unwrap();
+
+
+
+
+      console.log(
+        'Vehicle Verify Response:',
+        resp,
+      );
+
+
+      if (resp?.status === '00') {
+
         setStatus('success');
 
         dispatch(setVehicleVerified(true));
+
+
         Alert.alert(
           'Success',
           'Vehicle verified successfully',
@@ -207,43 +270,58 @@ export default function ValidateVehicles() {
             {
               text: 'OK',
               onPress: () => {
+
                 if (from === 'temporary_dashboard') {
+
                   navigation.goBack();
-                } else if (from === 'dashboard') {
+
+                }
+                else if (from === 'dashboard') {
+
                   navigation.getParent()?.reset({
                     index: 0,
-                    routes: [{ name: 'Dashboard' }],
+                    routes: [
+                      {
+                        name: 'Dashboard',
+                      },
+                    ],
                   });
+
                 }
+
               },
-            }
+            },
           ],
         );
 
-      } else {
-        setStatus('error');
-
-        Alert.alert(
-          'Verification Failed',
-          resp?.data?.message || 'Unable to verify vehicle',
-        );
-
-        console.log('Vehicle Verify Error:', resp?.data?.message);
       }
-    } catch (error) {
+
+
+    } catch (error: any) {
+
       setStatus('error');
 
-      Alert.alert(
-        'Error',
-        'Something went wrong. Please try again.',
+
+      console.log(
+        'Vehicle Verify Error:',
+        error,
       );
 
-      console.log('Vehicle Verify Exception:', error);
+
+      Alert.alert(
+        'Verification Failed',
+        error?.data?.message ||
+        error?.message ||
+        'Unable to verify vehicle',
+      );
+
+
     } finally {
+
       setLoading(false);
+
     }
   };
-
   return (
     <View style={[commonstyles.flex1, styles.validateconatiner]}>
       <AppHeader title={headerTitle} />
@@ -255,6 +333,15 @@ export default function ValidateVehicles() {
             {/* Row 1 */}
             <View style={styles.row}>
               <View style={styles.fieldBox}>
+                <LocalInput
+                  label="Vehicle No"
+                  value={values?.vehicleDetails.registrationNo}
+                  editable={false}
+                  style={{
+                    backgroundColor: '#F5F5F5',
+                    color: '#666',
+                  }}
+                />
                 <Text style={styles.text}>Vehicle No:{values?.vehicleDetails.registrationNo}</Text>
               </View>
 
@@ -305,10 +392,10 @@ export default function ValidateVehicles() {
                   onChangeText={handleVehicleTypeChange('length')}
                   keyboardType="number-pad"
                   placeholder="Length"
-                  // labelStyle={{
-                  //   fontSize: moderateScale(13),
-                  //   fontWeight: '600',
-                  // }}
+                // labelStyle={{
+                //   fontSize: moderateScale(13),
+                //   fontWeight: '600',
+                // }}
                 />
               </View>
 
@@ -319,10 +406,10 @@ export default function ValidateVehicles() {
                   onChangeText={handleVehicleTypeChange('width')}
                   keyboardType="number-pad"
                   placeholder="Width"
-                  // labelStyle={{
-                  //   fontSize: moderateScale(13),
-                  //   fontWeight: '600',
-                  // }}
+                // labelStyle={{
+                //   fontSize: moderateScale(13),
+                //   fontWeight: '600',
+                // }}
                 />
               </View>
 
@@ -333,10 +420,10 @@ export default function ValidateVehicles() {
                   onChangeText={handleVehicleTypeChange('height')}
                   keyboardType="number-pad"
                   placeholder="Height"
-                  // labelStyle={{
-                  //   fontSize: moderateScale(13),
-                  //   fontWeight: '600',
-                  // }}
+                // labelStyle={{
+                //   fontSize: moderateScale(13),
+                //   fontWeight: '600',
+                // }}
                 />
               </View>
             </View>
@@ -347,7 +434,10 @@ export default function ValidateVehicles() {
             <View style={styles.column}>
               <CustomImagePicker
                 label="Front Image"
-                onImageSelected={handleVehiclePhotoChange('front_img')}
+                returnType="uri"
+                onImageSelected={image =>
+                  handleVehiclePhotoChange('front_img')(image)
+                }
                 containerStyle={{
                   height: hp(5),
                   marginBottom: moderateScale(8),
@@ -356,7 +446,10 @@ export default function ValidateVehicles() {
 
               <CustomImagePicker
                 label="Back Image"
-                onImageSelected={handleVehiclePhotoChange('back_img')}
+                returnType="uri"
+                onImageSelected={image =>
+                  handleVehiclePhotoChange('back_img')(image)
+                }
                 containerStyle={{
                   height: hp(5),
                   marginBottom: moderateScale(8),
@@ -365,7 +458,10 @@ export default function ValidateVehicles() {
 
               <CustomImagePicker
                 label="Right Image"
-                onImageSelected={handleVehiclePhotoChange('right_img')}
+                returnType="uri"
+                onImageSelected={image =>
+                  handleVehiclePhotoChange('right_img')(image)
+                }
                 containerStyle={{
                   height: hp(5),
                   marginBottom: moderateScale(8),
@@ -374,33 +470,37 @@ export default function ValidateVehicles() {
 
               <CustomImagePicker
                 label="Left Image"
-                onImageSelected={handleVehiclePhotoChange('left_img')}
-
+                returnType="uri"
+                onImageSelected={image =>
+                  handleVehiclePhotoChange('left_img')(image)
+                }
                 containerStyle={{
                   height: hp(5),
                   marginBottom: moderateScale(8),
                 }}
               />
+
             </View>
 
             {/* Validate Button */}
-            <CustomButton
-              title={
-                loading
-                  ? 'Validating...'
-                  : status === 'success'
-                    ? 'Verified'
-                    : 'Validate'
-              }
-              textStyle={styles.buttontext}
-              onPress={handleSubmit}
-              style={[
-                styles.button,
-                status === 'success' && { backgroundColor: 'green' },
-              ]}
-              disabled={loading || status === 'success'}
-            />
+
+
           </CustomCard>
+          <SecondaryButton title={
+            loading
+              ? 'Validating...'
+              : status === 'success'
+                ? 'Verified'
+                : 'Validate'
+          }
+            onPress={handleSubmit}
+            textStyle={styles.buttontext}
+
+            style={[
+              status === 'success' && { backgroundColor: 'green' },
+            ]}
+            disabled={loading || status === 'success'}
+          />
         </View>
       </ScrollView>
     </View>

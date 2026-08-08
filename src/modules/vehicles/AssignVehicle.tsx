@@ -6,23 +6,22 @@ import { colors } from '@utils/colors';
 import spacing from '@utils/spacing';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import SearchableDropdown, { DropdownItem } from '@components/dropdown/SearchableDropdown';
+import  { DropdownItem } from '@components/dropdown/SearchableDropdown';
 import {
-  useGetAvailableDriversQuery,
-  useGetAvailableVehiclessQuery,
-  useGetVehicleAssignedQuery
+  useGetassigneddetailsQuery,
+  useGetunAssignedDriversQuery,
+  useGetunAssignedVehiclesQuery
 } from '@app/redux/query/queryApi';
 import {
-  useDivervehicleassignMutation,
-  useUpdateassignvehicleMutation,
-  useDeleteassignvehicleMutation
+  useAssignVehicleMutation,
+  useDessignVehicleMutation
+
 } from '@app/redux/mutation/authApi';
 import { useSelector } from 'react-redux';
 import { RootState } from '@app/redux';
 import SearchInput from '@components/custumcomponents/SearchInput';
-import { SOCKET_EVENTS } from './../../sockets/sockets/index';
-import socket from './../../sockets/sockets/socket.instance';
 import { Dropdown } from 'react-native-element-dropdown';
+
 
 type Vehicle = {
   id: string;
@@ -37,22 +36,21 @@ type Vehicle = {
 };
 
 export default function AssignVehicle() {
-  const vendor = useSelector((state: RootState) => state.auth.user?.id);
   const [searchVehicle, setSearchVehicle] = useState<DropdownItem | null>(null);
   const [searchDriver, setSearchDriver] = useState<DropdownItem | null>(null);
   const [selectedTab, setSelectedTab] = useState<'assign' | 'deassign'>('assign');
   const [searchText, setSearchText] = useState('');
   const [vehicleFocus, setVehicleFocus] = useState(false);
-const [driverFocus, setDriverFocus] = useState(false);
+  const [driverFocus, setDriverFocus] = useState(false);
 
   // Refs for dropdowns to clear input values
   const vehicleDropdownRef = useRef<any>(null);
   const driverDropdownRef = useRef<any>(null);
 
   // Mutations
-  const [assignVehicle, { isLoading: isAssigning }] = useDivervehicleassignMutation();
-  const [updateAssignVehicle, { isLoading: isUpdating }] = useUpdateassignvehicleMutation();
-  const [deleteAssignVehicle, { isLoading: isDeleting }] = useDeleteassignvehicleMutation();
+  const [assignVehicle, { isLoading: isAssigning }] = useAssignVehicleMutation();
+  const [deassign, { isLoading: isdeassigning }] = useDessignVehicleMutation()
+
 
   // Queries
   const {
@@ -60,79 +58,126 @@ const [driverFocus, setDriverFocus] = useState(false);
     isLoading: driversLoading,
     error: driversError,
     refetch: refetchDrivers
-  } = useGetAvailableDriversQuery(
-    { vendorId: vendor || '' },
-    { skip: !vendor, pollingInterval: 30000 }
-  );
+  } = useGetunAssignedDriversQuery(undefined, {
+    pollingInterval: 30000,
+  });
 
   const {
     data: vehiclesData,
     isLoading: vehiclesLoading,
     error: vehiclesError,
     refetch: refetchVehicles
-  } = useGetAvailableVehiclessQuery(
-    { vendorId: vendor || '' },
-    { skip: !vendor, pollingInterval: 30000 }
-  );
+  } = useGetunAssignedVehiclesQuery(undefined, {
+    pollingInterval: 30000,
+  })
 
   const {
     data: assignedData,
     isLoading: assignedLoading,
+    isFetching: isFetchingAssigned,
     error: assignedError,
     refetch: refetchAssigned,
-    isFetching: isFetchingAssigned
-  } = useGetVehicleAssignedQuery(
-    {
-      VendorID: vendor!,
-      verify_flag: selectedTab === 'assign' ? 'Y' : 'N',
-    },
-    { skip: !vendor }
-  );
+  } = useGetassigneddetailsQuery(undefined, {
+    pollingInterval: 30000,
+  });
+const refreshAll = useCallback(() => {
+  refetchAssigned();
+  refetchDrivers();
+  refetchVehicles();
+}, [refetchAssigned, refetchDrivers, refetchVehicles]);
+  // const drivers = useMemo(() => {
+  //   if (!driversData?.data) return [];
 
-  // Memoized data transformations
-  const drivers = useMemo(() => {
-    if (!driversData?.data) return [];
-    return driversData.data.map((d: any) => ({
+  //   return driversData.data.map((d: any) => ({
+  //     label: `${d.DriverName} (${d.MobileNo})`,
+  //     value: d.DriverProfileId,
+  //     driverName: d.DriverName,
+  //     mobileNo: d.MobileNo,
+  //     driverCode: d.DriverCode,
+  //     isVerified: d.IsVerified,
+  //     isActive: d.IsActive,
+  //   }));
+  // }, [driversData]);
+const drivers = useMemo(
+  () =>
+    driversData?.data?.map((d: any) => ({
       label: `${d.DriverName} (${d.MobileNo})`,
-      value: d.driver_id,
-    }));
-  }, [driversData]);
-console.log(drivers)
-  const vehicles = useMemo(() => {
-    if (!vehiclesData?.data) return [];
-    return vehiclesData.data.map((v: any) => ({
-      label: `${v.VehicleNumber} (${v.VehicleType})`,
-      value: v.vehicleid,
-    }));
-  }, [vehiclesData]);
+      value: d.DriverProfileId,
+    })) ?? [],
+  [driversData]
+);
+  // const vehicles = useMemo(() => {
+  //   if (!vehiclesData?.data) return [];
 
+  //   return vehiclesData.data
+  //     .filter((v: any) => v.IsVerified) // optional: only verified vehicles
+  //     .map((v: any) => ({
+  //       label: `${v.VehicleNo} (${v.BodyType || 'Vehicle'})`,
+  //       value: v.VehicleId,
+  //       vehicleNo: v.VehicleNo,
+  //       loadingCapacity: v.LoadingCapacity,
+  //       vehicleType: v.VehicleType,
+  //       bodyType: v.BodyType,
+  //       isVerified: v.IsVerified,
+  //       isActive: v.IsActive,
+  //     }));
+  // }, [vehiclesData]);
+
+
+
+  const vehicles = useMemo(
+  () =>
+    vehiclesData?.data
+      ?.filter((v: any) => v.IsVerified)
+      .map((v: any) => ({
+        label: `${v.VehicleNo} (${v.BodyType || 'Vehicle'})`,
+        value: v.VehicleId,
+      })) ?? [],
+  [vehiclesData]
+);
   const assignedList = useMemo(() => {
-    if (!assignedData?.data) return [];
+    if (assignedError || !assignedData?.data) return [];
+
     return assignedData.data.map((item: any) => ({
-      id: item.AssignID,
-      tripId: item.AssignID,
-      vehicleNumber: item.VehicleNumber || 'N/A',
+      id: item.AssignmentId,
+      tripId: item.AssignmentId,
+      vehicleNumber: item.VehicleNo || 'N/A',
       driverName: item.DriverName || 'N/A',
-      driverId: item.DriverID,
-      vehicleId: item.VehicleID || item.VehicleNumber,
-      date: item.AssignmentDate ? new Date(item.AssignmentDate).toLocaleDateString() : 'N/A',
-      status: item.IsActive === '1' ? 'Active' : 'Inactive',
-      type: selectedTab === 'assign' ? 'assign' : 'deassign',
+      driverId: item.DriverProfileId,
+      vehicleId: item.VehicleId,
+      date: item.AssignedAt
+        ? new Date(item.AssignedAt).toLocaleDateString()
+        : 'N/A',
+      status: item.IsActive ? 'Active' : 'Inactive',
+      type:
+        item.IsActive
+          ? 'assign'
+          : 'deassign',
     }));
-  }, [assignedData, selectedTab]);
+  }, [assignedData, assignedError]);
 
   const filteredList = useMemo(() => {
     const query = searchText.toLowerCase().trim();
-    if (!query) return assignedList;
 
-    return assignedList.filter(
-      (item: any) =>
-        item.vehicleNumber?.toLowerCase().includes(query) ||
-        item.driverName?.toLowerCase().includes(query)
+    const tabData = assignedList.filter(item =>
+      selectedTab === 'assign'
+        ? item.status === 'Active'
+        : item.status === 'Inactive'
     );
-  }, [searchText, assignedList]);
 
-  // Clear dropdown selections and input values
+    if (!query) return tabData;
+
+    return tabData.filter(item =>
+      item.vehicleNumber
+        ?.toLowerCase()
+        .includes(query) ||
+      item.driverName
+        ?.toLowerCase()
+        .includes(query)
+    );
+  }, [searchText, assignedList, selectedTab]);
+
+
   const clearDropdownSelections = () => {
     setSearchVehicle(null);
     setSearchDriver(null);
@@ -144,53 +189,28 @@ console.log(drivers)
     }
   };
 
-  // Handle Vehicle Assignment
   const handleAssign = async () => {
-    // Validation
     if (!searchVehicle || !searchDriver) {
       Alert.alert('Validation Error', 'Please select both vehicle and driver');
       return;
     }
 
-    if (!vendor) {
-      Alert.alert('Error', 'Vendor information not found');
-      return;
-    }
-
     try {
-      const response = await assignVehicle({
-        VehicleID: searchVehicle.value,
-        DriverID: searchDriver.value,
-        VendorID: vendor,
-      }).unwrap();
+      const payload = {
+        DriverProfileId: searchDriver.value,
+        VehicleId: searchVehicle.value,
+      };
+
+      console.log('Assign Payload:', payload);
+
+      const response = await assignVehicle(payload).unwrap();
 
       if (response?.status === '00') {
-        if (!socket.connected) {
-          console.log('⚠️ Socket not connected, connecting...');
-          socket.connect();
-        }
-        const payload = {
-          VendorID: vendor,
-          DriverID: searchDriver.value,
-          VehicleID: searchVehicle.value,
-          VehicleNo: searchVehicle?.label || '',
-          MobileNo: '', // if available from driver list
-          Driver_LPStatus: 'assigned',
-        };
-        console.log('📤 EMIT vendor:assign_driver =>', payload);
-
-        socket.emit(
-          SOCKET_EVENTS.VENDOR_ASSIGN_DRIVER,
-          payload
-        );
-
         Alert.alert('Success', 'Vehicle assigned successfully');
-        refetchDrivers();
-        refetchVehicles();
-        refetchAssigned();
 
-        // Clear selections and input boxes
-        clearDropdownSelections();
+
+    clearDropdownSelections();
+    refreshAll();
       } else {
         Alert.alert('Assignment Failed', response?.message || 'Something went wrong');
       }
@@ -198,82 +218,97 @@ console.log(drivers)
       console.error('Assign Error:', err);
       Alert.alert(
         'Error',
-        err?.data?.message || err?.message || 'Failed to assign vehicle. Please try again.'
+        err?.data?.message || err?.message || 'Failed to assign vehicle'
       );
     }
   };
 
-  // Handle Vehicle Deassignment
   const handleDeassign = async (item: Vehicle) => {
-    if (!vendor) {
-      Alert.alert('Error', 'Vendor information not found');
-      return;
-    }
-
     try {
-      const response = await deleteAssignVehicle({
-        DriverID: item.driverId,
-        VendorID: vendor,
-        VehicleID: item.vehicleId,
-      }).unwrap();
+      const payload = {
+        DriverProfileId: item.driverId,
+        VehicleId: item.vehicleId,
+      };
+
+      const response = await deassign(payload).unwrap();
 
       if (response?.status === '00') {
-        // Refresh without Promise.all for better performance
+        Alert.alert(
+          'Success',
+          `Vehicle ${item.vehicleNumber} has been deassigned successfully`
+        );
+
+        // Refresh lists
+        refetchAssigned();
         refetchDrivers();
         refetchVehicles();
-        refetchAssigned();
-
-        Alert.alert('Success', `Vehicle ${item.vehicleNumber} has been deassigned successfully`);
       } else {
-        Alert.alert('Deassignment Failed', response?.message || 'Something went wrong');
+        Alert.alert(
+          'Deassignment Failed',
+          response?.message || 'Something went wrong'
+        );
       }
     } catch (err: any) {
       console.error('Deassign Error:', err);
+
       Alert.alert(
         'Error',
-        err?.data?.message || err?.message || 'Failed to deassign vehicle. Please try again.'
+        err?.data?.message ||
+        err?.message ||
+        'Failed to deassign vehicle. Please try again.'
       );
     }
   };
 
-  // Handle Update Assignment
   const handleUpdate = async (item: Vehicle) => {
-    Alert.alert(
-      'Update Assignment',
-      `Update assignment for ${item.vehicleNumber}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Update',
-          onPress: async () => {
-            if (!vendor) {
-              Alert.alert('Error', 'Vendor information not found');
-              return;
-            }
+  Alert.alert(
+    'Update Assignment',
+    `Update assignment for ${item.vehicleNumber}?`,
+    [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Update',
+        onPress: async () => {
+          try {
+            const payload = {
+              DriverProfileId: item.driverId,
+              VehicleId: item.vehicleId,
+            };
 
-            try {
-              const response = await updateAssignVehicle({
-                AssignID: item.id,
-                VendorID: vendor,
-              }).unwrap();
+            console.log('Update Payload:', payload);
 
-              if (response?.status === '00') {
-                Alert.alert('Success', 'Vehicle assignment updated successfully');
-                refetchAssigned();
-              } else {
-                Alert.alert('Update Failed', response?.message || 'Something went wrong');
-              }
-            } catch (err: any) {
-              console.error('Update Error:', err);
-              Alert.alert('Error', err?.data?.message || err?.message || 'Failed to update assignment');
+            const response = await deassign(payload).unwrap();
+
+            if (response?.status === '00') {
+              Alert.alert(
+                'Success',
+                'Vehicle assignment updated successfully'
+              );
+
+             refreshAll()
+            } else {
+              Alert.alert(
+                'Update Failed',
+                response?.message || 'Something went wrong'
+              );
             }
-          },
+          } catch (err: any) {
+            console.error('Update Error:', err);
+
+            Alert.alert(
+              'Error',
+              err?.data?.message ||
+                err?.message ||
+                'Failed to update assignment'
+            );
+          }
         },
-      ]
-    );
-  };
+      },
+    ]
+  );
+};
 
-  // Confirm Deassignment Dialog
+
   const confirmDeassign = (item: Vehicle) => {
     Alert.alert(
       'Confirm Deassignment',
@@ -324,9 +359,9 @@ console.log(drivers)
             onPress={() => confirmDeassign(item)}
             style={styles.deleteButton}
             activeOpacity={0.7}
-            disabled={isDeleting}
+            disabled={isdeassigning}
           >
-            {isDeleting ? (
+            {isdeassigning ? (
               <ActivityIndicator size="small" color="#FF4444" />
             ) : (
               <FontAwesome name="trash-o" size={22} color="#FF4444" />
@@ -348,14 +383,9 @@ console.log(drivers)
         )}
       </View>
     </View>
-  ), [selectedTab, isDeleting, isUpdating]);
-
-  // Key extractor
+  ), [selectedTab]);
   const keyExtractor = useCallback((item: Vehicle) => item.id, []);
-
-  // Handle refresh
   const onRefresh = useCallback(() => {
-    // Remove Promise.all for better performance
     refetchAssigned();
     refetchDrivers();
     refetchVehicles();
@@ -377,21 +407,7 @@ console.log(drivers)
     );
   }
 
-  // Error state
-  if (assignedError) {
-    return (
-      <View style={styles.container}>
-        <AppHeader title="Assign / Deassigned" />
-        <View style={styles.errorContainer}>
-          <MaterialIcons name="error-outline" size={48} color="#FF4444" />
-          <Text style={styles.errorText}>Failed to load data</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={onRefresh}>
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
+
 
   return (
     <View style={styles.container}>
@@ -419,120 +435,116 @@ console.log(drivers)
           </Text>
         </TouchableOpacity>
       </View>
+      {selectedTab === 'assign' && (
+        <View style={styles.searchBox}>
 
-      {/* Assignment Form - Only Show in Assign Tab */}
-    {selectedTab === 'assign' && (
-  <View style={styles.searchBox}>
+          {/* Vehicle Dropdown */}
+          <View style={{ marginBottom: 16 }}>
+            {(vehicleFocus || searchVehicle) && (
+              <Text
+                style={{
+                  position: 'absolute',
+                  top: -10,
+                  left: 12,
+                  backgroundColor: '#fff',
+                  paddingHorizontal: 4,
+                  zIndex: 999,
+                  color: colors.primary,
+                  fontSize: 12,
+                }}>
+                Vehicle Number
+              </Text>
+            )}
 
-    {/* Vehicle Dropdown */}
-    <View style={{ marginBottom: 16 }}>
-      {(vehicleFocus || searchVehicle) && (
-        <Text
-          style={{
-            position: 'absolute',
-            top: -10,
-            left: 12,
-            backgroundColor: '#fff',
-            paddingHorizontal: 4,
-            zIndex: 999,
-            color: colors.primary,
-            fontSize: 12,
-          }}>
-          Vehicle Number
-        </Text>
+            <Dropdown
+              style={{
+                height: 50,
+                borderWidth: 1,
+                borderColor: vehicleFocus ? colors.primary : '#ddd',
+                borderRadius: 8,
+                paddingHorizontal: 12,
+              }}
+              data={vehicles}
+              search
+              labelField="label"
+              valueField="value"
+              placeholder={!vehicleFocus ? 'Select Vehicle' : ''}
+              searchPlaceholder="Search Vehicle..."
+              value={searchVehicle?.value}
+              onFocus={() => setVehicleFocus(true)}
+              onBlur={() => setVehicleFocus(false)}
+              onChange={item => {
+                setSearchVehicle(item);
+                setVehicleFocus(false);
+              }}
+            />
+          </View>
+
+          <View style={{ marginBottom: 16 }}>
+            {(driverFocus || searchDriver) && (
+              <Text
+                style={{
+                  position: 'absolute',
+                  top: -10,
+                  left: 12,
+                  backgroundColor: '#fff',
+                  paddingHorizontal: 4,
+                  zIndex: 999,
+                  color: colors.primary,
+                  fontSize: 12,
+                }}>
+                Driver
+              </Text>
+            )}
+
+            <Dropdown
+              style={{
+                height: 50,
+                borderWidth: 1,
+                borderColor: driverFocus ? colors.primary : '#ddd',
+                borderRadius: 8,
+                paddingHorizontal: 12,
+              }}
+              data={drivers}
+              search
+              labelField="label"
+              valueField="value"
+              placeholder={!driverFocus ? 'Select Driver' : ''}
+              searchPlaceholder="Search Driver..."
+              value={searchDriver?.value}
+              onFocus={() => setDriverFocus(true)}
+              onBlur={() => setDriverFocus(false)}
+              onChange={item => {
+                setSearchDriver(item);
+                setDriverFocus(false);
+              }}
+            />
+          </View>
+
+          {(driversError || vehiclesError) && (
+            <Text style={styles.warningText}>
+              Unable to load some data. Pull to refresh.
+            </Text>
+          )}
+
+          <TouchableOpacity
+            style={[
+              styles.submitBtn,
+              (!searchVehicle || !searchDriver || isAssigning) &&
+              styles.submitBtnDisabled,
+            ]}
+            onPress={handleAssign}
+            disabled={!searchVehicle || !searchDriver || isAssigning}>
+            {isAssigning ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.submitText}>Submit</Text>
+            )}
+          </TouchableOpacity>
+
+        </View>
       )}
 
-      <Dropdown
-        style={{
-          height: 50,
-          borderWidth: 1,
-          borderColor: vehicleFocus ? colors.primary : '#ddd',
-          borderRadius: 8,
-          paddingHorizontal: 12,
-        }}
-        data={vehicles}
-        search
-        labelField="label"
-        valueField="value"
-        placeholder={!vehicleFocus ? 'Select Vehicle' : ''}
-        searchPlaceholder="Search Vehicle..."
-        value={searchVehicle?.value}
-        onFocus={() => setVehicleFocus(true)}
-        onBlur={() => setVehicleFocus(false)}
-        onChange={item => {
-          setSearchVehicle(item);
-          setVehicleFocus(false);
-        }}
-      />
-    </View>
-
-    {/* Driver Dropdown */}
-    <View style={{ marginBottom: 16 }}>
-      {(driverFocus || searchDriver) && (
-        <Text
-          style={{
-            position: 'absolute',
-            top: -10,
-            left: 12,
-            backgroundColor: '#fff',
-            paddingHorizontal: 4,
-            zIndex: 999,
-            color: colors.primary,
-            fontSize: 12,
-          }}>
-          Driver
-        </Text>
-      )}
-
-      <Dropdown
-        style={{
-          height: 50,
-          borderWidth: 1,
-          borderColor: driverFocus ? colors.primary : '#ddd',
-          borderRadius: 8,
-          paddingHorizontal: 12,
-        }}
-        data={drivers}
-        search
-        labelField="label"
-        valueField="value"
-        placeholder={!driverFocus ? 'Select Driver' : ''}
-        searchPlaceholder="Search Driver..."
-        value={searchDriver?.value}
-        onFocus={() => setDriverFocus(true)}
-        onBlur={() => setDriverFocus(false)}
-        onChange={item => {
-          setSearchDriver(item);
-          setDriverFocus(false);
-        }}
-      />
-    </View>
-
-    {(driversError || vehiclesError) && (
-      <Text style={styles.warningText}>
-        Unable to load some data. Pull to refresh.
-      </Text>
-    )}
-
-    <TouchableOpacity
-      style={[
-        styles.submitBtn,
-        (!searchVehicle || !searchDriver || isAssigning) &&
-          styles.submitBtnDisabled,
-      ]}
-      onPress={handleAssign}
-      disabled={!searchVehicle || !searchDriver || isAssigning}>
-      {isAssigning ? (
-        <ActivityIndicator size="small" color="#fff" />
-      ) : (
-        <Text style={styles.submitText}>Submit</Text>
-      )}
-    </TouchableOpacity>
-
-  </View>
-)}
-
-      {/* Search Input */}
       {filteredList.length > 0 && (
         <SearchInput
           placeholder="Search Driver / Vehicle Number"
@@ -540,8 +552,6 @@ console.log(drivers)
           value={searchText}
         />
       )}
-
-      {/* List */}
       <CustomFlatList
         data={filteredList}
         renderItem={renderItem}
@@ -571,7 +581,6 @@ console.log(drivers)
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

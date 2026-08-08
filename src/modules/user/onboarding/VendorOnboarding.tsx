@@ -16,61 +16,45 @@ import VendorForm from './Registeration';
 import LegalDocuments from './LegalDocuments';
 import { colors } from '@utils/colors';
 import { useDispatch, useSelector } from 'react-redux';
-import { setAuthData, setVendorOnboarded } from '@app/redux/slices/AuthSlice';
+import {  setVendorOnboarded, updateUser } from '@app/redux/slices/AuthSlice';
 import { wp, hp, moderateScale } from '@utils/responsive';
 import { useOnboardingMutation } from '@app/redux/mutation/authApi';
 import AppSnackbar from '@components/custumcomponents/AppSnackbar';
-import { RootState } from '@app/redux';
+import { RootState, store } from '@app/redux';
 import { useNavigation } from '@react-navigation/native';
-import { HOME_ROUTES } from '@navigation/routes';
 
 const mapVendorPayload = (values: VendorFormValues) => {
   return {
-    VendorDetails: {
-      companyType: values.companyType,
-      companyName: values.companyName,
-      owner_name: values.ownerName,
-      Building: values.building,
-      Area: values.area,
-      // landMark: '',
-      mobileNo: values.mobileNumber,
-      pincode: values.pincode,
-      district: values.district,
-      Tahsil: values.town,
-      state: values.state,
-      // City: values.town,
-      // vehicle_count: values.legaldocuments.numberofvehicles?.toString(),
-      // employee_count: '1',
-    },
+    vendorName: values.companyName,
+    organizationType: values.companyType,
+    authorizedPerson:
+      values.companyType === 'Self'
+        ? values.companyName
+        : values.ownerName,
 
-    // VendorEmployeeDetails: [
-    //   {
-    //     full_name: '',
-    //     designation: '',
-    //     contact_No: '',
-    //     alternate_No: '',
-    //     emailAddress: '',
-    //     website: '',
-    //     username: '',
-    //     password: '',
-    //   },
-    // ],
+    mobileNo: values.mobileNumber,
+    building: values.building,
+    area: values.area,
+    pincode: values.pincode,
+    state: values.state,
+    district: values.district,
+    town: values.town,
 
-    VehicleDetails: values.legaldocuments.vehicles.map(v => ({
-      vehicle_number: v.registrationNumber,
-      vehicle_weight: v.capacity,
+    gstNo: values.legaldocuments.gstnumber,
+    panNo: values.legaldocuments.pannumber,
+
+    // Use the user-entered company name
+    organizationName: values.companyName,
+
+    vehicles: values.legaldocuments.vehicles.map(vehicle => ({
+      VehicleNo: vehicle.registrationNumber,
+      LoadingCapacity: Number(vehicle.capacity),
     })),
-
-    kycDetails: {
-      gstNo: values.legaldocuments.gstnumber,
-      cinNo: '',
-      panNo: values.legaldocuments.pannumber,
-      aadharNo: '',
-    },
   };
 };
 export default function VendorOnboarding() {
   const navigation = useNavigation<any>();
+  const currentAuth = store.getState().auth;
   const mobile = useSelector((state: RootState) => state.auth.user?.mobile);
   const initialValues: VendorFormValues = {
     companyName: '',
@@ -128,23 +112,18 @@ export default function VendorOnboarding() {
           res?.message || 'Vendor registered successfully',
           'success',
         );
-         dispatch(setVendorOnboarded(true));
-          // navigation.replace(HOME_ROUTES.TEMP_DASHBOARD);
         dispatch(
-          setAuthData({
-            token: '',
-            refreshToken: null,
-            user: {
-              id: res?.userDetails?.vendorid,
-              name: res?.userDetails?.companyName,
-              email: '',
-              mobile: res?.userDetails?.mobileNo,
-            },
-            vendor_onboarded: true, // Set to true after successful onboarding
-            kyc_verified: false,     // Set based on API response
-            vehicle_verified: false,
+          updateUser({
+            id: res.data.UserId,
+            vendorId: res.data.VendorId || '',
+            vendorCode: res.data.VendorCode,
+            mobile: res.data.Mobile,
+            role: res.data.Role,
           }),
         );
+        dispatch(setVendorOnboarded(true));
+        // navigation.replace(HOME_ROUTES.TEMP_DASHBOARD);
+
       } else {
         showSnackbar(res?.message || 'Registration failed', 'error');
       }

@@ -18,8 +18,8 @@ interface Props extends TextInputProps {
   status?: 'idle' | 'loading' | 'success' | 'error';
   customError?: string;
   forceUppercase?: boolean;
-   formatType?: 'aadhaar' | 'none';
-   
+  formatType?: 'aadhaar' | 'none';
+
 }
 
 
@@ -34,15 +34,15 @@ export default function CustomInput({
   const [field, meta, helpers] = useField(name);
   const [isFocused, setIsFocused] = useState(false);
   const formatValue = (value: string) => {
-  if (rest.formatType === 'aadhaar') {
-    return value
-      .replace(/\D/g, '')
-      .replace(/(\d{4})(?=\d)/g, '$1 ')
-      .trim();
-  }
+    if (rest.formatType === 'aadhaar') {
+      return value
+        .replace(/\D/g, '')
+        .replace(/(\d{4})(?=\d)/g, '$1 ')
+        .trim();
+    }
 
-  return value;
-};
+    return value;
+  };
 
   const animatedLabel = useRef(new Animated.Value(field.value ? 1 : 0)).current;
 
@@ -71,7 +71,7 @@ export default function CustomInput({
     }),
     fontSize: animatedLabel.interpolate({
       inputRange: [0, 1],
-      outputRange: [normalizeFont(14), normalizeFont(11)],
+      outputRange: [normalizeFont(14), normalizeFont(12)],
     }),
     fontWeight: 'semibold',
     color: labelColor,
@@ -136,12 +136,12 @@ const styles = StyleSheet.create({
   },
 
   input: {
-    fontSize: 16,
-    height: 20,
+    fontSize: normalizeFont(14),
+    height: moderateScale(20),
     padding: 0,
     margin: 0,
     color: colors.text,
-    fontWeight: '800',
+    fontWeight: '600',
     width: '100%',
   },
 

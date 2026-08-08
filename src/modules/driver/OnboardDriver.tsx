@@ -43,6 +43,7 @@ import {
 // import socket from '@redux/sockets/sockets/socket.instance';
 import { useSelector } from 'react-redux';
 import { RootState } from '@app/redux';
+import { useLazyVerifyDriverQrQuery } from '@app/redux/query/queryApi';
 
 interface DriverData {
   driver_id: string;
@@ -67,6 +68,7 @@ export default function OnboardDriver() {
 
   const [getDriverDataByScan, { isLoading }] =
     useGetdriverdatabyscanMutation();
+    const [verifyDriverQr] = useLazyVerifyDriverQrQuery();
 
   const inputRef = useRef<TextInput>(null);
 
@@ -197,91 +199,49 @@ export default function OnboardDriver() {
 
   /* ---------------- HANDLE QR SCAN ---------------- */
 
-  const handleScan = useCallback(
-    async (data: string) => {
-      if (scanningRef.current) return;
+const handleScan = useCallback(
+  async (data: string) => {
+    if (scanningRef.current) return;
 
-      scanningRef.current = true;
+    scanningRef.current = true;
 
-      try {
-        console.log('RAW QR DATA =>', data);
+    try {
+      console.log('Scanned URL:', data);
 
-        let onboardId = data;
+      // Automatically call the scanned URL
+      const response = await verifyDriverQr(data).unwrap();
 
-        try {
-          const parsedData = JSON.parse(data);
+      console.log(response, 'driverdata');
 
-          onboardId =
-            parsedData?.onboard_id ||
-            parsedData?.user_id ||
-            parsedData?.driver_id ||
-            data;
-        } catch {
-          onboardId = data;
-        }
+      if (response?.status === '00' && response?.data) {
+        const driver = response.data;
 
-        const cleanData = onboardId
-          ?.replace(/[\r\n\t]/g, '')
-          ?.trim();
+        setShowScanner(false);
 
-        const response =
-          await getDriverDataByScan({
-            driver_id: cleanData,
-          }).unwrap();
-
-
-        if (
-          String(response?.status) === '00'
-        ) {
-          const driverData =
-            response?.data?.[0];
-
-          if (!driverData?.driver_id) {
-            Alert.alert(
-              'Driver Not Found',
-              'No driver found for this QR code',
-            );
-
-            return;
-          }
-      
-          setShowScanner(false);
-
-          navigation.navigate(
-            HOME_ROUTES.DRIVERINDEX,
-            {
-              scannedData: JSON.stringify({
-                driver_id:
-                  driverData.driver_id,
-
-                driver_name:
-                  driverData.driver_name,
-
-                timestamp:
-                  new Date().toISOString(),
-              }),
-            },
-          );
-        } else {
-          Alert.alert(
-            'Error',
-            response?.message ||
-            'Failed to fetch driver',
-          );
-        }
-      } catch (error: any) {
-
+        navigation.navigate(HOME_ROUTES.DRIVERINDEX, {
+          driverData: driver, // pass complete driver object
+        });
+      } else {
         Alert.alert(
-          'Error',
+          'Driver Not Found',
+          response?.message || 'Invalid QR code',
+        );
+      }
+    } catch (error: any) {
+      console.log('QR Error:', error);
+
+      Alert.alert(
+        'Error',
+        error?.data?.message ||
           error?.message ||
           'QR verification failed',
-        );
-      } finally {
-        scanningRef.current = false;
-      }
-    },
-    [getDriverDataByScan, navigation],
-  );
+      );
+    } finally {
+      scanningRef.current = false;
+    }
+  },
+  [verifyDriverQr, navigation],
+);
 
   /* ---------------- CLOSE MODAL ---------------- */
 

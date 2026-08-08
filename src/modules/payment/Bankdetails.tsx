@@ -23,40 +23,38 @@ import { setKycVerified } from '@app/redux/slices/AuthSlice';
 
 export default function Bankdetails() {
   const [errors, setErrors] = useState<any>({});
-  const { user } = useAppSelector(state => state.auth);
-  const vendorid = user?.id;
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const [bankdetails] = useBankdetailsMutation();
-
   const [values, setValues] = useState({
-    vendorid: vendorid,
-    bank_ac_holder_name: '',
-    account_type: '',
-    bank_ac_number: '',
-    bank_ac_number_verify: '',
-    ifsc_code: '',
-    bank_name: '',
-    // branch_name: '',
-    cheque_img: '',
+    AccountHolderName: '',
+    BankName: '',
+    BranchName: '',
+    AccountNumber: '',
+    ConfirmAccountNumber: '',
+    IFSCCode: '',
+    AccountType: '',
+    PassbookPhoto: '',
   });
   const validate = () => {
     let newErrors: any = {};
 
-    if (!values.bank_ac_number) {
-      newErrors.bank_ac_number = 'Account number is required';
+    if (!values.AccountNumber) {
+      newErrors.AccountNumber = 'Account number is required';
     }
 
-    if (!values.bank_ac_number_verify) {
-      newErrors.bank_ac_number_verify = 'Please confirm account number';
+    if (!values.ConfirmAccountNumber) {
+      newErrors.ConfirmAccountNumber =
+        'Please confirm account number';
     }
 
     if (
-      values.bank_ac_number &&
-      values.bank_ac_number_verify &&
-      values.bank_ac_number !== values.bank_ac_number_verify
+      values.AccountNumber &&
+      values.ConfirmAccountNumber &&
+      values.AccountNumber !== values.ConfirmAccountNumber
     ) {
-      newErrors.bank_ac_number_verify = 'Account numbers do not match';
+      newErrors.ConfirmAccountNumber =
+        'Account numbers do not match';
     }
 
     return newErrors;
@@ -73,57 +71,66 @@ export default function Bankdetails() {
       [key]: '',
     }));
   };
+const handleSubmit = async () => {
+  const validationErrors = validate();
+  setErrors(validationErrors);
 
-  const handleSubmit = async () => {
-    const validationErrors = validate();
-    setErrors(validationErrors);
+  if (Object.keys(validationErrors).length > 0) {
+    return;
+  }
 
-    if (Object.keys(validationErrors).length > 0) {
-      return;
+  try {
+    const payload = {
+      AccountHolderName: values.AccountHolderName,
+      BankName: values.BankName,
+      BranchName: values.BranchName,
+      AccountNumber: values.AccountNumber,
+      ConfirmAccountNumber: values.ConfirmAccountNumber,
+      IFSCCode: values.IFSCCode,
+      AccountType: values.AccountType,
+      PassbookPhoto: values.PassbookPhoto,
+    };
+
+    const resp = await bankdetails(payload).unwrap();
+
+    if (resp.status === '00') {
+      dispatch(setKycVerified(true));
+
+      Alert.alert('Success', 'KYC Updated Successfully');
+
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'HomeController' }],
+      });
+    } else {
+      Alert.alert('Error', resp.message || 'Error Occurred on Server');
     }
-    try {
-      const resp = await bankdetails(values).unwrap();
-
-
-      if (resp.status === '00') {
-        dispatch(setKycVerified(true));
-
-        Alert.alert('Success', 'KYC Updated Successfully');
-
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'HomeController' }],
-        });
-      } else {
-        Alert.alert('Error', 'Error Occurred on Server');
-      }
-    } catch (error: any) {
-      Alert.alert(
-        'Error',
-        error?.data?.message ||
+  } catch (error: any) {
+    Alert.alert(
+      'Error',
+      error?.data?.message ||
         error?.message ||
         'Something went wrong',
-      );
-    }
-  };
-
+    );
+  }
+};
   return (
     <View style={commonstyles.container}>
       <AppHeader title="Banks detail" />
-      <FormContainer disableTopSafeArea containerStyle={{padding:20}}>
-      
-          <LocalInput
-            label="IFSC Code"
-            value={values.ifsc_code}
-            onChangeText={handleChange('ifsc_code')}
-          />
-             <LocalInput
-            label="Bank Name & Branch"
-            value={values.bank_name}
-            onChangeText={handleChange('bank_name')}
-          />
-          {/* Account Holder */}
-          {/* <CustomDropdown
+      <FormContainer disableTopSafeArea containerStyle={{ padding: 20 }}>
+
+        <LocalInput
+          label="IFSC Code"
+          value={values.IFSCCode}
+          onChangeText={handleChange('IFSCCode')}
+        />
+        <LocalInput
+          label="Bank Name"
+          value={values.BankName}
+          onChangeText={handleChange('BankName')}
+        />
+        {/* Account Holder */}
+        {/* <CustomDropdown
             data={bankOptions}
             placeholder="Select Bank Options"
             value={values.bank_name}
@@ -133,41 +140,41 @@ export default function Bankdetails() {
             }}
           /> */}
 
-          {/* Account Number */}
-          <LocalInput
-            label="Account Number"
-            value={values.bank_ac_number}
-            onChangeText={handleChange('bank_ac_number')}
-            keyboardType="number-pad"
-            error={!!errors.bank_ac_number}
-            errorMessage={errors.bank_ac_number}
-          />
+        {/* Account Number */}
+        <LocalInput
+          label="Account Number"
+          value={values.AccountNumber}
+          onChangeText={handleChange('AccountNumber')}
+          keyboardType="number-pad"
+          error={!!errors.AccountNumber}
+          errorMessage={errors.AccountNumber}
+        />
 
-          {/* Confirm Account Number */}
-          <LocalInput
-            label="Confirm Account Number"
-            value={values.bank_ac_number_verify}
-            onChangeText={handleChange('bank_ac_number_verify')}
-            keyboardType="number-pad"
-            error={!!errors.bank_ac_number_verify}
-            errorMessage={errors.bank_ac_number_verify}
-          />
-          <LocalInput
-            label="Account Holder Name"
-            value={values.bank_ac_holder_name}
-            onChangeText={handleChange('bank_ac_holder_name')}
-          />
-          {/* Account Type */}
-          {/* <Text style={styles.label}>Account Type</Text> */}
-          <CustomDropdown
-            label="Account Type"
-            data={Accounttypes}
-            value={values.account_type}
-            onSelect={item => {
-              handleChange('account_type')(item.value);
-            }}
-          />
-          {/* 
+        {/* Confirm Account Number */}
+        <LocalInput
+          label="Confirm Account Number"
+          value={values.ConfirmAccountNumber}
+          onChangeText={handleChange('ConfirmAccountNumber')}
+          keyboardType="number-pad"
+          error={!!errors.ConfirmAccountNumber}
+          errorMessage={errors.ConfirmAccountNumber}
+        />
+        <LocalInput
+          label="Account Holder Name"
+          value={values.AccountHolderName}
+          onChangeText={handleChange('AccountHolderName')}
+        />
+        {/* Account Type */}
+        {/* <Text style={styles.label}>Account Type</Text> */}
+        <CustomDropdown
+          label="Account Type"
+          data={Accounttypes}
+          value={values.AccountType}
+          onSelect={item => {
+            handleChange('AccountType')(item.value);
+          }}
+        />
+        {/* 
           <View style={styles.accountTypeRow}>
             <TouchableOpacity
               style={[
@@ -206,46 +213,47 @@ export default function Bankdetails() {
 
 
 
-          {/* IFSC */}
+        {/* IFSC */}
 
 
-          {/* Bank Name */}
-          {/* <LocalInput
+        {/* Bank Name */}
+        {/* <LocalInput
             label="Bank Name"
             value={values.bank_name}
             onChangeText={handleChange('bank_name')}
           /> */}
 
-          {/* Branch */}
-          {/* <LocalInput
+        {/* Branch */}
+        {/* <LocalInput
             label="Branch"
             value={values.branch_name}
             onChangeText={handleChange('branch_name')}
           /> */}
 
-          {/* Upload Image */}
-          <View style={styles.uploadBox}>
-            <CustomImagePicker
-              label=" Add Your Passbook / cheque photo"
-              containerStyle={{ height: wp(15) }}
-              onImageSelected={img =>
-                handleChange('cheque_img')(img?.uri || img)
-              }
-            />
-            {values.cheque_img ? (
-              <Text style={{ marginTop: 8, fontSize: 12 }}>
-                Image Selected ✅
-              </Text>
-            ) : null}
-          </View>
-
-          {/* Save Button */}
-          <CustomButton
-            title="Save"
-            onPress={handleSubmit}
-            style={styles.saveBtn}
+        {/* Upload Image */}
+        <View style={styles.uploadBox}>
+          <CustomImagePicker
+            label="Add Your Passbook / Cheque Photo"
+            containerStyle={{ height: wp(15) }}
+            onImageSelected={img =>
+              handleChange('PassbookPhoto')(img?.uri || img)
+            }
           />
-      
+
+          {values.PassbookPhoto ? (
+            <Text style={{ marginTop: 8, fontSize: 12 }}>
+              Image Selected ✅
+            </Text>
+          ) : null}
+        </View>
+
+        {/* Save Button */}
+        <CustomButton
+          title="Save"
+          onPress={handleSubmit}
+          style={styles.saveBtn}
+        />
+
       </FormContainer>
     </View>
   );
@@ -308,9 +316,9 @@ const styles = StyleSheet.create({
   saveBtn: {
     marginTop: spacing.xl,
     color: colors.primary,
-    justifyContent:'center',
-    alignSelf:'center',
-    height:56,
-    width:213
+    justifyContent: 'center',
+    alignSelf: 'center',
+    height: 56,
+    width: 213
   },
 });
