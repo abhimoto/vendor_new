@@ -35,14 +35,8 @@ export default function DashboardQuickActions({
         activeOpacity={0.8}
         style={styles.item}
         onPress={onFindLoad}>
-        <MaterialCommunityIcons
-          name="package-variant-closed"
-          size={moderateScale(34)}
-          color={colors.primary}
-        />
-
-        <Text style={styles.title}>
-          Find Load
+       <Text style={styles.title}>
+          Vehicle No
         </Text>
       </TouchableOpacity>
 
@@ -54,11 +48,17 @@ export default function DashboardQuickActions({
         activeOpacity={0.8}
         style={styles.item}
         onPress={onCommunication}>
-
+   <MaterialCommunityIcons
+          name="package-variant-closed"
+          size={moderateScale(34)}
+          color={colors.primary}
+        />
 
         <Text style={styles.title}>
-          Communication
+          Find Load
         </Text>
+
+      
         {/* <Image
           source={require('@assets/icons/communication.png')}
           style={styles.logo}

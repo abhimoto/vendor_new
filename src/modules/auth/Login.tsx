@@ -69,7 +69,7 @@ export default function Login() {
 
   // ✅ Send OTP
   const handleSendOtp = async () => {
-  
+
     if (!mobile || mobile.length !== 10) {
       showSnackbar(
         'Enter valid mobile number',
@@ -105,7 +105,7 @@ export default function Login() {
         );
       }
     } catch (err: any) {
-      console.log({err})
+      console.log({ err })
       showSnackbar(
         err?.data?.message ||
         'Failed to send OTP',
@@ -133,11 +133,14 @@ export default function Login() {
       inputRefs.current[index - 1]?.focus();
     }
   };
+
+
+
   const handleVerify = async () => {
-    const enteredOtp = otp.join('');
+    const enteredOtp = otp.join("");
 
     if (enteredOtp.length !== 4) {
-      showSnackbar('Enter valid OTP', 'error');
+      showSnackbar("Enter valid OTP", "error");
       return;
     }
 
@@ -145,12 +148,13 @@ export default function Login() {
       const res = await verifyOtp({
         mobile,
         otp: enteredOtp,
-        Role: 'VENDOR',
+        Role: "VENDOR",
       }).unwrap();
 
-      console.log('Verify Response:', res);
+      console.log("Verify Response:", res);
 
-      if (res.status === '00' || res.status === '01') {
+      // ---------------- Registration Required ----------------
+      if (res.status === "01") {
         dispatch(
           setAuthData({
             token: res.data.accessToken,
@@ -166,29 +170,50 @@ export default function Login() {
           }),
         );
 
-        showSnackbar(res.message, 'success');
+        showSnackbar(res.message, "success");
+        navigation.replace(AUTH_ROUTES.VENDORONBOARDING);
+        return;
+      }
 
-        if (res.status === '01') {
-          // New vendor
+      // ---------------- Login Success ----------------
+      if (res.status === "00") {
+        dispatch(
+          setAuthData({
+            token: res.data.accessToken,
+            refreshToken: res.data.refreshToken,
+            user: {
+              id: res.data.userId,
+              mobile: res.data.mobile,
+              role: res.data.role,
+            },
+            vendor_onboarded: res.data.isVendorProfileCreated ?? false,
+            vehicle_verified: res.data.isVehicleVerified ?? false,
+            kyc_verified: res.data.isKycVerified ?? false,
+          }),
+        );
+
+        showSnackbar(res.message, "success");
+
+        if (!res.data.isVendorProfileCreated) {
           navigation.replace(AUTH_ROUTES.VENDORONBOARDING);
         } else {
-          // Existing vendor
           navigation.replace(HOME_ROUTES.DASHBOARD);
         }
 
         return;
       }
 
-      showSnackbar(res.message || 'OTP verification failed', 'error');
+      showSnackbar(res.message || "OTP verification failed", "error");
     } catch (err: any) {
-      console.log('Verify Error:', err);
+      console.log("Verify Error:", err);
 
       showSnackbar(
-        err?.data?.message || 'Invalid OTP',
-        'error',
+        err?.data?.message || "Invalid OTP",
+        "error"
       );
     }
   };
+
 
   return (
     <View

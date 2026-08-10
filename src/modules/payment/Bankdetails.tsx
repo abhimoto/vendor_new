@@ -20,12 +20,14 @@ import { useBankdetailsMutation } from '@app/redux/mutation/authApi';
 import CustomDropdown from '@components/dropdown/CustomDropdown';
 import { Accounttypes, bankOptions } from '@utils/constants';
 import { setKycVerified } from '@app/redux/slices/AuthSlice';
+import { useUploadDocumentMutation } from '@app/redux/mutation/authApi';
 
 export default function Bankdetails() {
   const [errors, setErrors] = useState<any>({});
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const [bankdetails] = useBankdetailsMutation();
+  const [uploadDocument] = useUploadDocumentMutation();
   const [values, setValues] = useState({
     AccountHolderName: '',
     BankName: '',
@@ -34,7 +36,7 @@ export default function Bankdetails() {
     ConfirmAccountNumber: '',
     IFSCCode: '',
     AccountType: '',
-    PassbookPhoto: '',
+    PassbookPhoto: null as any,
   });
   const validate = () => {
     let newErrors: any = {};
@@ -71,49 +73,71 @@ export default function Bankdetails() {
       [key]: '',
     }));
   };
-const handleSubmit = async () => {
-  const validationErrors = validate();
-  setErrors(validationErrors);
+  const handleSubmit = async () => {
+    const validationErrors = validate();
+    setErrors(validationErrors);
 
-  if (Object.keys(validationErrors).length > 0) {
-    return;
-  }
-
-  try {
-    const payload = {
-      AccountHolderName: values.AccountHolderName,
-      BankName: values.BankName,
-      BranchName: values.BranchName,
-      AccountNumber: values.AccountNumber,
-      ConfirmAccountNumber: values.ConfirmAccountNumber,
-      IFSCCode: values.IFSCCode,
-      AccountType: values.AccountType,
-      PassbookPhoto: values.PassbookPhoto,
-    };
-
-    const resp = await bankdetails(payload).unwrap();
-
-    if (resp.status === '00') {
-      dispatch(setKycVerified(true));
-
-      Alert.alert('Success', 'KYC Updated Successfully');
-
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'HomeController' }],
-      });
-    } else {
-      Alert.alert('Error', resp.message || 'Error Occurred on Server');
+    if (Object.keys(validationErrors).length > 0) {
+      return;
     }
-  } catch (error: any) {
-    Alert.alert(
-      'Error',
-      error?.data?.message ||
+
+    try {
+      let uploadedPath = '';
+
+      if (values.PassbookPhoto?.uri) {
+        const uploadResp = await uploadDocument({
+          documentType: 'PROFILE',
+          file: values.PassbookPhoto,
+        }).unwrap();
+
+        if (uploadResp.status !== '00') {
+          Alert.alert(
+            'Error',
+            uploadResp.message || 'Document upload failed'
+          );
+          return;
+        }
+
+        uploadedPath = uploadResp.data.fileUrl; // use the uploaded file URL
+      }
+
+      const payload = {
+        AccountHolderName: values.AccountHolderName,
+        BankName: values.BankName,
+        BranchName: values.BranchName,
+        AccountNumber: values.AccountNumber,
+        ConfirmAccountNumber: values.ConfirmAccountNumber,
+        IFSCCode: values.IFSCCode,
+        AccountType: values.AccountType,
+        PassbookPhoto: uploadedPath,
+      };
+
+      const resp = await bankdetails(payload).unwrap();
+
+      if (resp.status === '00') {
+        dispatch(setKycVerified(true));
+
+        Alert.alert('Success', 'KYC Updated Successfully');
+
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'HomeController' }],
+        });
+      } else {
+        Alert.alert(
+          'Error',
+          resp.message || 'Error Occurred on Server'
+        );
+      }
+    } catch (error: any) {
+      Alert.alert(
+        'Error',
+        error?.data?.message ||
         error?.message ||
-        'Something went wrong',
-    );
-  }
-};
+        'Something went wrong'
+      );
+    }
+  };
   return (
     <View style={commonstyles.container}>
       <AppHeader title="Banks detail" />
@@ -236,7 +260,10 @@ const handleSubmit = async () => {
             label="Add Your Passbook / Cheque Photo"
             containerStyle={{ height: wp(15) }}
             onImageSelected={img =>
-              handleChange('PassbookPhoto')(img?.uri || img)
+              setValues(prev => ({
+                ...prev,
+                PassbookPhoto: img,
+              }))
             }
           />
 

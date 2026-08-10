@@ -45,9 +45,6 @@ export default function ValidateVehicles() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
-
-  console.log(item, 'vehicle data')
-
   const headerTitle = from === 'dashboard'
     ? 'Add / Verified'
     : 'Validate Vehicles'
@@ -342,7 +339,7 @@ export default function ValidateVehicles() {
                     color: '#666',
                   }}
                 />
-                <Text style={styles.text}>Vehicle No:{values?.vehicleDetails.registrationNo}</Text>
+             
               </View>
 
               <View style={styles.fieldBox}>
@@ -428,59 +425,70 @@ export default function ValidateVehicles() {
               </View>
             </View>
 
-            {/* Image Section */}
-            <Text style={styles.imageTitle}>Add Real Image Of Vehicle</Text>
 
-            <View style={styles.column}>
-              <CustomImagePicker
-                label="Front Image"
-                returnType="uri"
-                onImageSelected={image =>
-                  handleVehiclePhotoChange('front_img')(image)
-                }
-                containerStyle={{
-                  height: hp(5),
-                  marginBottom: moderateScale(8),
-                }}
-              />
+           {/* ================= IMAGE SECTION ================= */}
 
-              <CustomImagePicker
-                label="Back Image"
-                returnType="uri"
-                onImageSelected={image =>
-                  handleVehiclePhotoChange('back_img')(image)
-                }
-                containerStyle={{
-                  height: hp(5),
-                  marginBottom: moderateScale(8),
-                }}
-              />
+<Text style={styles.imageTitle}>
+  Add Real Image Of Vehicle
+</Text>
 
-              <CustomImagePicker
-                label="Right Image"
-                returnType="uri"
-                onImageSelected={image =>
-                  handleVehiclePhotoChange('right_img')(image)
-                }
-                containerStyle={{
-                  height: hp(5),
-                  marginBottom: moderateScale(8),
-                }}
-              />
+<View style={styles.imageGrid}>
 
-              <CustomImagePicker
-                label="Left Image"
-                returnType="uri"
-                onImageSelected={image =>
-                  handleVehiclePhotoChange('left_img')(image)
-                }
-                containerStyle={{
-                  height: hp(5),
-                  marginBottom: moderateScale(8),
-                }}
-              />
+  {/* ROW 1 */}
+  <View style={styles.imageRow}>
 
-            </View>
+    <View style={styles.imageItem}>
+      <CustomImagePicker
+        label="Front Image"
+        returnType="uri"
+        onImageSelected={image =>
+          handleVehiclePhotoChange('front_img')(image)
+        }
+        containerStyle={styles.imagePicker}
+      />
+    </View>
+
+    <View style={styles.imageItem}>
+      <CustomImagePicker
+        label="Back Image"
+        returnType="uri"
+        onImageSelected={image =>
+          handleVehiclePhotoChange('back_img')(image)
+        }
+        containerStyle={styles.imagePicker}
+      />
+    </View>
+
+  </View>
+
+  {/* ROW 2 */}
+  <View style={styles.imageRow}>
+
+    <View style={styles.imageItem}>
+      <CustomImagePicker
+        label="Right Image"
+        returnType="uri"
+        onImageSelected={image =>
+          handleVehiclePhotoChange('right_img')(image)
+        }
+        containerStyle={styles.imagePicker}
+      />
+    </View>
+
+    <View style={styles.imageItem}>
+      <CustomImagePicker
+        label="Left Image"
+        returnType="uri"
+        onImageSelected={image =>
+          handleVehiclePhotoChange('left_img')(image)
+        }
+        containerStyle={styles.imagePicker}
+      />
+    </View>
+
+  </View>
+
+</View>
 
             {/* Validate Button */}
 
@@ -544,14 +552,38 @@ const styles = StyleSheet.create({
 
   smallField: {
     flex: 1,
-    marginHorizontal: moderateScale(2), // Add spacing between fields
+    marginHorizontal: moderateScale(2), 
   },
 
-  imageTitle: {
-    color: colors.primary,
-    fontWeight: '600',
-    marginBottom: spacing.sm,
-  },
+imageTitle: {
+  color: colors.primary,
+  fontWeight: '600',
+  fontSize: moderateScale(13),
+  marginBottom: moderateScale(5),
+},
+imageGrid: {
+  width: '100%',
+},
+imageRow: {
+  width: '100%',
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+
+  marginBottom: moderateScale(5),
+
+  gap: moderateScale(8),
+},
+imageItem: {
+  flex: 1,
+  minWidth: 0,
+},
+
+imagePicker: {
+  width: '100%',
+  height: moderateScale(27),
+  marginBottom: 0,
+},
   button: {
     width: 213,
     height: 56,
@@ -561,9 +593,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
-  },
-  column: {
-    width: '100%',
   },
   buttontext: {
     fontSize: 24

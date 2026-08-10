@@ -7,7 +7,11 @@ import {
 import { RootState } from '@app/redux';
 
 // Single base URL
-const BASE_URL = 'http://192.168.1.103:5000/api/v1';
+// THIS IS COMPUTER IP
+const BASE_URL = 'http://192.168.1.112:5000/api/v1';   
+
+// THIS IS EMULTER IP
+// const BASE_URL = 'http://10.0.2.2:5000/api/v1';
 
 const rawBaseQuery = fetchBaseQuery({
   prepareHeaders: (headers, { getState }) => {

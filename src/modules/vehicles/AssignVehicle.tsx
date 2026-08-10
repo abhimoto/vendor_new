@@ -6,7 +6,7 @@ import { colors } from '@utils/colors';
 import spacing from '@utils/spacing';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import  { DropdownItem } from '@components/dropdown/SearchableDropdown';
+import { DropdownItem } from '@components/dropdown/SearchableDropdown';
 import {
   useGetassigneddetailsQuery,
   useGetunAssignedDriversQuery,
@@ -17,10 +17,10 @@ import {
   useDessignVehicleMutation
 
 } from '@app/redux/mutation/authApi';
-import { useSelector } from 'react-redux';
-import { RootState } from '@app/redux';
 import SearchInput from '@components/custumcomponents/SearchInput';
 import { Dropdown } from 'react-native-element-dropdown';
+import vehicleAssignToDriver from './../../sockets/VendorSocket'
+import VendorSocket from './../../sockets/VendorSocket';
 
 
 type Vehicle = {
@@ -80,11 +80,11 @@ export default function AssignVehicle() {
   } = useGetassigneddetailsQuery(undefined, {
     pollingInterval: 30000,
   });
-const refreshAll = useCallback(() => {
-  refetchAssigned();
-  refetchDrivers();
-  refetchVehicles();
-}, [refetchAssigned, refetchDrivers, refetchVehicles]);
+  const refreshAll = useCallback(() => {
+    refetchAssigned();
+    refetchDrivers();
+    refetchVehicles();
+  }, [refetchAssigned, refetchDrivers, refetchVehicles]);
   // const drivers = useMemo(() => {
   //   if (!driversData?.data) return [];
 
@@ -98,14 +98,14 @@ const refreshAll = useCallback(() => {
   //     isActive: d.IsActive,
   //   }));
   // }, [driversData]);
-const drivers = useMemo(
-  () =>
-    driversData?.data?.map((d: any) => ({
-      label: `${d.DriverName} (${d.MobileNo})`,
-      value: d.DriverProfileId,
-    })) ?? [],
-  [driversData]
-);
+  const drivers = useMemo(
+    () =>
+      driversData?.data?.map((d: any) => ({
+        label: `${d.DriverName} (${d.MobileNo})`,
+        value: d.DriverProfileId,
+      })) ?? [],
+    [driversData]
+  );
   // const vehicles = useMemo(() => {
   //   if (!vehiclesData?.data) return [];
 
@@ -126,15 +126,15 @@ const drivers = useMemo(
 
 
   const vehicles = useMemo(
-  () =>
-    vehiclesData?.data
-      ?.filter((v: any) => v.IsVerified)
-      .map((v: any) => ({
-        label: `${v.VehicleNo} (${v.BodyType || 'Vehicle'})`,
-        value: v.VehicleId,
-      })) ?? [],
-  [vehiclesData]
-);
+    () =>
+      vehiclesData?.data
+        ?.filter((v: any) => v.IsVerified)
+        .map((v: any) => ({
+          label: `${v.VehicleNo} (${v.BodyType || 'Vehicle'})`,
+          value: v.VehicleId,
+        })) ?? [],
+    [vehiclesData]
+  );
   const assignedList = useMemo(() => {
     if (assignedError || !assignedData?.data) return [];
 
@@ -206,11 +206,12 @@ const drivers = useMemo(
       const response = await assignVehicle(payload).unwrap();
 
       if (response?.status === '00') {
+        VendorSocket.vehicleAssignToDriver(searchDriver?.)
         Alert.alert('Success', 'Vehicle assigned successfully');
 
 
-    clearDropdownSelections();
-    refreshAll();
+        clearDropdownSelections();
+        refreshAll();
       } else {
         Alert.alert('Assignment Failed', response?.message || 'Something went wrong');
       }
@@ -233,6 +234,7 @@ const drivers = useMemo(
       const response = await deassign(payload).unwrap();
 
       if (response?.status === '00') {
+    
         Alert.alert(
           'Success',
           `Vehicle ${item.vehicleNumber} has been deassigned successfully`
@@ -261,52 +263,52 @@ const drivers = useMemo(
   };
 
   const handleUpdate = async (item: Vehicle) => {
-  Alert.alert(
-    'Update Assignment',
-    `Update assignment for ${item.vehicleNumber}?`,
-    [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Update',
-        onPress: async () => {
-          try {
-            const payload = {
-              DriverProfileId: item.driverId,
-              VehicleId: item.vehicleId,
-            };
+    Alert.alert(
+      'Update Assignment',
+      `Update assignment for ${item.vehicleNumber}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Update',
+          onPress: async () => {
+            try {
+              const payload = {
+                DriverProfileId: item.driverId,
+                VehicleId: item.vehicleId,
+              };
 
-            console.log('Update Payload:', payload);
+              console.log('Update Payload:', payload);
 
-            const response = await deassign(payload).unwrap();
+              const response = await deassign(payload).unwrap();
 
-            if (response?.status === '00') {
+              if (response?.status === '00') {
+                Alert.alert(
+                  'Success',
+                  'Vehicle Deassign  Successfully'
+                );
+
+                refreshAll()
+              } else {
+                Alert.alert(
+                  'Update Failed',
+                  response?.message || 'Something went wrong'
+                );
+              }
+            } catch (err: any) {
+              console.error('Update Error:', err);
+
               Alert.alert(
-                'Success',
-                'Vehicle assignment updated successfully'
-              );
-
-             refreshAll()
-            } else {
-              Alert.alert(
-                'Update Failed',
-                response?.message || 'Something went wrong'
-              );
-            }
-          } catch (err: any) {
-            console.error('Update Error:', err);
-
-            Alert.alert(
-              'Error',
-              err?.data?.message ||
+                'Error',
+                err?.data?.message ||
                 err?.message ||
                 'Failed to update assignment'
-            );
-          }
+              );
+            }
+          },
         },
-      },
-    ]
-  );
-};
+      ]
+    );
+  };
 
 
   const confirmDeassign = (item: Vehicle) => {
@@ -372,12 +374,16 @@ const drivers = useMemo(
             onPress={() => handleUpdate(item)}
             style={styles.editButton}
             activeOpacity={0.7}
-            disabled={isUpdating}
+            disabled={isdeassigning}
           >
-            {isUpdating ? (
+            {isdeassigning ? (
               <ActivityIndicator size="small" color="#3F5C8A" />
             ) : (
-              <MaterialIcons name="edit" size={22} color="#3F5C8A" />
+              <MaterialIcons
+                name="edit"
+                size={22}
+                color="#3F5C8A"
+              />
             )}
           </TouchableOpacity>
         )}

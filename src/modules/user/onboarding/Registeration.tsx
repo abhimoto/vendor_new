@@ -3,7 +3,6 @@ import { View, StyleSheet } from 'react-native';
 import { useFormikContext } from 'formik';
 
 import CustomDropdown from '@components/dropdown/CustomDropdown';
-import CustomButton from '@components/buttons/CustomButton';
 import CustomInput from '@components/Inputs/CustomInput';
 import AppSnackbar from '@components/custumcomponents/AppSnackbar';
 

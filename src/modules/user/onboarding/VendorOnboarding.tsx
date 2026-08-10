@@ -99,11 +99,8 @@ export default function VendorOnboarding() {
   };
 
   const handleFinalSubmit = async (values: VendorFormValues) => {
-    // navigation.navigate(HOME_ROUTES.VALIDATE_VEHICLES);
     try {
       const payload = mapVendorPayload(values);
-      console.log('Payload:', payload);
-
       const res = await onboarding(payload).unwrap();
       console.log('API Response:', res);
 
@@ -122,7 +119,6 @@ export default function VendorOnboarding() {
           }),
         );
         dispatch(setVendorOnboarded(true));
-        // navigation.replace(HOME_ROUTES.TEMP_DASHBOARD);
 
       } else {
         showSnackbar(res?.message || 'Registration failed', 'error');
