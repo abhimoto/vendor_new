@@ -15,7 +15,7 @@
       "@translation/*": ["src/translation/*"],
       "@redux/*": ["src/*"],
       "@hooks/*": ["src/hooks*"],
-      "@socket": ["src/sockets/sockets/index.ts"]
+      "@socket": ["src/sockets/sockets/index.ts"],
       // "@api/*":["src/"]
     }
   },

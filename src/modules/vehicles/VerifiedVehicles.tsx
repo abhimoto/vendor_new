@@ -186,7 +186,7 @@ center: {
 vehicleNo: {
   fontSize: 18,
   fontWeight: '700',
-  color: colors.primary,
+  color: colors.text,
   alignSelf: 'center',
   marginBottom: 15,
 },

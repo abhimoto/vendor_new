@@ -13,12 +13,10 @@ import DriverRegister from './DriverRegister';
 import DriverDocument from './DriverDocument';
 import AppHeader from '@components/custumcomponents/AppHeader';
 import { HOME_ROUTES } from '@navigation/routes';
-import { useGetdriverdatabyscanMutation } from '@app/redux/query/queryApi';
 
 import { moderateScale, normalizeFont, wp } from '@utils/responsive';
 import spacing from '@utils/spacing';
 import { colors } from '@utils/colors';
-import commonstyles from '@utils/commonstyles';
 
 export interface FormValues {
   licenseNumber?: string;

@@ -19,8 +19,7 @@ import { useGetpancardMutation } from '@app/redux/query/queryApi';
 import { Checkbox } from 'react-native-paper';
 import { GST_REGEX, PAN_REGEX } from '@utils/constants';
 import { moderateScale, normalizeFont, wp } from '@utils/responsive';
-import { useDuplicatevehicleMutation } from '@app/redux/mutation/authApi';
-import SecondaryButton from '@components/buttons/SecondaryButton';
+import { useLazyCheckDuplicateVehicleQuery } from '@app/redux/query/queryApi';
 type Props = {
   onPrev: () => void;
 };
@@ -34,7 +33,7 @@ export default function LegalDocuments({ onPrev }: Props) {
     'idle' | 'loading' | 'success' | 'error'
   >('idle');
   const [panStatus, setPanStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [getduplicate, isLoading] = useDuplicatevehicleMutation()
+const [checkDuplicateVehicleApi] = useLazyCheckDuplicateVehicleQuery();
   const [gstError, setGstError] = useState('');
   const [panError, setPanError] = useState('');
   const [vehicleErrors, setVehicleErrors] = useState<Record<number, string>>({});
@@ -76,49 +75,30 @@ export default function LegalDocuments({ onPrev }: Props) {
     }
   }, [values.legaldocuments.gstnumber]);
 
-  const checkDuplicateVehicle = async (
-    registrationNumber: string,
-    index: number,
-  ) => {
-    try {
-      const response = await getduplicate({
-        registration_no: registrationNumber,
-      }).unwrap();
+const checkDuplicateVehicle = async (
+  registrationNumber: string,
+  index: number,
+) => {
+  try {
+    const response = await checkDuplicateVehicleApi(registrationNumber).unwrap();
 
-      if (response?.status !== '00') {
-        setVehicleErrors(prev => ({
-          ...prev,
-          [index]: 'Vehicle already exists',
-        }));
-      } else {
-        setVehicleErrors(prev => ({
-          ...prev,
-          [index]: '',
-        }));
-      }
-    } catch (error) {
-      console.log('Duplicate Vehicle API Error', error);
+    if (response?.data?.isDuplicate) {
+      setVehicleErrors(prev => ({
+        ...prev,
+        [index]: 'Vehicle already exists',
+      }));
+    } else {
+      setVehicleErrors(prev => ({
+        ...prev,
+        [index]: '',
+      }));
     }
-  };
+  } catch (error) {
+    console.log('Duplicate Vehicle API Error', error);
+  }
+};
 
-  // useEffect(() => {
-  //   const gst = values.legaldocuments.gstnumber;
-  //   setGstname('');
 
-  //   if (debounceRef.current) {
-  //     clearTimeout(debounceRef.current);
-  //   }
-
-  //   if (gst?.length === 15) {
-  //     debounceRef.current = setTimeout(() => {
-  //       handleValidate(gst);
-  //     }, 600); // 👈 debounce delay
-  //   }
-  // }, [values.legaldocuments.gstnumber]);
-  // useEffect(() => {
-  //   setGstStatus('idle');
-  //   setGstError('');
-  // }, [values.legaldocuments.gstnumber]);
 
   // ✅ GST Verify API
   const handleValidate = async (gstValue?: string) => {

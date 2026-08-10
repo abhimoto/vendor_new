@@ -5,7 +5,7 @@ export const authApi = api.injectEndpoints({
   endpoints: builder => ({
     sendOtp: builder.mutation<LoginResponse, LoginRequest>({
       query: body => ({
-        url: '/auth/send-otp',
+        url: '/vendor/send-otp',
         method: 'POST',
         body,
       }),
@@ -13,7 +13,7 @@ export const authApi = api.injectEndpoints({
 
     verifyOtp: builder.mutation<any, any>({
       query: body => ({
-        url: '/auth/verify-otp',
+        url: '/vendor/verify-otp',
         method: 'POST',
         body,
       }),
@@ -21,7 +21,7 @@ export const authApi = api.injectEndpoints({
 
     onboarding: builder.mutation<any, any>({
       query: body => ({
-        url: '/auth/vendor/register',
+        url: '/vendor/register',
         method: 'POST',
         body,
       }),
@@ -29,7 +29,7 @@ export const authApi = api.injectEndpoints({
 
     addvehicle: builder.mutation<any, any>({
       query: body => ({
-        url: '/vendor/add-vehicle',
+        url: '/vendor/vehicle/add-vehicle',
         method: 'POST',
         body,
       }),
@@ -39,7 +39,7 @@ export const authApi = api.injectEndpoints({
 
     bankdetails: builder.mutation<any, any>({
       query: body => ({
-        url: '/vendor/bankdetails',
+        url: '/vendor/kyc/bankdetails',
         method: 'POST',
         body,
       }),
@@ -63,7 +63,7 @@ export const authApi = api.injectEndpoints({
 
     vehicleedit: builder.mutation<any, EditRequest>({
       query: body => ({
-        url: '/vendor/editvehicles',
+        url: '/vendor/vehicle/editvehicles',
         method: 'PUT',
         body,
       }),
@@ -71,7 +71,7 @@ export const authApi = api.injectEndpoints({
 
     Licenseverify: builder.mutation<any, any>({
       query: body => ({
-        url: '/auth/kyc/driving-license/verify',
+        url: '/vendor/kyc/driving-license/verify',
         method: 'POST',
         body,
       }),
@@ -79,7 +79,7 @@ export const authApi = api.injectEndpoints({
 
     Driver_verification: builder.mutation<any, any>({
       query: body => ({
-        url: '/vendor/driver-onboarding',
+        url: '/vendor/vehicle/driver-onboarding',
         method: 'POST',
         body,
       }),
@@ -87,14 +87,14 @@ export const authApi = api.injectEndpoints({
 
     AssignVehicle: builder.mutation<any, any>({
       query: body => ({
-        url: '/vendor/assign-vehicle',
+        url: '/vendor/vehicle/assign-vehicle',
         method: 'POST',
         body,
       }),
     }),
         DessignVehicle: builder.mutation<any, any>({
       query: body => ({
-        url: '/vendor/deassign-vehicle',
+        url: '/vendor/vehicle/deassign-vehicle',
         method: 'POST',
         body,
       }),
@@ -158,6 +158,38 @@ export const authApi = api.injectEndpoints({
         body,
       }),
     }),
+uploadDocument: builder.mutation<
+  any,
+  {
+    documentType: string;
+    file: any;
+    vehicleId?: string;
+    loadId?: string;
+    rcNumber?: string;
+  }>({
+  query: ({ documentType, file, vehicleId, loadId, rcNumber }) => {
+    const formData = new FormData();
+
+    formData.append('documentType', documentType);
+
+    if (vehicleId) formData.append('vehicleId', vehicleId);
+    if (loadId) formData.append('loadId', loadId);
+    if (rcNumber) formData.append('rcNumber', rcNumber);
+
+    formData.append('file', {
+      uri: file.uri,
+      name: file.fileName || 'document.jpg',
+      type: file.type || 'image/jpeg',
+    } as any);
+
+
+    return {
+      url: '/vendor/upload-document',
+      method: 'POST',
+      body: formData,
+    };
+  },
+}),
 
     duplicatevehicle: builder.mutation<any, any>({
       query: body => ({
@@ -188,5 +220,6 @@ export const {
   useUpdatevendorkycMutation,
   useDuplicatevehicleMutation,
   useAddvehicleMutation,
-  useDessignVehicleMutation
+  useDessignVehicleMutation,
+  useUploadDocumentMutation
 } = authApi;

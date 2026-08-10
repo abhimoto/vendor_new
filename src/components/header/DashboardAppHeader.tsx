@@ -17,92 +17,69 @@ import {
 } from '@utils/responsive';
 
 interface Props {
-  isOnline: boolean;
-  onToggle: (value: boolean) => void;
   driverName?: string;
-  vehicleNumber?: string;
+  driverId?: string;
   profileImage?: string;
   onMenuPress?: () => void;
 }
 
 export default function DashboardAppHeader({
-  isOnline,
-  onToggle,
   driverName = 'Rohit Sharma',
-  vehicleNumber = 'MH12JM2623',
+  driverId = '268823',
   profileImage = 'https://i.pravatar.cc/150?img=12',
   onMenuPress,
 }: Props) {
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Menu */}
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={onMenuPress}
-          style={styles.menuButton}>
-          <MaterialIcons
-            name="menu"
-            size={moderateScale(32)}
-            color="#FFF"
-          />
-        </TouchableOpacity>
-
-        {/* Toggle */}
-        <View style={styles.toggleWrapper}>
+        {/* Left section */}
+        <View style={styles.leftSection}>
           <TouchableOpacity
-            activeOpacity={0.9}
-            style={styles.toggleTrack}
-            onPress={() => onToggle(!isOnline)}>
-            <View
-              style={[
-                styles.thumb,
-                isOnline && styles.thumbRight,
-              ]}
+            onPress={onMenuPress}
+            style={styles.menuButton}
+            activeOpacity={0.8}>
+            <MaterialIcons
+              name="menu"
+              size={moderateScale(28)}
+              color="#FFFFFF"
             />
           </TouchableOpacity>
 
-          <View style={styles.toggleLabels}>
-            <Text
-              style={[
-                styles.toggleText,
-                !isOnline && styles.activeToggleText,
-              ]}>
-              Off
-            </Text>
+          <View style={styles.trackingIcon}>
+            <MaterialIcons
+              name="place"
+              size={moderateScale(14)}
+              color="#FFFFFF"
+            />
+            <View style={styles.dottedLine} />
+            <MaterialIcons
+              name="inventory-2"
+              size={moderateScale(14)}
+              color="#FFFFFF"
+            />
+          </View>
 
-            <Text
-              style={[
-                styles.toggleText,
-                isOnline && styles.activeToggleText,
-              ]}>
-              On
+          <Text style={styles.title}>Tracking</Text>
+        </View>
+
+        {/* Right section */}
+        <View style={styles.rightSection}>
+          <View style={styles.infoContainer}>
+            <Text numberOfLines={1} style={styles.driverName}>
+              {driverName}
+            </Text>
+            <Text numberOfLines={1} style={styles.driverId}>
+              id {driverId}
             </Text>
           </View>
+
+          <TouchableOpacity activeOpacity={0.8}>
+            <Image
+              source={{ uri: profileImage }}
+              style={styles.avatar}
+            />
+          </TouchableOpacity>
         </View>
-
-        {/* Driver Info */}
-        <View style={styles.infoContainer}>
-          <Text
-            numberOfLines={1}
-            style={styles.driverName}>
-            {driverName}
-          </Text>
-
-          <Text
-            numberOfLines={1}
-            style={styles.vehicleNumber}>
-            {vehicleNumber}
-          </Text>
-        </View>
-
-        {/* Profile */}
-        <TouchableOpacity activeOpacity={0.8}>
-          <Image
-            source={{ uri: profileImage }}
-            style={styles.avatar}
-          />
-        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -115,97 +92,78 @@ const styles = StyleSheet.create({
 
   container: {
     backgroundColor: '#355C97',
-
     flexDirection: 'row',
     alignItems: 'center',
-
-    paddingHorizontal: wp(5),
+    justifyContent: 'space-between',
+    paddingHorizontal: wp(4),
     paddingVertical: hp(1.5),
+  },
+
+  leftSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
 
   menuButton: {
     width: moderateScale(36),
     justifyContent: 'center',
     alignItems: 'center',
-  },
-
-  toggleWrapper: {
-    alignItems: 'center',
-    marginLeft: wp(5),
-  },
-
-  toggleTrack: {
-    width: wp(26),
-    minWidth: moderateScale(95),
-    height: moderateScale(22),
-    backgroundColor: '#FFF',
-    borderRadius: moderateScale(20),
-    justifyContent: 'center',
-    paddingHorizontal: 2,
-  },
-
-  thumb: {
-    width: moderateScale(28),
-    height: moderateScale(28),
-    borderRadius: moderateScale(14),
-
-    backgroundColor: '#355C97',
-
-    borderWidth: 3,
-    borderColor: '#FFF',
-  },
-
-  thumbRight: {
-    alignSelf: 'flex-end',
-  },
-
-  toggleLabels: {
-    width: wp(26),
-    minWidth: moderateScale(95),
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: hp(0.4),
-    paddingHorizontal: moderateScale(2),
-  },
-
-  toggleText: {
-    color: '#FFFFFF',
-    fontSize: normalizeFont(14),
-    opacity: 0.7,
-    fontWeight: '500',
-  },
-
-  activeToggleText: {
-    opacity: 1,
-    fontWeight: '700',
-  },
-
-  infoContainer: {
-    flex: 1,
-    marginLeft: wp(10),
     marginRight: wp(3),
   },
 
-  driverName: {
-    color: '#FFF',
-    fontSize: normalizeFont(14),
+  trackingIcon: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: wp(2.5),
+  },
+
+  dottedLine: {
+    width: 1,
+    height: moderateScale(14),
+    borderLeftWidth: 1,
+    borderStyle: 'dotted',
+    borderColor: '#FFFFFF',
+    marginVertical: 1,
+  },
+
+  title: {
+    color: '#FFFFFF',
+    fontSize: normalizeFont(18),
     fontWeight: '700',
   },
 
-  vehicleNumber: {
+  rightSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: wp(3),
+  },
+
+  infoContainer: {
+    alignItems: 'flex-end',
+    marginRight: wp(3),
+    maxWidth: wp(35),
+  },
+
+  driverName: {
+    color: '#FFFFFF',
+    fontSize: normalizeFont(15),
+    fontWeight: '700',
+  },
+
+  driverId: {
     color: '#FFFFFF',
     fontSize: normalizeFont(14),
-    marginTop: hp(0.2),
+    fontWeight: '600',
+    marginTop: 2,
     opacity: 0.95,
-    fontWeight: '500',
   },
 
   avatar: {
-    width: moderateScale(52),
-    height: moderateScale(52),
-    borderRadius: moderateScale(26),
-
+    width: moderateScale(48),
+    height: moderateScale(48),
+    borderRadius: moderateScale(24),
     borderWidth: 2,
-    borderColor: '#FFF',
+    borderColor: '#E5C39A',
   },
 });

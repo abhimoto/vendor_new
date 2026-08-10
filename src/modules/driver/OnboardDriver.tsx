@@ -23,7 +23,6 @@ import AppHeader from '@components/custumcomponents/AppHeader';
 import CustomButton from '@components/buttons/CustomButton';
 import CustomModal from '@components/modal/CustomModal';
 import QRScanner from '@components/common/QRScanner';
-import { SOCKET_EVENTS } from '@socket';
 
 import spacing from '@utils/spacing';
 
@@ -34,7 +33,7 @@ import {
 } from '@utils/responsive';
 import { useNavigation } from '@react-navigation/native';
 import { HOME_ROUTES } from '@navigation/routes';
-import { useGetdriverdatabyscanMutation } from '@app/redux/query/queryApi';
+import { useGetdriverdatabyscanQuery ,useLazyGetdriverdatabyscanQuery} from '@app/redux/query/queryApi';
 import {
   IconButton,
   Surface,
@@ -66,8 +65,8 @@ export default function OnboardDriver() {
   const [showScanner, setShowScanner] =
     useState(false);
 
-  const [getDriverDataByScan, { isLoading }] =
-    useGetdriverdatabyscanMutation();
+const [getDriverDataByScan, { isLoading }] =
+  useLazyGetdriverdatabyscanQuery();
     const [verifyDriverQr] = useLazyVerifyDriverQrQuery();
 
   const inputRef = useRef<TextInput>(null);
@@ -113,83 +112,44 @@ export default function OnboardDriver() {
   );
 
   /* ---------------- MANUAL SUBMIT ---------------- */
+const handleSubmit = useCallback(async () => {
+  if (!validateUserId(userId)) {
+    inputRef.current?.focus();
+    return;
+  }
 
-  const handleSubmit = useCallback(async () => {
-    if (!validateUserId(userId)) {
-      inputRef.current?.focus();
+  try {
+    const response = await getDriverDataByScan({
+      userId: userId.trim(),
+      notificationId: userId.trim(),
+    }).unwrap();
 
-      return;
-    }
+    console.log("Manual verification response:", response);
 
-    try {
-      const response =
-        await getDriverDataByScan({
-          onboard_id: userId.trim(),
-        }).unwrap();
-      console.log('data of manual entry', response)
-      if (response?.status === '00') {
-        const driverData: DriverData =
-          response?.data?.[0];
-        console.log('this is driver details', driverData)
-       
-        if (!driverData?.driver_id) {
-          Alert.alert(
-            'Driver Not Found',
-            'No driver found with the provided User ID.',
-            [
-              {
-                text: 'OK',
-                onPress: () =>
-                  inputRef.current?.focus(),
-              },
-            ],
-          );
+    if (response?.status === "00" && response?.data) {
+      setVisible(false);
+      setUserId("");
 
-          return;
-        }
-
-
-        setVisible(false);
-
-        setUserId('');
-
-        navigation.navigate(
-          HOME_ROUTES.DRIVERINDEX,
-          {
-            scannedData: JSON.stringify({
-              driver_id:
-                driverData.driver_id,
-
-              driver_name:
-                driverData.driver_name,
-
-              timestamp:
-                new Date().toISOString(),
-            }),
-          },
-        );
-      } else {
-        Alert.alert(
-          'Error',
-          response?.message ||
-          'Failed to fetch driver data',
-        );
-      }
-    } catch (error: any) {
-      console.log(error);
-
+      navigation.navigate(HOME_ROUTES.DRIVERINDEX, {
+        driverData: response.data,
+      });
+    } else {
       Alert.alert(
-        'Error',
-        error?.message ||
-        'Something went wrong',
+        "Driver Not Found",
+        response?.message || "No driver found with the provided ID."
       );
     }
-  }, [
-    userId,
-    validateUserId,
-    getDriverDataByScan,
-    navigation,
-  ]);
+  } catch (error: any) {
+    console.log(error);
+
+    Alert.alert(
+      "Error",
+      error?.data?.message ||
+        error?.message ||
+        "Something went wrong"
+    );
+  }
+}, [userId, validateUserId, getDriverDataByScan, navigation]);
 
   /* ---------------- OPEN SCANNER ---------------- */
 
@@ -400,19 +360,15 @@ const handleScan = useCallback(
               )}
             </View>
 
-            <CustomButton
-              title={
-                isLoading
-                  ? 'Verifying...'
-                  : 'Submit'
-              }
-              onPress={handleSubmit}
-              disabled={isLoading}
-              style={styles.modalButton}
-              textStyle={
-                styles.modalButtonText
-              }
-            />
+        <View style={styles.modalButtonContainer}>
+  <CustomButton
+    title={isLoading ? 'Verifying...' : 'Submit'}
+    onPress={handleSubmit}
+    disabled={isLoading}
+    style={styles.modalButton}
+    textStyle={styles.modalButtonText}
+  />
+</View>
           </View>
         </KeyboardAvoidingView>
       </CustomModal>
@@ -446,12 +402,14 @@ const styles = StyleSheet.create({
   },
 
   qrButton: {
+    width:'100%',
     height: moderateScale(56),
     borderRadius: moderateScale(12),
     backgroundColor: colors.primary,
   },
 
   userIdButton: {
+    width:'100%',
     height: moderateScale(56),
     borderRadius: moderateScale(12),
     borderWidth: 2,
@@ -466,9 +424,10 @@ const styles = StyleSheet.create({
   },
 
   userIdButtonText: {
+    width:'100%',
     fontSize: moderateScale(16),
     fontWeight: '600',
-    color: colors.primary,
+    color: colors.primary
   },
 
   divider: {
@@ -493,11 +452,16 @@ const styles = StyleSheet.create({
     width: '100%',
   },
 
-  modalContent: {
-    width: '100%',
-    padding: moderateScale(20),
-    gap: spacing.lg,
-  },
+ modalContent: {
+  width: '100%',
+  padding: moderateScale(20),
+  gap: spacing.lg,
+  alignItems: 'stretch', // important
+},
+modalButtonContainer: {
+  width: '100%',
+  alignItems: 'center',
+},
 
   modalHeader: {
     flexDirection: 'row',
@@ -539,15 +503,20 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(12),
   },
 
-  modalButton: {
-    height: moderateScale(50),
-    borderRadius: moderateScale(10),
-    backgroundColor: colors.primary,
-  },
+modalButton: {
+  width: 250,
+  height: moderateScale(50),
+  borderRadius: moderateScale(10),
+  backgroundColor: colors.primary,
+  justifyContent: 'center',
+  alignItems: 'center',
+  alignSelf: 'stretch',
+},
 
-  modalButtonText: {
-    fontSize: moderateScale(16),
-    fontWeight: '600',
-  },
+ modalButtonText: {
+  color: colors.background,
+  fontSize: moderateScale(16),
+  fontWeight: '600',
+},
 });
 

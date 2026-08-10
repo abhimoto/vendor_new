@@ -4,7 +4,7 @@ export const queryApi = api.injectEndpoints({
   endpoints: builder => ({
     getvehicle: builder.mutation<any, void>({
       query: () => ({
-        url: '/vendor/vehicles',
+        url: '/vendor/vehicle/vehicles',
         method: 'POST',
         body: {},
       }),
@@ -24,11 +24,15 @@ export const queryApi = api.injectEndpoints({
         body,
       }),
     }),
-    getdriverdatabyscan: builder.mutation<any, { driver_id: string }>({
-      query: (body) => ({
-        url: 'qr_scan/driver_details',
-        method: 'POST',
-        body,
+
+    getdriverdatabyscan: builder.query<any, { userId?: string; notificationId?: string }>({
+      query: ({ userId, notificationId }) => ({
+        url: '/vendor/verify',
+        method: 'GET',
+        params: {
+          userId,
+          notificationId,
+        },
       }),
     }),
     getdriverdetails: builder.mutation<any, { vendorid: string }>({
@@ -38,6 +42,19 @@ export const queryApi = api.injectEndpoints({
         body,
       }),
     }),
+checkDuplicateVehicle: builder.query<any, string>({
+  query: (vehicleNo) => ({
+    url: '/vendor/check-duplicate',
+    method: 'GET',
+    params: { vehicleNo },
+  }),
+}),
+getCounts: builder.query<any, void>({
+  query: () => ({
+    url: '/vendor/dashboard/counts',
+    method: 'GET',
+  }),
+}),
     getavailabledrivers: builder.mutation<any, { vendorId: string }>({
       query: (body) => ({
         url: 'get_DriverAvailable',
@@ -47,7 +64,7 @@ export const queryApi = api.injectEndpoints({
     }),
     getavailablevehicles: builder.mutation<any, { vendorId: string }>({
       query: (body) => ({
-        url: '/vehicles/unassigned',
+        url: '/vendor/vehicle/unassigned',
         method: 'POST',
         body,
       }),
@@ -61,7 +78,7 @@ export const queryApi = api.injectEndpoints({
     }),
     getpancard: builder.mutation<any, { pan_number: string }>({
       query: (body) => ({
-        url: '/auth/kyc/pan',
+        url: '/vendor/kyc/pan',
         method: 'POST',
         body,
       }),
@@ -101,20 +118,20 @@ export const queryApi = api.injectEndpoints({
     }),
     getPincode: builder.query<any, { pincode: string }>({
       query: ({ pincode }) => ({
-        url: `/location/pincode?search=${pincode}`,
+        url: `/vendor/location/pincode?search=${pincode}`,
         method: 'GET',
       }),
     }),
     getunAssignedVehicles: builder.query<any, void>({
       query: () => ({
-        url: '/vendor/vehicles/unassigned',
+        url: '/vendor/vehicle/unassigned',
         method: 'GET',
       }),
     }),
 
     getunAssignedDrivers: builder.query<any, void>({
       query: () => ({
-        url: '/vendor/drivers/unassigned',
+        url: '/vendor/vehicle/unassigneddrivers',
         method: 'GET',
       }),
     }),
@@ -125,12 +142,12 @@ export const queryApi = api.injectEndpoints({
         body
       })
     }),
-getassigneddetails: builder.query<any, void>({
-  query: () => ({
-    url: '/vendor/driver-vehicle-assignments',
-    method: 'GET',
-  }),
-}),
+    getassigneddetails: builder.query<any, void>({
+      query: () => ({
+        url: '/vendor/vehicle/driver-vehicle-assignments',
+        method: 'GET',
+      }),
+    }),
     getvendorkyc: builder.query<any, { vendorid: string }>({
       query: (body) => ({
         url: 'get_vendor_kyc  ',
@@ -167,7 +184,9 @@ getassigneddetails: builder.query<any, void>({
 export const {
   useGetvehicleMutation,
   useValidateVehicleMutation,
-  useGetdriverdatabyscanMutation,
+ useGetdriverdatabyscanQuery,
+ useLazyGetdriverdatabyscanQuery,
+ useGetCountsQuery,
   useGetdriverdetailsMutation,
   useGetavailabledriversMutation,
   useGetavailablevehiclesMutation,
@@ -189,6 +208,7 @@ export const {
   useLazyGetStateQuery,
   useGetDistrictsQuery,
   useLazyGetDistrictsQuery,
-  useGetassigneddetailsQuery
+  useGetassigneddetailsQuery,
+  useLazyCheckDuplicateVehicleQuery
 
 } = queryApi;

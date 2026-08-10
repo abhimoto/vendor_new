@@ -18,6 +18,7 @@ import {
   hp,
   moderateScale,
   normalizeFont,
+  verticalScale,
 } from '@utils/responsive';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
@@ -50,68 +51,68 @@ export default function AddVehicle() {
   const [search, setsearch] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<any>(null);
-const [vehicles, setVehicles] = useState([
-  {
-    registrationNumber: '',
-    capacity: '',
-  },
-]);
-
-const [vehicleErrors, setVehicleErrors] = useState<Record<number, string>>({});
-const [addVehicle, { isLoading:isaddded }] = useAddvehicleMutation();
-const vehicleDebounceRef = useRef<Record<number, any>>({});
-  const [filter, setFilter] = useState<
-    'verified' | 'pending' | 'all'
-  >('pending');
-  /* ---------------- API ---------------- */
-const addNewVehicle = () => {
-  const last = vehicles[vehicles.length - 1];
-
-  if (!last.registrationNumber || !last.capacity) {
-    Alert.alert('Please fill vehicle details first');
-    return;
-  }
-
-  setVehicles(prev => [
-    ...prev,
+  const [vehicles, setVehicles] = useState([
     {
       registrationNumber: '',
       capacity: '',
     },
   ]);
-};
 
-const removeVehicle = (index: number) => {
-  setVehicles(prev => prev.filter((_, i) => i !== index));
-};
+  const [vehicleErrors, setVehicleErrors] = useState<Record<number, string>>({});
+  const [addVehicle, { isLoading: isaddded }] = useAddvehicleMutation();
+  const vehicleDebounceRef = useRef<Record<number, any>>({});
+  const [filter, setFilter] = useState<
+    'verified' | 'pending' | 'all'
+  >('pending');
+  /* ---------------- API ---------------- */
+  const addNewVehicle = () => {
+    const last = vehicles[vehicles.length - 1];
 
-const updateRegistration = (text: string, index: number) => {
-  const formatted = text
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, '');
+    if (!last.registrationNumber || !last.capacity) {
+      Alert.alert('Please fill vehicle details first');
+      return;
+    }
 
-  const updated = [...vehicles];
-  updated[index].registrationNumber = formatted;
+    setVehicles(prev => [
+      ...prev,
+      {
+        registrationNumber: '',
+        capacity: '',
+      },
+    ]);
+  };
 
-  setVehicles(updated);
+  const removeVehicle = (index: number) => {
+    setVehicles(prev => prev.filter((_, i) => i !== index));
+  };
 
-  setVehicleErrors(prev => ({
-    ...prev,
-    [index]: '',
-  }));
+  const updateRegistration = (text: string, index: number) => {
+    const formatted = text
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '');
 
-  if (vehicleDebounceRef.current[index]) {
-    clearTimeout(vehicleDebounceRef.current[index]);
-  }
+    const updated = [...vehicles];
+    updated[index].registrationNumber = formatted;
+
+    setVehicles(updated);
+
+    setVehicleErrors(prev => ({
+      ...prev,
+      [index]: '',
+    }));
+
+    if (vehicleDebounceRef.current[index]) {
+      clearTimeout(vehicleDebounceRef.current[index]);
+    }
 
 
-};
+  };
 
-const updateCapacity = (text: string, index: number) => {
-  const updated = [...vehicles];
-  updated[index].capacity = text;
-  setVehicles(updated);
-};
+  const updateCapacity = (text: string, index: number) => {
+    const updated = [...vehicles];
+    updated[index].capacity = text;
+    setVehicles(updated);
+  };
   const [getVehicle, { data: validationData, isLoading, isError }] =
     useGetvehicleMutation();
 
@@ -190,55 +191,55 @@ const updateCapacity = (text: string, index: number) => {
     setSkippedVehicles(prev => [...prev, id]);
   };
 
-const handleAddVehicles = async () => {
-  // Validation
-  const hasEmptyFields = vehicles.some(
-    vehicle =>
-      !vehicle.registrationNumber.trim() ||
-      !vehicle.capacity.trim(),
-  );
-
-  if (hasEmptyFields) {
-    Alert.alert(
-      'Validation',
-      'Please fill all vehicle details.',
+  const handleAddVehicles = async () => {
+    // Validation
+    const hasEmptyFields = vehicles.some(
+      vehicle =>
+        !vehicle.registrationNumber.trim() ||
+        !vehicle.capacity.trim(),
     );
-    return;
-  }
 
-  try {
-    const payload = {
-      Vehicles: vehicles.map(vehicle => ({
-        VehicleNo: vehicle.registrationNumber,
-        LoadingCapacity: Number(vehicle.capacity),
-      })),
-    };
-
-    const response = await addVehicle(payload).unwrap();
-
-    if (response.status === '00') {
-      Alert.alert('Success', response.message);
-
-      // Refresh vehicle list
-      getVehicle();
-
-      // Clear form
-      setVehicles([
-        {
-          registrationNumber: '',
-          capacity: '',
-        },
-      ]);
-    } else {
-      Alert.alert('Error', response.message);
+    if (hasEmptyFields) {
+      Alert.alert(
+        'Validation',
+        'Please fill all vehicle details.',
+      );
+      return;
     }
-  } catch (error: any) {
-    Alert.alert(
-      'Error',
-      error?.data?.message || 'Something went wrong',
-    );
-  }
-};
+
+    try {
+      const payload = {
+        Vehicles: vehicles.map(vehicle => ({
+          VehicleNo: vehicle.registrationNumber,
+          LoadingCapacity: Number(vehicle.capacity),
+        })),
+      };
+
+      const response = await addVehicle(payload).unwrap();
+
+      if (response.status === '00') {
+        Alert.alert('Success', response.message);
+
+        // Refresh vehicle list
+        getVehicle();
+
+        // Clear form
+        setVehicles([
+          {
+            registrationNumber: '',
+            capacity: '',
+          },
+        ]);
+      } else {
+        Alert.alert('Error', response.message);
+      }
+    } catch (error: any) {
+      Alert.alert(
+        'Error',
+        error?.data?.message || 'Something went wrong',
+      );
+    }
+  };
   /* ---------------- SEARCH FILTER ---------------- */
 
   const filteredVehicles = useMemo(() => {
@@ -254,7 +255,7 @@ const handleAddVehicles = async () => {
           ? true
           : filter === 'verified'
             ? vehicle.IsVerified === true
-            : vehicle.IsVerified !== true; 
+            : vehicle.IsVerified !== true;
 
       return matchesSearch && matchesFilter;
     });
@@ -306,7 +307,7 @@ const handleAddVehicles = async () => {
                 <LocalInput
                   value={item.registrationNumber}
                   placeholder="eg MH02JM2623"
-                    importantForAutofill="no"
+                  importantForAutofill="no"
                   onChangeText={text =>
                     updateRegistration(text, index)
                   }
@@ -351,188 +352,190 @@ const handleAddVehicles = async () => {
           title="Submit"
           style={styles.submitBtn}
           onPress={handleAddVehicles}
+          textStyle={styles.text}
         />
-      
 
-      <Text style={styles.heading}>
-        Validate Vehicle
-      </Text>
+<View style={styles.vehicleSecondContainer}>
+        <Text style={styles.heading}>
+          Validate Vehicle
+        </Text>
 
-      <View style={styles.filterRow}>
-        {[
-          {
-            label: 'Verified',
-            value: 'verified',
-          },
-          {
-            label: 'Unverified',
-            value: 'pending',
-          },
-          {
-            label: 'All',
-            value: 'all',
-          },
-        ].map(item => (
-          <TouchableOpacity
-            key={item.value}
-            style={styles.radioItem}
-            onPress={() =>
-              setFilter(item.value as any)
-            }
-          >
-            <View
-              style={[
-                styles.radioOuter,
-                filter === item.value &&
-                  styles.radioOuterActive,
-              ]}
+        <View style={styles.filterRow}>
+          {[
+            {
+              label: 'Verified',
+              value: 'verified',
+            },
+            {
+              label: 'Unverified',
+              value: 'pending',
+            },
+            {
+              label: 'All',
+              value: 'all',
+            },
+          ].map(item => (
+            <TouchableOpacity
+              key={item.value}
+              style={styles.radioItem}
+              onPress={() =>
+                setFilter(item.value as any)
+              }
             >
-              {filter === item.value && (
-                <View style={styles.radioInner} />
-              )}
-            </View>
-
-            <Text style={styles.radioLabel}>{item.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* SEARCH */}
-      <SearchInput
-        value={search}
-        containerStyle={styles.seachinput}
-        onChangeText={setsearch}
-        placeholder="Search Vehicle By Number"
-      />
-
-      {/* LIST */}
-      <CustomFlatList
-        data={filteredVehicles}
-        loading={isLoading}
-        keyExtractor={(item) => item?.id.toString()}
-        renderItem={({ item }: any) => {
-
-          const isSkipped = skippedVehicles.includes(item.id);
-          const verified = item.IsVerified;
-
-          return (
-            <View style={styles.card}>
-              {!verified && (
-                <TouchableOpacity
-                  style={styles.editIcon}
-                  onPress={() => {
-                    setSelectedVehicle(item);
-                    setModalVisible(true);
-                  }}
-                >
-                  <MaterialIcons name="edit" size={18} color="#3E5B93" />
-                </TouchableOpacity>
-              )}
-              {/* LEFT SECTION */}
-              <View style={styles.leftContainer}>
-                <Text style={styles.vehicleNumber}>
-                  {item.number}
-                </Text>
-
-                <Text style={styles.subtitle}>
-                  {verified
-                    ? 'Vehicle Verified Successfully'
-                    : isSkipped
-                      ? 'Vehicle needs to be validated'
-                      : 'Vehicle needs to be validated'}
-                </Text>
+              <View
+                style={[
+                  styles.radioOuter,
+                  filter === item.value &&
+                  styles.radioOuterActive,
+                ]}
+              >
+                {filter === item.value && (
+                  <View style={styles.radioInner} />
+                )}
               </View>
 
-              {/* RIGHT SECTION */}
-              {verified ? (
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  style={styles.verifiedContainer}
-                  onPress={() =>
-                    navigation.navigate(
-                      from === 'temporary_dashboard'
-                        ? HOME_ROUTES.VERIFIEDVEHICLES_ONBOARD
-                        : HOME_ROUTES.VERIFIES_VEHICLES,
-                      { vehicle: item }
-                    )
-                  }
-                >
-                  <View style={styles.checkCircle}>
-                    <Text style={styles.checkText}>
-                      ✓
-                    </Text>
-                  </View>
+              <Text style={styles.radioLabel}>{item.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-                  <View style={styles.verifiedButton}>
-                    <Text style={styles.statusText}>
-                      Verified
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              ) : (
-                <View style={styles.pendingContainer}>
-                  {/* VALIDATE BUTTON */}
+        {/* SEARCH */}
+        <SearchInput
+          value={search}
+          containerStyle={styles.seachinput}
+          onChangeText={setsearch}
+          placeholder="Search Vehicle By Number"
+        />
+
+        {/* LIST */}
+        <CustomFlatList
+          data={filteredVehicles}
+          loading={isLoading}
+          keyExtractor={(item) => item?.id.toString()}
+          renderItem={({ item }: any) => {
+
+            const isSkipped = skippedVehicles.includes(item.id);
+            const verified = item.IsVerified;
+
+            return (
+              <View style={styles.card}>
+                {!verified && (
                   <TouchableOpacity
-                    activeOpacity={0.8}
-                    style={[
-                      styles.validateButton,
-                      isSkipped && styles.disabledButton
-                    ]}
-                    disabled={isSkipped}
+                    style={styles.editIcon}
                     onPress={() => {
-                      navigation.navigate(
-                        HOME_ROUTES.VALIDATE_VEHICLES,
-                        {
-                          item,
-                          from,
-                        },
-                      );
+                      setSelectedVehicle(item);
+                      setModalVisible(true);
                     }}
                   >
-                    <Text style={styles.statusText}>
-                      Validate
-                    </Text>
+                    <MaterialIcons name="edit" size={18} color="#3E5B93" />
                   </TouchableOpacity>
+                )}
+                {/* LEFT SECTION */}
+                <View style={styles.leftContainer}>
+                  <Text style={styles.vehicleNumber}>
+                    {item.number}
+                  </Text>
 
-                  {/* SHOW SKIP ONLY FOR TEMP DASHBOARD */}
-                  {from === 'temporary_dashboard' && (
+                  <Text style={styles.subtitle}>
+                    {verified
+                      ? 'Vehicle Verified Successfully'
+                      : isSkipped
+                        ? 'Vehicle needs to be validated'
+                        : 'Vehicle needs to be validated'}
+                  </Text>
+                </View>
+
+                {/* RIGHT SECTION */}
+                {verified ? (
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={styles.verifiedContainer}
+                    onPress={() =>
+                      navigation.navigate(
+                        from === 'temporary_dashboard'
+                          ? HOME_ROUTES.VERIFIEDVEHICLES_ONBOARD
+                          : HOME_ROUTES.VERIFIES_VEHICLES,
+                        { vehicle: item }
+                      )
+                    }
+                  >
+                    <View style={styles.checkCircle}>
+                      <Text style={styles.checkText}>
+                        ✓
+                      </Text>
+                    </View>
+
+                    <View style={styles.verifiedButton}>
+                      <Text style={styles.statusText}>
+                        Verified
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ) : (
+                  <View style={styles.pendingContainer}>
+                    {/* VALIDATE BUTTON */}
                     <TouchableOpacity
                       activeOpacity={0.8}
                       style={[
-                        styles.skipButton,
-                        isSkipped && styles.skippedButtonStyle
+                        styles.validateButton,
+                        isSkipped && styles.disabledButton
                       ]}
                       disabled={isSkipped}
-                      onPress={() => handleSkip(item.id)}
+                      onPress={() => {
+                        navigation.navigate(
+                          HOME_ROUTES.VALIDATE_VEHICLES,
+                          {
+                            item,
+                            from,
+                          },
+                        );
+                      }}
                     >
-                      <Text style={[
-                        styles.skipText,
-                        isSkipped && styles.skippedTextStyle
-                      ]}>
-                        {isSkipped ? 'Skipped' : 'Skip'}
+                      <Text style={styles.statusText}>
+                        Validate
                       </Text>
                     </TouchableOpacity>
-                  )}
-                </View>
-              )}
-            </View>
-          );
-        }}
-      />
-     
-      <CustomModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-      >
-        <EditVehicles
-          vehicle={selectedVehicle}
-          onClose={() => setModalVisible(false)}
-          onSuccess={() => {
-            getVehicle();
+
+                    {/* SHOW SKIP ONLY FOR TEMP DASHBOARD */}
+                    {from === 'temporary_dashboard' && (
+                      <TouchableOpacity
+                        activeOpacity={0.8}
+                        style={[
+                          styles.skipButton,
+                          isSkipped && styles.skippedButtonStyle
+                        ]}
+                        disabled={isSkipped}
+                        onPress={() => handleSkip(item.id)}
+                      >
+                        <Text style={[
+                          styles.skipText,
+                          isSkipped && styles.skippedTextStyle
+                        ]}>
+                          {isSkipped ? 'Skipped' : 'Skip'}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+              </View>
+            );
           }}
         />
-      </CustomModal>
-      </View> 
+
+        <CustomModal
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
+        >
+          <EditVehicles
+            vehicle={selectedVehicle}
+            onClose={() => setModalVisible(false)}
+            onSuccess={() => {
+              getVehicle();
+            }}
+          />
+        </CustomModal>
+      </View>
+      </View>
     </>
   );
 }
@@ -581,7 +584,10 @@ const styles = StyleSheet.create({
   },
 
   /* ---------------- VERIFIED ---------------- */
-
+  text: {
+    fontSize: normalizeFont(24),
+    fontWeight: '700'
+  },
   verifiedContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -646,9 +652,9 @@ const styles = StyleSheet.create({
   },
 
   skippedButtonStyle: {
-    backgroundColor: '#888888',
+    backgroundColor: '#CAB059',
     borderWidth: 1,
-    borderColor: '#888888',
+    borderColor: '#CAB059',
   },
 
   statusText: {
@@ -664,7 +670,7 @@ const styles = StyleSheet.create({
   },
 
   skippedTextStyle: {
-    color: '#ffffff',
+    color: '#fff',
   },
 
   disabledButton: {
@@ -712,7 +718,7 @@ const styles = StyleSheet.create({
   submitBtn: {
     marginTop: 20,
     alignSelf: 'center',
-    width:166
+    width: 166
   },
 
   heading: {
@@ -804,4 +810,7 @@ const styles = StyleSheet.create({
     marginBottom: moderateScale(10),
     gap: moderateScale(20),
   },
+  vehicleSecondContainer:{
+    marginTop:verticalScale(35)
+  }
 });

@@ -7,7 +7,7 @@ import ValidateVehicles from '@modules/vehicles/ValidateVehicles';
 import Bankdetails from '@modules/payment/Bankdetails';
 import VerifiedVehicles from '@modules/vehicles/VerifiedVehicles';
 import { AUTH_ROUTES } from '@navigation/routes';
-import VendorOnboarding from '@modules/user/onboarding/VendorOnboarding';
+import VendorOnboarding from '@modules/user/onboarding/screens/VendorOnboarding';
 
 const Stack = createNativeStackNavigator();
 

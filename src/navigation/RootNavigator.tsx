@@ -7,8 +7,8 @@ import OnboardingNavigator from './OnboardingNavigator/OnboardingNavigator';
 
 import { useAppSelector } from '@app/hooks/hooks';
 
-import { initSocket } from './../sockets/sockets/socket.manager';
-import { registerVendorSocketListeners } from './../sockets/sockets/socket.listeners';
+import socketService from "./../sockets/socket.service"
+import { registerSocketListeners } from './../sockets/socket.listeners';
 
 const Stack = createNativeStackNavigator();
 
@@ -19,21 +19,19 @@ export default function RootNavigator() {
     vendor_onboarded,
     vehicle_verified,
     kyc_verified,
+    token
   } = useAppSelector(state => state.auth);
-console.log(  isAuthenticated,
-    user,
-    vendor_onboarded,
-    vehicle_verified,
-    kyc_verified,'=========================================')
 
 
 
   useEffect(() => {
-    if (isAuthenticated && user?.id) {
-      initSocket(user.id);
-      registerVendorSocketListeners();
+    if (isAuthenticated && token) {
+      socketService.connect(token);
+      registerSocketListeners();
     }
-  }, [isAuthenticated, user?.id]);
+  }, [isAuthenticated, token]);
+
+  
 
  return (
   <Stack.Navigator screenOptions={{ headerShown: false }}>

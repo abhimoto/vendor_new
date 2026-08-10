@@ -3,20 +3,17 @@ import React, { useState } from 'react';
 import AppHeader from '@components/custumcomponents/AppHeader';
 import LocalInput from '@components/Inputs/LocalInput';
 import CustomButton from '@components/buttons/CustomButton';
-import Custumtable from '@components/custumcomponents/table/Custumtable';
 import { columns, formatDate, licensedata } from '@utils/constants';
 import commonstyles from '@utils/commonstyles';
 import spacing from '@utils/spacing';
 import CustomDatePicker from '@components/datepicker/CustomDatePicker';
 import { normalizeFont, wp } from '@utils/responsive';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { HOME_ROUTES } from '@navigation/routes';
 import { useLicenseverifyMutation } from '@app/redux/mutation/authApi';
 import { useDriver_verificationMutation } from '@app/redux/mutation/authApi';
 import { useSelector } from 'react-redux';
 import { RootState } from '@app/redux';
-import { SOCKET_EVENTS } from './../../../sockets/sockets/index';
-import socket from './../../../sockets/sockets/socket.instance';
+import VendorSocket from '../../../sockets/VendorSocket';
 
 export default function LicenseAdd() {
   const vendorid = useSelector((state: RootState) => state.auth.user?.id);
@@ -171,76 +168,110 @@ export default function LicenseAdd() {
     { isLoading: isDriverVerificationLoading }
   ] = useDriver_verificationMutation();
 
-
-  const handleSubmit = async () => {
-
+ const handleSubmit = async () => {
     try {
+      const payload = createDriverPayload(values, verifiedData);
 
-      const payload = createDriverPayload(
-        values,
-        verifiedData
-      );
-
-      console.log(
-        "ONBOARD DRIVER PAYLOAD",
-        payload
-      );
-
+      console.log('ONBOARD DRIVER PAYLOAD', payload);
 
       const resp = await driver_verification(payload).unwrap();
 
-
       if (resp?.status === '00') {
-
-        Alert.alert(
-          "Success",
-          resp.message || "Driver onboarded successfully"
-        );
-
-
-        navigation.reset({
-          index: 0,
-          routes: [
-            {
-              name: 'Dashboard',
-            }
-          ]
-        });
-
+        VendorSocket.onboardDriver(resp?.data?.DriverUserId || '')
+          .then((response: any) => {
+            console.log('Driver onboarded successfully:', response);
+            navigation.reset({
+              index: 0,
+              routes: [
+                {
+                  name: 'Dashboard',
+                },
+              ],
+            });
+          })
+          .catch((error: any) => {
+            console.error('Error onboarding driver:', error);
+          });
+      } else {
+        Alert.alert('Error', resp?.message || 'Something went wrong');
       }
-      else {
-
-        Alert.alert(
-          "Error",
-          resp?.message || "Something went wrong"
-        );
-
-      }
-
-
     } catch (error: any) {
-
-      console.log(
-        "Onboarding error:",
-        error
-      );
-
+      console.log('Onboarding error:', error);
 
       // RTK Query error handling
       const message =
-        error?.data?.message ||
-        error?.message ||
-        "Failed to onboard driver";
+        error?.data?.message || error?.message || 'Failed to onboard driver';
 
-
-      Alert.alert(
-        "Error",
-        message
-      );
-
+      Alert.alert('Error', message);
     }
-
   };
+  // const handleSubmit = async () => {
+
+  //   try {
+
+  //     const payload = createDriverPayload(
+  //       values,
+  //       verifiedData
+  //     );
+
+  //     console.log(
+  //       "ONBOARD DRIVER PAYLOAD",
+  //       payload
+  //     );
+
+
+  //     const resp = await driver_verification(payload).unwrap();
+
+
+  //     if (resp?.status === '00') {
+  //  VendorSocket.onboardDriver(resp?.data?.DriverUserId || '')
+  //         .then((response: any) => {
+  //           console.log('Driver onboarded successfully:', response);
+
+
+  //       navigation.reset({
+  //         index: 0,
+  //         routes: [
+  //           {
+  //             name: 'Dashboard',
+  //           }
+  //         ]
+  //       });
+
+  //     }
+  //     else {
+
+  //       Alert.alert(
+  //         "Error",
+  //         resp?.message || "Something went wrong"
+  //       );
+
+  //     }
+
+
+  //   } catch (error: any) {
+
+  //     console.log(
+  //       "Onboarding error:",
+  //       error
+  //     );
+
+
+  //     // RTK Query error handling
+  //     const message =
+  //       error?.data?.message ||
+  //       error?.message ||
+  //       "Failed to onboard driver";
+
+
+  //     Alert.alert(
+  //       "Error",
+  //       message
+  //     );
+
+  //   }
+
+  // };
 
 
   // 🔹 Handle verify button
