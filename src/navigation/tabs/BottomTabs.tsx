@@ -2,7 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Expense from '@modules/expense/Expense';
 import Payments from '@modules/payment/Payments';
-import Profile from '@modules/profile/Profile';
+import Profile from '@modules/profile/screens/Profile';
 import CustomTabBar from '@components/tabbar/CustumTab';
 import NewLoad from '@modules/loads/NewLoad';
 import HomeStack from '@navigation/stacks/StackNavigator';

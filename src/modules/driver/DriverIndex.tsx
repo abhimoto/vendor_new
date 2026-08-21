@@ -17,6 +17,7 @@ import { HOME_ROUTES } from '@navigation/routes';
 import { moderateScale, normalizeFont, wp } from '@utils/responsive';
 import spacing from '@utils/spacing';
 import { colors } from '@utils/colors';
+import SecondaryButton from '@components/buttons/SecondaryButton';
 
 export interface FormValues {
   licenseNumber?: string;
@@ -77,49 +78,49 @@ export default function DriverIndex() {
     'register',
   );
 
-const driver = route.params?.driverData || null;
+  const driver = route.params?.driverData || null;
 
   // ✅ Map API → Form
-const mappedValues: FormValues = useMemo(() => {
-  if (!driver) return initialValues;
+  const mappedValues: FormValues = useMemo(() => {
+    if (!driver) return initialValues;
 
-  return {
-    licenseNumber: driver.DrivingLicenseNo || '',
-    dateofbirth: driver.DOB || '',
-    mobileno: driver.Mobile || '',
-    fullname: driver.FullName || '',
-    nickname: driver.NickName || '',
-    email: driver.EmailId || '',
+    return {
+      licenseNumber: driver.DrivingLicenseNo || '',
+      dateofbirth: driver.DOB || '',
+      mobileno: driver.Mobile || '',
+      fullname: driver.FullName || '',
+      nickname: driver.NickName || '',
+      email: driver.EmailId || '',
 
-    building: driver.Building || '',
-    street: driver.Area || '',
-    pincode: driver.Pincode || '',
-    taluka: driver.Tahsil || '',
-    state: driver.State || '',
-    district: driver.District || '',
+      building: driver.Building || '',
+      street: driver.Area || '',
+      pincode: driver.Pincode || '',
+      taluka: driver.Tahsil || '',
+      state: driver.State || '',
+      district: driver.District || '',
 
-    aadharNumber: driver.AadharNo || '',
+      aadharNumber: driver.AadharNo || '',
 
-    referenceName: driver.ReferredPersonName || '',
-    referencePhone: driver.ReferredPersonContactNo || '',
-    relation: driver.Relation || '',
+      referenceName: driver.ReferredPersonName || '',
+      referencePhone: driver.ReferredPersonContactNo || '',
+      relation: driver.Relation || '',
 
-    licensefront: driver.LicenseFrontImage || '',
-    licenseback: driver.LicenseBackImage || '',
-    aadharfront: driver.AadharFrontImage || '',
-    aadharback: driver.AadharBackImage || '',
+      licensefront: driver.LicenseFrontImage || '',
+      licenseback: driver.LicenseBackImage || '',
+      aadharfront: driver.AadharFrontImage || '',
+      aadharback: driver.AadharBackImage || '',
+    };
+  }, [driver]);
+
+  console.log(mappedValues, 'mappedvalues')
+  const submit = (values: FormValues) => {
+    navigation.navigate(HOME_ROUTES.LICENSEADD, {
+      driverData: values,
+      driverId: driver?.UserId,
+      driverCode: driver?.DriverCode,
+      driverProfileId: driver?.DriverProfileId,
+    });
   };
-}, [driver]);
-
-console.log(mappedValues,'mappedvalues')
-const submit = (values: FormValues) => {
-  navigation.navigate(HOME_ROUTES.LICENSEADD, {
-    driverData: values,
-    driverId: driver?.UserId,
-      driverCode:driver?.DriverCode,
-    driverProfileId: driver?.DriverProfileId,
-  });
-};
 
 
 
@@ -192,12 +193,17 @@ const submit = (values: FormValues) => {
       {/* Form */}
       <Formik
         initialValues={mappedValues}
-        enableReinitialize={true}
+        enableReinitialize
         onSubmit={submit}
       >
         {({ handleSubmit, values, setFieldValue }) => (
           <View style={styles.content}>
-            <ScrollView showsVerticalScrollIndicator={false}>
+
+            <ScrollView
+              style={styles.formScroll}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+            >
               {activeTab === 'register' ? (
                 <DriverRegister
                   values={values}
@@ -211,18 +217,20 @@ const submit = (values: FormValues) => {
               )}
             </ScrollView>
 
-            <TouchableOpacity
-              style={styles.Submitbutton}
-              onPress={() => {
-                if (activeTab === 'register') {
-                  setActiveTab('document');
-                } else {
-                  handleSubmit();
-                }
-              }}
-            >
-              <Text style={styles.buttonText}>Next</Text>
-            </TouchableOpacity>
+            <View style={styles.bottomButtonContainer}>
+              <SecondaryButton
+                title={activeTab === 'register' ? 'Next' : 'Submit'}
+                onPress={() => {
+                  if (activeTab === 'register') {
+                    setActiveTab('document');
+                  } else {
+                    handleSubmit();
+                  }
+                }}
+                textStyle={styles.buttonText}
+              />
+            </View>
+
           </View>
         )}
       </Formik>
@@ -264,7 +272,6 @@ const styles = StyleSheet.create({
 
   content: {
     flex: 1,
-    paddingHorizontal: spacing.xl,
   },
 
   Submitbutton: {
@@ -283,12 +290,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 5
   },
+scrollContent: {
+  paddingHorizontal: spacing.xl,
+  paddingBottom: moderateScale(30),
+},
 
   buttonText: {
     color: '#fff',
     fontWeight: '600',
-    fontSize: normalizeFont(24),
-    alignSelf: 'center'
+    fontSize: normalizeFont(16),
+    textAlign: 'center',
   },
   tabRow: {
     flexDirection: 'row',
@@ -323,5 +334,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#fff',
+  },
+bottomButtonContainer: {
+  width: '100%',
+  paddingHorizontal: spacing.xl,
+  paddingTop: moderateScale(10),
+  paddingBottom: moderateScale(20),
+  backgroundColor: '#fff',
+  alignItems: 'center',
+},
+  formScroll: {
+    flex: 1,
   },
 });

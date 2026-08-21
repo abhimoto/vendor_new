@@ -21,6 +21,7 @@ import CustomDropdown from '@components/dropdown/CustomDropdown';
 import { Accounttypes, bankOptions } from '@utils/constants';
 import { setKycVerified } from '@app/redux/slices/AuthSlice';
 import { useUploadDocumentMutation } from '@app/redux/mutation/authApi';
+import SecondaryButton from '@components/buttons/SecondaryButton';
 
 export default function Bankdetails() {
   const [errors, setErrors] = useState<any>({});
@@ -38,6 +39,7 @@ export default function Bankdetails() {
     AccountType: '',
     PassbookPhoto: null as any,
   });
+  
   const validate = () => {
     let newErrors: any = {};
 
@@ -67,7 +69,7 @@ export default function Bankdetails() {
       [key]: value,
     }));
 
-    // clear error when user types
+  
     setErrors((prev: any) => ({
       ...prev,
       [key]: '',
@@ -153,16 +155,7 @@ export default function Bankdetails() {
           value={values.BankName}
           onChangeText={handleChange('BankName')}
         />
-        {/* Account Holder */}
-        {/* <CustomDropdown
-            data={bankOptions}
-            placeholder="Select Bank Options"
-            value={values.bank_name}
-            onSelect={item => {
-              handleChange('bank_name')(item.value);
-              handleChange('ifsc_code')(item.ifsc);
-            }}
-          /> */}
+
 
         {/* Account Number */}
         <LocalInput
@@ -174,7 +167,7 @@ export default function Bankdetails() {
           errorMessage={errors.AccountNumber}
         />
 
-        {/* Confirm Account Number */}
+    
         <LocalInput
           label="Confirm Account Number"
           value={values.ConfirmAccountNumber}
@@ -188,8 +181,7 @@ export default function Bankdetails() {
           value={values.AccountHolderName}
           onChangeText={handleChange('AccountHolderName')}
         />
-        {/* Account Type */}
-        {/* <Text style={styles.label}>Account Type</Text> */}
+
         <CustomDropdown
           label="Account Type"
           data={Accounttypes}
@@ -198,63 +190,7 @@ export default function Bankdetails() {
             handleChange('AccountType')(item.value);
           }}
         />
-        {/* 
-          <View style={styles.accountTypeRow}>
-            <TouchableOpacity
-              style={[
-                styles.accountTypeBtn,
-                values.account_type === 'saving' && styles.activeBtn,
-              ]}
-              onPress={() => handleChange('account_type')('saving')}
-            >
-              <Text
-                style={[
-                  styles.accountTypeText,
-                  values.account_type === 'saving' && styles.activeText,
-                ]}
-              >
-                Saving
-              </Text>
-            </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[
-                styles.accountTypeBtn,
-                values.account_type === 'current' && styles.activeBtn,
-              ]}
-              onPress={() => handleChange('account_type')('current')}
-            >
-              <Text
-                style={[
-                  styles.accountTypeText,
-                  values.account_type === 'current' && styles.activeText,
-                ]}
-              >
-                Current
-              </Text>
-            </TouchableOpacity>
-          </View> */}
-
-
-
-        {/* IFSC */}
-
-
-        {/* Bank Name */}
-        {/* <LocalInput
-            label="Bank Name"
-            value={values.bank_name}
-            onChangeText={handleChange('bank_name')}
-          /> */}
-
-        {/* Branch */}
-        {/* <LocalInput
-            label="Branch"
-            value={values.branch_name}
-            onChangeText={handleChange('branch_name')}
-          /> */}
-
-        {/* Upload Image */}
         <View style={styles.uploadBox}>
           <CustomImagePicker
             label="Add Your Passbook / Cheque Photo"
@@ -274,11 +210,11 @@ export default function Bankdetails() {
           ) : null}
         </View>
 
-        {/* Save Button */}
-        <CustomButton
-          title="Save"
+    
+        <SecondaryButton 
+           title="Save"
           onPress={handleSubmit}
-          style={styles.saveBtn}
+           style={styles.saveBtn}
         />
 
       </FormContainer>
@@ -345,7 +281,5 @@ const styles = StyleSheet.create({
     color: colors.primary,
     justifyContent: 'center',
     alignSelf: 'center',
-    height: 56,
-    width: 213
   },
 });

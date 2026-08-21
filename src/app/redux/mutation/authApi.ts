@@ -26,6 +26,13 @@ export const authApi = api.injectEndpoints({
         body,
       }),
     }),
+       updateprofile: builder.mutation<any, any>({
+      query: body => ({
+        url: '/vendor/profile/update',
+        method: 'POST',
+        body,
+      }),
+    }),
 
     addvehicle: builder.mutation<any, any>({
       query: body => ({
@@ -47,7 +54,7 @@ export const authApi = api.injectEndpoints({
 
     gstverify: builder.mutation<any, any>({
       query: body => ({
-        url: '/auth/kyc/gst',
+        url: '/vendor/kyc/gst',
         method: 'POST',
         body,
       }),
@@ -120,28 +127,35 @@ export const authApi = api.injectEndpoints({
       }),
     }),
 
-    deletevehicle: builder.mutation<any, {
-      vehicleid: string;
-      vendorid: string;
-      Remark: string;
-    }>({
-      query: body => ({
-        url: '/delete_vehicle',
-        method: 'POST',
-        body,
-      }),
-    }),
+deletevehicle: builder.mutation<
+  any,
+  {
+    VehicleId: string;
+    Remark: string;
+    RatingValue: number;
+  }
+>({
+  query: body => ({
+    url: '/vendor/vehicle/discontinue-vehicle',
+    method: 'POST',
+    body,
+  }),
+}),
 
-    deletedriver: builder.mutation<any, {
-      driverid: string;
-      vendorid: string;
-    }>({
-      query: body => ({
-        url: '/delete_driver',
-        method: 'POST',
-        body,
-      }),
-    }),
+discontinueDriver: builder.mutation<
+  any,
+  {
+    DriverProfileId: string;
+    Remark: string;
+    RatingValue: number;
+  }
+>({
+  query: body => ({
+    url: '/vendor/vehicle/discontinue-driver',
+    method: 'POST',
+    body,
+  }),
+}),
 
     updatevendordetails: builder.mutation<any, any>({
       query: body => ({
@@ -214,12 +228,13 @@ export const {
   useDeleteassignvehicleMutation,
   useUpdateassignvehicleMutation,
   useDeletevehicleMutation,
-  useDeletedriverMutation,
+ useDiscontinueDriverMutation,
   useVehicleeditMutation,
   useUpdatevendordetailsMutation,
   useUpdatevendorkycMutation,
   useDuplicatevehicleMutation,
   useAddvehicleMutation,
   useDessignVehicleMutation,
-  useUploadDocumentMutation
+  useUploadDocumentMutation,
+  useUpdateprofileMutation
 } = authApi;

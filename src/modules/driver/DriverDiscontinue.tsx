@@ -6,7 +6,7 @@ import { useRoute } from '@react-navigation/native';
 import { wp, hp, moderateScale } from '@utils/responsive';
 import { colors } from '@utils/colors';
 import AppHeader from '@components/custumcomponents/AppHeader';
-import { useDeletedriverMutation } from '@app/redux/mutation/authApi';
+import { useDiscontinueDriverMutation } from '@app/redux/mutation/authApi';
 import { useSelector } from 'react-redux';
 import { RootState } from '@app/redux';
 
@@ -30,15 +30,15 @@ export default function DriverDiscontinue({ navigation }: Props) {
 
   const { item } = route.params as any;
 
-  const [values, setValues] = useState<FormValues>({
-    drivername: item?.full_name || '',
-    mobileno: item?.contact_no || '',
-    licenseno: item?.driving_license_no || '',
-    reason: '',
-    rating: 0,
-  });
-
-  const [deletedriver, { isLoading }] = useDeletedriverMutation();
+ const [values, setValues] = useState({
+  drivername: item?.DriverName || '',
+  mobileno: item?.MobileNo || '',
+  licenseno: item?.LicenseNumber || '',
+  reason: '',
+  rating: 0,
+});
+const [discontinueDriver, { isLoading }] =
+  useDiscontinueDriverMutation();
 
   const handleChange = (
     field: keyof FormValues,
@@ -52,14 +52,13 @@ export default function DriverDiscontinue({ navigation }: Props) {
 
   const handleSubmit = async () => {
     try {
-      const payload = {
-        driver_id: item?.driver_id,
-        vendorid: vendorid,
-        remark: values.reason,
-        RatingValue : values.rating,
-      };
+    const payload = {
+  DriverProfileId: item?.DriverProfileId,
+  Remark: values.reason,
+  RatingValue: values.rating,
+};
 
-      const response = await deletedriver(payload).unwrap();
+      const response = await discontinueDriver(payload).unwrap();
 
       if(response.status ==='00')
         Alert.alert(response.message)

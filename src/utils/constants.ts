@@ -43,9 +43,23 @@ export const vehicles = [
   { id: '4', number: 'MPS46F5158', status: 'verified' },
 ];
 
-export const truckBodyTypes = [
-  { label: 'Open Body', value: 'open_body' },
-  { label: 'Closed Body', value: 'closed_body' },
+export const segmentoptions = [
+  {
+    label: 'Open Body',
+    value: 'OPEN_BODY',
+  },
+  {
+    label: 'Container',
+    value: 'CONTAINER',
+  },
+  {
+    label: 'Closed Body',
+    value: 'CLOSED_BODY',
+  },
+  {
+    label: 'Trailer',
+    value: 'TRAILER',
+  },
 ];
 
 export const verifiedvehicles = [

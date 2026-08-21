@@ -2,7 +2,6 @@ import { Alert, StyleSheet, Text, View } from 'react-native';
 import React, { useState } from 'react';
 import AppHeader from '@components/custumcomponents/AppHeader';
 import LocalInput from '@components/Inputs/LocalInput';
-import CustomButton from '@components/buttons/CustomButton';
 import { columns, formatDate, licensedata } from '@utils/constants';
 import commonstyles from '@utils/commonstyles';
 import spacing from '@utils/spacing';
@@ -11,17 +10,14 @@ import { normalizeFont, wp } from '@utils/responsive';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useLicenseverifyMutation } from '@app/redux/mutation/authApi';
 import { useDriver_verificationMutation } from '@app/redux/mutation/authApi';
-import { useSelector } from 'react-redux';
-import { RootState } from '@app/redux';
 import VendorSocket from '../../../sockets/VendorSocket';
+import SecondaryButton from '@components/buttons/SecondaryButton';
 
 export default function LicenseAdd() {
-  const vendorid = useSelector((state: RootState) => state.auth.user?.id);
   const navigation = useNavigation<any>();
   const [isVerified, setIsVerified] = useState(false);
   const route = useRoute<any>();
   const driverData = route.params?.driverData;
-  const driverid = route.params?.driverId;
   const licenseNo = driverData?.licenseNumber || '';
   const driverCode = route.params?.driverCode;
   const dobString = driverData?.dateofbirth; // string from API
@@ -39,12 +35,45 @@ export default function LicenseAdd() {
   });
   const [tableData, setTableData] = useState<any[]>([]);
 
-  console.log(tableData)
-  const data = [
-    { code: '262603', issue: '19 - 09 - 2020', expire: '19 - 09 - 2025' },
-    { code: '262603', issue: '19 - 09 - 2020', expire: '19 - 09 - 2025' },
-    { code: '262603', issue: '19 - 09 - 2020', expire: '19 - 09 - 2025' },
-  ];
+// const createDriverPayload = (
+//   form: any,
+//   verifiedData: any,
+// ) => {
+//   return {
+//     DriverCode: driverCode || 'DRV001',
+
+//     LicenseNumber: 'MH1220231234567',
+//     DOB: '1995-01-15',
+//     FullName: 'REHMAT ALI',
+
+//     RelativeName: 'MOHAMMED ALI',
+//     Address: 'Room No. 12, Ghatkopar West, Mumbai, Maharashtra - 400086',
+
+//     IssuingRTO: 'MH01',
+//     IssueDate: '2023-01-10',
+
+//     // Non Transport Validity
+//     NTValidityFrom: '2023-01-10',
+//     NTValidityTo: '2043-01-09',
+
+//     // Transport Validity
+//     TValidityFrom: '2023-01-10',
+//     TValidityTo: '2028-01-09',
+
+//     // Vehicle Class Details
+//     VehicleClassCodes: ['MCWG', 'LMV', 'TRANS'],
+//     VehicleClassIssueDates: [
+//       '2023-01-10',
+//       '2023-01-10',
+//       '2023-01-10',
+//     ],
+//     VehicleClassExpiryDates: [
+//       '2028-01-09',
+//       '2028-01-09',
+//       '2028-01-09',
+//     ],
+//   };
+// };
 
   const createDriverPayload = (
     form: any,
@@ -53,11 +82,7 @@ export default function LicenseAdd() {
 
     return {
 
-      // Driver Mapping
       DriverCode: driverCode || '',
-
-
-      // License Details
       LicenseNumber:
         verifiedData?.licenseNumber ||
         form.licenseNo,
@@ -168,7 +193,7 @@ export default function LicenseAdd() {
     { isLoading: isDriverVerificationLoading }
   ] = useDriver_verificationMutation();
 
- const handleSubmit = async () => {
+  const handleSubmit = async () => {
     try {
       const payload = createDriverPayload(values, verifiedData);
 
@@ -179,7 +204,8 @@ export default function LicenseAdd() {
       if (resp?.status === '00') {
         VendorSocket.onboardDriver(resp?.data?.DriverUserId || '')
           .then((response: any) => {
-            console.log('Driver onboarded successfully:', response);
+            Alert.alert(response?.message || 'Driver onboarded successfully')
+            // console.log('Driver onboarded successfully:', response);
             navigation.reset({
               index: 0,
               routes: [
@@ -205,6 +231,7 @@ export default function LicenseAdd() {
       Alert.alert('Error', message);
     }
   };
+  
   // const handleSubmit = async () => {
 
   //   try {
@@ -275,6 +302,9 @@ export default function LicenseAdd() {
 
 
   // 🔹 Handle verify button
+ 
+ 
+ 
   const handleVerify = async () => {
     if (!values.licenseNo || !values.dob) {
       Alert.alert(
@@ -374,19 +404,15 @@ export default function LicenseAdd() {
         </View>
 
 
+        <SecondaryButton title={
+          isLoading
+            ? 'Verifying...'
+            : isVerified
+              ? 'Verified'
+              : 'Verify License'
+        }
+          onPress={handleVerify} style={styles.verify} />
 
-        <CustomButton
-          title={
-            isLoading
-              ? 'Verifying...'
-              : isVerified
-                ? 'Verified'
-                : 'Verify License'
-          }
-          style={styles.button}
-          onPress={handleVerify}
-        // disabled={isLoading || isVerified}
-        />
       </View>
 
       {/* Info Section */}
@@ -433,18 +459,21 @@ export default function LicenseAdd() {
           ))}
 
         </View>
+        <SecondaryButton
+        title={isDriverVerificationLoading ? 'Submitting...' : 'Submit'}
+        onPress={handleSubmit} style={{alignSelf:'center'}} />
         {/* <Custumtable
           columns={columns}
           data={tableData}
           keyExtractor={item => item.id}
         /> */}
       </View>
-      <CustomButton
-        title={isDriverVerificationLoading ? 'Submitting...' : 'Submit'}
-        onPress={handleSubmit}
+      
+      {/* <CustomButton
+      
         // disabled={isDriverVerificationLoading}
         style={styles.submit}
-      />
+      /> */}
     </View>
   );
 }
@@ -467,7 +496,10 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     fontSize: normalizeFont(24)
   },
-
+  verify: {
+    marginTop: spacing.sm,
+    alignSelf: 'center',
+  },
   tableContainer: {
     flex: 1,
     marginTop: spacing.md,

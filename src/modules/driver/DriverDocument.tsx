@@ -1,22 +1,18 @@
 import { StyleSheet, Text, View, Image } from 'react-native';
 import React, { useState } from 'react';
-import CustomImagePicker from '@components/imagepicker/ImagePicker';
 import CustomInput from '@components/Inputs/CustomInput';
 import spacing from '@utils/spacing';
 import { moderateScale } from '@utils/responsive';
-import CustomButton from '@components/buttons/CustomButton';
 type Props = {
   values: any;
   setFieldValue: (field: string, value: any) => void;
 };
-export default function DriverDocument({ values, setFieldValue }: Props) {
-  const formatAadhaar = (val: string = '') => {
-    return val
-      .replace(/\D/g, '')        // remove non-digits
-      .replace(/(\d{4})(?=\d)/g, '$1 ') // add space after every 4 digits
-      .trim();
-  };
 
+
+export default function DriverDocument({ values, setFieldValue }: Props) {
+  const aadharFront = `https://stag.motohelpindia.com${values?.aadharfront || ''}`;
+const aadharBack = `https://stag.motohelpindia.com${values?.aadharback || ''}`;
+console.log(aadharFront,aadharBack)
 
   return (
     <View style={styles.container}>
@@ -63,9 +59,9 @@ export default function DriverDocument({ values, setFieldValue }: Props) {
           </Text>
 
           {values?.aadharfront ? (
-            <Image
+              <Image
               source={{
-                uri: values.aadharfront,
+                uri: aadharFront,
               }}
               style={styles.image}
               resizeMode="cover"
@@ -89,9 +85,9 @@ export default function DriverDocument({ values, setFieldValue }: Props) {
           </Text>
 
           {values?.aadharback ? (
-            <Image
+              <Image
               source={{
-                uri: values.aadharback,
+                uri: aadharBack,
               }}
               style={styles.image}
               resizeMode="cover"

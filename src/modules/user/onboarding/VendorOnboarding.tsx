@@ -53,8 +53,6 @@ const mapVendorPayload = (values: VendorFormValues) => {
   };
 };
 export default function VendorOnboarding() {
-  const navigation = useNavigation<any>();
-  const currentAuth = store.getState().auth;
   const mobile = useSelector((state: RootState) => state.auth.user?.mobile);
   const initialValues: VendorFormValues = {
     companyName: '',
@@ -208,6 +206,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: wp(4),
     paddingVertical: hp(2),
+    backgroundColor:'#FBFBF8'
   },
 
   title: {

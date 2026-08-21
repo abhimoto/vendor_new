@@ -98,13 +98,13 @@ const styles = StyleSheet.create({
 
   centerButton: {
     backgroundColor: colors.primary,
-    width: 60,
-    height: 60,
+    width: 50,
+    height: 50,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 10,
     transform: [{ rotate: '45deg' }],
-    marginTop: -53, // lifts button but keeps label aligned
+    marginTop: -30, // lifts button but keeps label aligned
   },
 });

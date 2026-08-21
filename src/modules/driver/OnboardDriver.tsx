@@ -39,7 +39,6 @@ import {
   Surface,
   HelperText,
 } from 'react-native-paper';
-// import socket from '@redux/sockets/sockets/socket.instance';
 import { useSelector } from 'react-redux';
 import { RootState } from '@app/redux';
 import { useLazyVerifyDriverQrQuery } from '@app/redux/query/queryApi';
@@ -50,18 +49,11 @@ interface DriverData {
 }
 
 export default function OnboardDriver() {
-  const vendorid = useSelector(
-    (state: RootState) => state.auth.user?.id,
-  );
   const navigation = useNavigation<any>();
-
   const [visible, setVisible] = useState(false);
-
   const [userId, setUserId] = useState('');
-
   const [userIdError, setUserIdError] =
     useState('');
-
   const [showScanner, setShowScanner] =
     useState(false);
 
@@ -168,7 +160,7 @@ const handleScan = useCallback(
     try {
       console.log('Scanned URL:', data);
 
-      // Automatically call the scanned URL
+
       const response = await verifyDriverQr(data).unwrap();
 
       console.log(response, 'driverdata');
@@ -179,7 +171,7 @@ const handleScan = useCallback(
         setShowScanner(false);
 
         navigation.navigate(HOME_ROUTES.DRIVERINDEX, {
-          driverData: driver, // pass complete driver object
+          driverData: driver, 
         });
       } else {
         Alert.alert(
@@ -223,7 +215,6 @@ const handleScan = useCallback(
     }, 100);
   }, []);
 
-  /* ---------------- QR SCANNER ---------------- */
 
   if (showScanner) {
     return (
@@ -408,14 +399,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
 
-  userIdButton: {
-    width:'100%',
-    height: moderateScale(56),
-    borderRadius: moderateScale(12),
-    borderWidth: 2,
-    borderColor: colors.primary,
-    backgroundColor: 'transparent',
-  },
+userIdButton: {
+  width: '100%',
+  height: moderateScale(56),
+  borderRadius: moderateScale(12),
+  borderWidth: 2,
+  borderColor: colors.primary,
+  backgroundColor: 'transparent',
+  justifyContent: 'center',
+  alignItems: 'center',
+},
 
   buttonText: {
     fontSize: moderateScale(16),
@@ -423,12 +416,12 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 
-  userIdButtonText: {
-    width:'100%',
-    fontSize: moderateScale(16),
-    fontWeight: '600',
-    color: colors.primary
-  },
+ userIdButtonText: {
+  fontSize: moderateScale(16),
+  fontWeight: '600',
+  color: colors.primary,
+  textAlign: 'center',
+},
 
   divider: {
     flexDirection: 'row',

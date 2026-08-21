@@ -1,4 +1,9 @@
-export default {
-  BASE_URL: 'https://uat.motohelpindia.com/vendor/v1/',
-  SOCKET_URL: 'https://uat.motohelpindia.com',
+const dev = {
+  BASE_URL: 'https://stag.motohelpindia.com/api/v1',
+
+  IMAGE_BASE_URL: 'https://stag.motohelpindia.com',
+
+  SOCKET_URL: 'https://stag.motohelpindia.com',
 };
+
+export default dev;

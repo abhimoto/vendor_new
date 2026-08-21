@@ -18,6 +18,8 @@ import { colors } from '@utils/colors';
 import MapView, { Marker } from 'react-native-maps';
 import DashboardAppHeader from '@components/header/DashboardAppHeader';
 import DashboardQuickActions from '@components/header/DashboardQuickActions';
+import CustomButton from '@components/buttons/CustomButton';
+import VendorSocket from '../../sockets/VendorSocket';
 
 const dashboardCards = [
   {
@@ -100,7 +102,10 @@ export default function Dashboard() {
         onMenuPress={() => navigation.openDrawer()}
       />
       <DashboardQuickActions />
-
+{/* <CustomButton title='onboard' onPress={()=>VendorSocket.onboardDriver("D7ABED47-D7CC-40E8-8A62-09D5D4B64C3B")} />
+  <CustomButton title='offnboard' onPress={()=>VendorSocket.offboardDriver("D7ABED47-D7CC-40E8-8A62-09D5D4B64C3B")} />
+    <CustomButton title='asiign' onPress={()=>VendorSocket.vehicleAssignToDriver("D7ABED47-D7CC-40E8-8A62-09D5D4B64C3B","MH09EJ6943")} />
+      <CustomButton title='deassign' onPress={()=>VendorSocket.vehicleDeassignToDriver("D7ABED47-D7CC-40E8-8A62-09D5D4B64C3B","MH09EJ6943")} /> */}
       {/* Map (FULL SCREEN) */}
       <View style={styles.mapContainer}>
         {/* <AdvancedMap

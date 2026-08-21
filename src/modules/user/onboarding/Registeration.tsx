@@ -12,6 +12,7 @@ import { colors } from '@utils/colors';
 import { debounce } from '@utils/helpers';
 import SecondaryButton from '@components/buttons/SecondaryButton';
 import { useLazyGetPincodeQuery } from '@app/redux/query/queryApi';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 type Props = {
   onNext: () => void;
@@ -146,15 +147,21 @@ const debouncedPincode = useMemo(
         </View>
       </View>
 
-      {/* Next Button */}
-      {/* <CustomButton
-    
-     
-        style={styles.button}
-        textStyle={styles.nextText}
-      /> */}
-      <SecondaryButton     onPress={onNext}     title="Next"/>
-
+ 
+   <SecondaryButton
+  onPress={onNext}
+  title="Next"
+  style={styles.button}
+  textStyle={styles.nextText}
+  icon={
+    <Ionicons
+      name="arrow-forward"
+      size={20}
+      color="#FFFFFF"
+    />
+  }
+  iconPosition="right"
+/>
       {/* Snackbar */}
       <AppSnackbar
         visible={snackbar.visible}
@@ -181,14 +188,12 @@ const styles = StyleSheet.create({
   button: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.primary,
-    width: 231,
-    height: 56,
     borderRadius: 12,
     marginTop: 10,
     alignSelf: 'center',
   },
   nextText: {
     fontSize: 24,
+    fontWeight:'600',
   },
 });

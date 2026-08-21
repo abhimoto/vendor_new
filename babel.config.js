@@ -1,5 +1,6 @@
 module.exports = {
   presets: ['module:@react-native/babel-preset'],
+
   plugins: [
     [
       'module-resolver',
@@ -8,6 +9,7 @@ module.exports = {
         alias: {
           '@app': './src/app',
           '@store': './src/app/redux',
+          '@config': './src/config',
           '@components': './src/components',
           '@modules': './src/modules',
           '@navigation': './src/navigation',
@@ -21,6 +23,6 @@ module.exports = {
       },
     ],
 
-    'react-native-reanimated/plugin', // MUST BE LAST
+    'react-native-reanimated/plugin',
   ],
 };

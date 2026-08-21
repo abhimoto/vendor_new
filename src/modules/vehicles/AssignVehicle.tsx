@@ -23,12 +23,23 @@ import vehicleAssignToDriver from './../../sockets/VendorSocket'
 import VendorSocket from './../../sockets/VendorSocket';
 
 
+type DriverDropdownItem = DropdownItem & {
+  driverUserId: string;
+  driverName: string;
+};
+
+type VehicleDropdownItem = DropdownItem & {
+  vehicleNo: string;
+};
 type Vehicle = {
   id: string;
   tripId: string;
   date: string;
   vehicleNumber: string;
+  vehicleType: string;
   driverName: string;
+  driverLicenseNo: string;
+  Driveruserid: string;
   driverId: string;
   vehicleId: string;
   status: string;
@@ -36,8 +47,8 @@ type Vehicle = {
 };
 
 export default function AssignVehicle() {
-  const [searchVehicle, setSearchVehicle] = useState<DropdownItem | null>(null);
-  const [searchDriver, setSearchDriver] = useState<DropdownItem | null>(null);
+  const [searchVehicle, setSearchVehicle] = useState<VehicleDropdownItem | null>(null);
+  const [searchDriver, setSearchDriver] = useState<DriverDropdownItem | null>(null);
   const [selectedTab, setSelectedTab] = useState<'assign' | 'deassign'>('assign');
   const [searchText, setSearchText] = useState('');
   const [vehicleFocus, setVehicleFocus] = useState(false);
@@ -61,6 +72,7 @@ export default function AssignVehicle() {
   } = useGetunAssignedDriversQuery(undefined, {
     pollingInterval: 30000,
   });
+  console.log(driversData, "driver data")
 
   const {
     data: vehiclesData,
@@ -70,7 +82,7 @@ export default function AssignVehicle() {
   } = useGetunAssignedVehiclesQuery(undefined, {
     pollingInterval: 30000,
   })
-
+  console.log(vehiclesData, "driver data")
   const {
     data: assignedData,
     isLoading: assignedLoading,
@@ -80,10 +92,14 @@ export default function AssignVehicle() {
   } = useGetassigneddetailsQuery(undefined, {
     pollingInterval: 30000,
   });
-  const refreshAll = useCallback(() => {
-    refetchAssigned();
-    refetchDrivers();
-    refetchVehicles();
+
+  console.log(assignedData,'assigneddataaaa')
+  const refreshAll = useCallback(async () => {
+    await Promise.all([
+      refetchAssigned(),
+      refetchDrivers(),
+      refetchVehicles(),
+    ]);
   }, [refetchAssigned, refetchDrivers, refetchVehicles]);
   // const drivers = useMemo(() => {
   //   if (!driversData?.data) return [];
@@ -98,63 +114,69 @@ export default function AssignVehicle() {
   //     isActive: d.IsActive,
   //   }));
   // }, [driversData]);
-  const drivers = useMemo(
+  const drivers = useMemo<DriverDropdownItem[]>(
     () =>
       driversData?.data?.map((d: any) => ({
         label: `${d.DriverName} (${d.MobileNo})`,
         value: d.DriverProfileId,
+        driverUserId: d.Driveruserid,
+        driverName: d.DriverName,
       })) ?? [],
     [driversData]
   );
-  // const vehicles = useMemo(() => {
-  //   if (!vehiclesData?.data) return [];
-
-  //   return vehiclesData.data
-  //     .filter((v: any) => v.IsVerified) // optional: only verified vehicles
-  //     .map((v: any) => ({
-  //       label: `${v.VehicleNo} (${v.BodyType || 'Vehicle'})`,
-  //       value: v.VehicleId,
-  //       vehicleNo: v.VehicleNo,
-  //       loadingCapacity: v.LoadingCapacity,
-  //       vehicleType: v.VehicleType,
-  //       bodyType: v.BodyType,
-  //       isVerified: v.IsVerified,
-  //       isActive: v.IsActive,
-  //     }));
-  // }, [vehiclesData]);
 
 
 
-  const vehicles = useMemo(
+
+  const vehicles = useMemo<VehicleDropdownItem[]>(
     () =>
       vehiclesData?.data
         ?.filter((v: any) => v.IsVerified)
         .map((v: any) => ({
           label: `${v.VehicleNo} (${v.BodyType || 'Vehicle'})`,
           value: v.VehicleId,
+          vehicleNo: v.VehicleNo,
         })) ?? [],
     [vehiclesData]
   );
+  
   const assignedList = useMemo(() => {
     if (assignedError || !assignedData?.data) return [];
 
     return assignedData.data.map((item: any) => ({
       id: item.AssignmentId,
       tripId: item.AssignmentId,
+
       vehicleNumber: item.VehicleNo || 'N/A',
+
+      vehicleType:
+        item.VehicleType ||
+        item.BodyType ||
+        'Goods carrier',
+
       driverName: item.DriverName || 'N/A',
+
+      driverLicenseNo:
+        item.license_number || 'N/A',
+
       driverId: item.DriverProfileId,
+     Driveruserid: item.DriverUserid,
       vehicleId: item.VehicleId,
+
       date: item.AssignedAt
-        ? new Date(item.AssignedAt).toLocaleDateString()
+        ? new Date(item.AssignedAt).toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        })
         : 'N/A',
+
       status: item.IsActive ? 'Active' : 'Inactive',
-      type:
-        item.IsActive
-          ? 'assign'
-          : 'deassign',
+
+      type: item.IsActive ? 'assign' : 'deassign',
     }));
   }, [assignedData, assignedError]);
+
 
   const filteredList = useMemo(() => {
     const query = searchText.toLowerCase().trim();
@@ -201,66 +223,92 @@ export default function AssignVehicle() {
         VehicleId: searchVehicle.value,
       };
 
-      console.log('Assign Payload:', payload);
-
       const response = await assignVehicle(payload).unwrap();
 
       if (response?.status === '00') {
-        VendorSocket.vehicleAssignToDriver(searchDriver?.)
-        Alert.alert('Success', 'Vehicle assigned successfully');
-
-
-        clearDropdownSelections();
-        refreshAll();
-      } else {
-        Alert.alert('Assignment Failed', response?.message || 'Something went wrong');
-      }
-    } catch (err: any) {
-      console.error('Assign Error:', err);
-      Alert.alert(
-        'Error',
-        err?.data?.message || err?.message || 'Failed to assign vehicle'
-      );
-    }
-  };
-
-  const handleDeassign = async (item: Vehicle) => {
-    try {
-      const payload = {
-        DriverProfileId: item.driverId,
-        VehicleId: item.vehicleId,
-      };
-
-      const response = await deassign(payload).unwrap();
-
-      if (response?.status === '00') {
-    
-        Alert.alert(
-          'Success',
-          `Vehicle ${item.vehicleNumber} has been deassigned successfully`
+        await VendorSocket.vehicleAssignToDriver(
+          searchDriver.driverUserId,
+          searchVehicle.vehicleNo,
         );
 
-        // Refresh lists
+        Alert.alert('Success', 'Vehicle assigned successfully');
+
+        clearDropdownSelections();
         refetchAssigned();
         refetchDrivers();
         refetchVehicles();
       } else {
         Alert.alert(
-          'Deassignment Failed',
-          response?.message || 'Something went wrong'
+          'Assignment Failed',
+          response?.message || 'Something went wrong',
         );
       }
     } catch (err: any) {
-      console.error('Deassign Error:', err);
+      console.error('Assign Error:', err);
 
       Alert.alert(
         'Error',
-        err?.data?.message ||
-        err?.message ||
-        'Failed to deassign vehicle. Please try again.'
+        err?.data?.message || err?.message || 'Failed to assign vehicle',
       );
     }
   };
+
+  const handleDeassign = async (item: Vehicle) => {
+  try {
+    console.log('DEASSIGN ITEM:', item);
+    console.log('DriverProfileId:', item.driverId);
+    console.log('Driveruserid:', item.Driveruserid);
+    console.log('VehicleId:', item.vehicleId);
+    console.log('VehicleNumber:', item.vehicleNumber);
+
+    if (!item.Driveruserid) {
+      Alert.alert(
+        'Error',
+        'Driver User ID is missing. Please refresh the list.',
+      );
+      return;
+    }
+
+    const payload = {
+      DriverProfileId: item.driverId,
+      VehicleId: item.vehicleId,
+    };
+
+    const response = await deassign(payload).unwrap();
+
+    if (response?.status === '00') {
+      await VendorSocket.vehicleDeassignToDriver(
+        item.Driveruserid,
+        item.vehicleNumber,
+      );
+
+      Alert.alert(
+        'Success',
+        `Vehicle ${item.vehicleNumber} has been deassigned successfully`,
+      );
+
+      await Promise.all([
+        refetchAssigned(),
+        refetchDrivers(),
+        refetchVehicles(),
+      ]);
+    } else {
+      Alert.alert(
+        'Deassignment Failed',
+        response?.message || 'Something went wrong',
+      );
+    }
+  } catch (err: any) {
+    console.error('Deassign Error:', err);
+
+    Alert.alert(
+      'Error',
+      err?.data?.message ||
+        err?.message ||
+        'Failed to deassign vehicle. Please try again.',
+    );
+  }
+};
 
   const handleUpdate = async (item: Vehicle) => {
     Alert.alert(
@@ -327,69 +375,162 @@ export default function AssignVehicle() {
   };
 
   // Render list item
-  const renderItem = useCallback(({ item }: { item: Vehicle }) => (
-    <View style={styles.card}>
-      <View style={styles.rowBetween}>
-        <View style={styles.topBadge}>
-          <Text style={styles.topBadgeText}>ID: {item.tripId}</Text>
-        </View>
-        <View style={styles.topBadge}>
-          <Text style={styles.topBadgeText}>{item.date}</Text>
-        </View>
-      </View>
+  const renderItem = useCallback(
+    ({ item }: { item: Vehicle }) => (
+      <View style={styles.assignmentCard}>
 
-      <View style={styles.divider} />
+        {/* Top Assignment / Date */}
+        <View style={styles.topRow}>
+          <View style={styles.assignmentBadge}>
+            <Text
+              style={styles.assignmentText}
+              numberOfLines={1}>
+              Assign {item.tripId}
+            </Text>
+          </View>
 
-      <View style={styles.detailsRow}>
-        <View style={styles.detailColumn}>
-          <Text style={styles.label}>Vehicle Number</Text>
-          <Text style={styles.value}>{item.vehicleNumber}</Text>
-        </View>
-        <View style={styles.detailColumn}>
-          <Text style={styles.label}>Driver Name</Text>
-          <Text style={styles.value}>{item.driverName}</Text>
-        </View>
-      </View>
-
-      <View style={styles.rowBetween}>
-        <View style={[styles.status, item.status === 'Active' ? styles.activeStatus : styles.inactiveStatus]}>
-          <Text style={styles.statusText}>{item.status}</Text>
+          <View style={styles.dateBadge}>
+            <Text style={styles.dateText} numberOfLines={1}>
+              {item.date}
+            </Text>
+          </View>
         </View>
 
-        {selectedTab === 'deassign' ? (
+        {/* Vehicle + Driver */}
+        <View style={styles.infoRow}>
+
+          {/* Vehicle */}
+          <View style={styles.infoSection}>
+            <View style={styles.iconCircle}>
+              <MaterialIcons
+                name="local-shipping"
+                size={18}
+                color={colors.primary}
+              />
+            </View>
+
+            <View style={styles.infoContent}>
+              <Text style={styles.infoLabel}>
+                Vehicle Number
+              </Text>
+
+              <Text
+                style={styles.vehicleNumber}
+                numberOfLines={1}>
+                {item.vehicleNumber}
+              </Text>
+
+              <Text
+                style={styles.vehicleType}
+                numberOfLines={1}>
+                {item.vehicleType}
+              </Text>
+            </View>
+          </View>
+
+          {/* Vertical Divider */}
+          <View style={styles.verticalDivider} />
+
+          {/* Driver */}
+          <View style={styles.infoSection}>
+            <View style={styles.iconCircle}>
+              <MaterialIcons
+                name="person-outline"
+                size={19}
+                color={colors.primary}
+              />
+            </View>
+
+            <View style={styles.infoContent}>
+              <Text style={styles.infoLabel}>
+                Driver Name
+              </Text>
+
+              <Text
+                style={styles.driverName}
+                numberOfLines={1}>
+                {item.driverName}
+              </Text>
+
+              <Text
+                style={styles.driverLicense}
+                numberOfLines={1}>
+                {item.driverLicenseNo}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Dotted Divider */}
+        <View style={styles.dottedDivider} />
+
+        {/* Bottom */}
+        <View style={styles.bottomRow}>
+
+          {/* Status */}
+          <View
+            style={[
+              styles.statusBadge,
+              item.status === 'Active'
+                ? styles.activeStatus
+                : styles.inactiveStatus,
+            ]}>
+            <MaterialIcons
+              name={
+                item.status === 'Active'
+                  ? 'check-circle-outline'
+                  : 'cancel'
+              }
+              size={14}
+              color={
+                item.status === 'Active'
+                  ? '#20A464'
+                  : '#777'
+              }
+            />
+
+            <Text
+              style={[
+                styles.statusText,
+                item.status === 'Active'
+                  ? styles.activeStatusText
+                  : styles.inactiveStatusText,
+              ]}>
+              {item.status}
+            </Text>
+          </View>
+
+          {/* Delete */}
           <TouchableOpacity
             onPress={() => confirmDeassign(item)}
             style={styles.deleteButton}
             activeOpacity={0.7}
-            disabled={isdeassigning}
-          >
+            disabled={isdeassigning}>
+
             {isdeassigning ? (
-              <ActivityIndicator size="small" color="#FF4444" />
-            ) : (
-              <FontAwesome name="trash-o" size={22} color="#FF4444" />
-            )}
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            onPress={() => handleUpdate(item)}
-            style={styles.editButton}
-            activeOpacity={0.7}
-            disabled={isdeassigning}
-          >
-            {isdeassigning ? (
-              <ActivityIndicator size="small" color="#3F5C8A" />
-            ) : (
-              <MaterialIcons
-                name="edit"
-                size={22}
-                color="#3F5C8A"
+              <ActivityIndicator
+                size="small"
+                color="#FF3B30"
               />
+            ) : (
+              <>
+                <MaterialIcons
+                  name="delete-outline"
+                  size={17}
+                  color="#FF3B30"
+                />
+
+                <Text style={styles.deleteText}>
+                  Delete
+                </Text>
+              </>
             )}
           </TouchableOpacity>
-        )}
+        </View>
       </View>
-    </View>
-  ), [selectedTab]);
+    ),
+    [isdeassigning, confirmDeassign],
+  );
   const keyExtractor = useCallback((item: Vehicle) => item.id, []);
   const onRefresh = useCallback(() => {
     refetchAssigned();
@@ -412,7 +553,6 @@ export default function AssignVehicle() {
       </View>
     );
   }
-
 
 
   return (
@@ -480,7 +620,7 @@ export default function AssignVehicle() {
               onFocus={() => setVehicleFocus(true)}
               onBlur={() => setVehicleFocus(false)}
               onChange={item => {
-                setSearchVehicle(item);
+                setSearchVehicle(item as VehicleDropdownItem);
                 setVehicleFocus(false);
               }}
             />
@@ -521,7 +661,7 @@ export default function AssignVehicle() {
               onFocus={() => setDriverFocus(true)}
               onBlur={() => setDriverFocus(false)}
               onChange={item => {
-                setSearchDriver(item);
+                setSearchDriver(item as DriverDropdownItem);
                 setDriverFocus(false);
               }}
             />
@@ -709,80 +849,193 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 24,
   },
-  card: {
-    backgroundColor: '#fff',
-    padding: spacing.md,
-    borderRadius: 10,
-    marginBottom: spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  rowBetween: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  topBadge: {
+  assignmentCard: {
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    backgroundColor: '#FAFAFA',
+    borderColor: '#E5E5E5',
+    borderRadius: 2,
+    marginBottom: 10,
+    paddingHorizontal: 8,
+    paddingTop: 8,
+    paddingBottom: 7,
+
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
   },
-  topBadgeText: {
-    color: colors.primary,
-    fontWeight: '600',
-    fontSize: 12,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#E0E0E0',
-    marginVertical: spacing.md,
-  },
-  detailsRow: {
+
+  topRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spacing.md,
+    gap: 12,
   },
-  detailColumn: {
+
+  assignmentBadge: {
     flex: 1,
+    height: 31,
+    backgroundColor: '#F0F3FB',
+    borderRadius: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
   },
-  label: {
+
+  dateBadge: {
+    flex: 1,
+    height: 31,
+    backgroundColor: '#F0F3FB',
+    borderRadius: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+  },
+
+  assignmentText: {
+    color: '#3F5C8A',
     fontSize: 12,
-    color: '#666',
-    fontWeight: '500',
-    marginBottom: 4,
+    fontWeight: '700',
   },
-  value: {
-    fontWeight: '600',
-    fontSize: 14,
+
+  dateText: {
+    color: '#3F5C8A',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 14,
+    minHeight: 52,
+  },
+
+  infoSection: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    minWidth: 0,
+  },
+
+  iconCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#F2F5FA',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+
+  infoContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  infoLabel: {
+    fontSize: 10,
+    color: '#222',
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+
+  vehicleNumber: {
+    fontSize: 12,
     color: '#333',
+    fontWeight: '700',
   },
-  status: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 6,
+
+  vehicleType: {
+    fontSize: 10,
+    color: '#333',
+    marginTop: 1,
   },
-  activeStatus: {
-    backgroundColor: '#4CAF50',
-  },
-  inactiveStatus: {
-    backgroundColor: '#9E9E9E',
-  },
-  statusText: {
-    color: '#fff',
+
+  driverName: {
     fontSize: 12,
-    fontWeight: '500',
+    color: '#333',
+    fontWeight: '700',
   },
+
+  driverLicense: {
+    fontSize: 10,
+    color: '#333',
+    marginTop: 1,
+  },
+
+  verticalDivider: {
+    width: 1,
+    height: 47,
+    backgroundColor: '#E5E5E5',
+    marginHorizontal: 8,
+  },
+
+  dottedDivider: {
+    borderBottomWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#D8D8D8',
+    marginTop: 8,
+    marginBottom: 8,
+  },
+
+  bottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 5,
+  },
+
+  activeStatus: {
+    backgroundColor: '#E9F8F0',
+  },
+
+  inactiveStatus: {
+    backgroundColor: '#F0F0F0',
+  },
+
+  statusText: {
+    fontSize: 10,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+
+  activeStatusText: {
+    color: '#20A464',
+  },
+
+  inactiveStatusText: {
+    color: '#777',
+  },
+
   deleteButton: {
-    padding: 5,
+    height: 27,
+    minWidth: 65,
+    paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: '#FF3B30',
+    borderRadius: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  editButton: {
-    padding: 5,
+
+  deleteText: {
+    color: '#FF3B30',
+    fontSize: 10,
+    fontWeight: '600',
+    marginLeft: 3,
   },
   emptyContainer: {
     alignItems: 'center',
@@ -796,6 +1049,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   listContent: {
-    padding: spacing.md,
+    paddingHorizontal: 10,
+    paddingTop: 4,
+    paddingBottom: 20,
   },
 });

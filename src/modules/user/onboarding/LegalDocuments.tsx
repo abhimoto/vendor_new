@@ -20,6 +20,7 @@ import { Checkbox } from 'react-native-paper';
 import { GST_REGEX, PAN_REGEX } from '@utils/constants';
 import { moderateScale, normalizeFont, wp } from '@utils/responsive';
 import { useLazyCheckDuplicateVehicleQuery } from '@app/redux/query/queryApi';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 type Props = {
   onPrev: () => void;
 };
@@ -33,7 +34,7 @@ export default function LegalDocuments({ onPrev }: Props) {
     'idle' | 'loading' | 'success' | 'error'
   >('idle');
   const [panStatus, setPanStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-const [checkDuplicateVehicleApi] = useLazyCheckDuplicateVehicleQuery();
+  const [checkDuplicateVehicleApi] = useLazyCheckDuplicateVehicleQuery();
   const [gstError, setGstError] = useState('');
   const [panError, setPanError] = useState('');
   const [vehicleErrors, setVehicleErrors] = useState<Record<number, string>>({});
@@ -75,28 +76,28 @@ const [checkDuplicateVehicleApi] = useLazyCheckDuplicateVehicleQuery();
     }
   }, [values.legaldocuments.gstnumber]);
 
-const checkDuplicateVehicle = async (
-  registrationNumber: string,
-  index: number,
-) => {
-  try {
-    const response = await checkDuplicateVehicleApi(registrationNumber).unwrap();
+  const checkDuplicateVehicle = async (
+    registrationNumber: string,
+    index: number,
+  ) => {
+    try {
+      const response = await checkDuplicateVehicleApi(registrationNumber).unwrap();
 
-    if (response?.data?.isDuplicate) {
-      setVehicleErrors(prev => ({
-        ...prev,
-        [index]: 'Vehicle already exists',
-      }));
-    } else {
-      setVehicleErrors(prev => ({
-        ...prev,
-        [index]: '',
-      }));
+      if (response?.data?.isDuplicate) {
+        setVehicleErrors(prev => ({
+          ...prev,
+          [index]: 'Vehicle already exists',
+        }));
+      } else {
+        setVehicleErrors(prev => ({
+          ...prev,
+          [index]: '',
+        }));
+      }
+    } catch (error) {
+      console.log('Duplicate Vehicle API Error', error);
     }
-  } catch (error) {
-    console.log('Duplicate Vehicle API Error', error);
-  }
-};
+  };
 
 
 
@@ -320,7 +321,7 @@ const checkDuplicateVehicle = async (
   };
 
   return (
-    <View style={commonstyles.flex1}>
+    <View style={[commonstyles.flex1]}>
       <Text style={styles.header}>Kyc Validation</Text>
 
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -558,6 +559,7 @@ const checkDuplicateVehicle = async (
 
               <View style={{ flex: 1, width: 136, height: 56 }}>
                 <CustomInput
+                label=''
                   name={`legaldocuments.vehicles[${index}].registrationNumber`}
                   placeholder="eg MH02J123"
                   forceUppercase
@@ -597,6 +599,7 @@ const checkDuplicateVehicle = async (
 
               <View style={{ flex: 1, width: 136, height: 56 }}>
                 <CustomInput
+                label=''
                   name={`legaldocuments.vehicles[${index}].capacity`}
                   placeholder="2000KG"
                   keyboardType="numeric"
@@ -634,12 +637,21 @@ const checkDuplicateVehicle = async (
           onPress={onPrev}
           style={styles.backBtn}
           textStyle={styles.backBtnText}
+          icon={
+            <Ionicons
+              name="arrow-back"
+              size={20}
+              color={colors.primary}
+            />
+          }
+          iconPosition="left"
         />
         <CustomButton
           title="Submit"
           onPress={handleSubmit}
           style={styles.submitBtn}
           textStyle={styles.submitbuttontext}
+
         // disabled={gstStatus || panStatus !== 'success'}
         />
       </View>
@@ -706,7 +718,7 @@ const styles = StyleSheet.create({
 
   validatetext: {
     fontSize: normalizeFont(18),
-    fontWeight: '600',
+    fontWeight: '700',
   },
 
   vehicleCard: {

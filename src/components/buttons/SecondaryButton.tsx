@@ -6,6 +6,8 @@ import {
   StyleSheet,
   ViewStyle,
   TextStyle,
+  ActivityIndicator,
+  View,
 } from 'react-native';
 import { wp, hp, moderateScale } from '@utils/responsive';
 
@@ -15,6 +17,13 @@ type Props = {
   style?: ViewStyle;
   textStyle?: TextStyle;
   disabled?: boolean;
+
+  // Optional loading state
+  loading?: boolean;
+
+  // Optional icon
+  icon?: React.ReactNode;
+  iconPosition?: 'left' | 'right';
 };
 
 export default function SecondaryButton({
@@ -23,24 +32,64 @@ export default function SecondaryButton({
   style,
   textStyle,
   disabled = false,
+  loading = false,
+  icon,
+  iconPosition = 'left',
 }: Props) {
+  const isDisabled = disabled || loading;
+
   return (
     <Pressable
-      style={[styles.button, style, disabled && styles.disabled]}
+      style={[
+        styles.button,
+        style,
+        isDisabled && styles.disabled,
+      ]}
       onPress={onPress}
-      disabled={disabled}
+      disabled={isDisabled}
     >
-      <Text style={[styles.text, textStyle]}>{title}</Text>
+      <View style={styles.content}>
+        {loading ? (
+          <ActivityIndicator
+            size="small"
+            color="#FFFFFF"
+          />
+        ) : (
+          <>
+            {icon && iconPosition === 'left' && (
+              <View style={styles.iconLeft}>
+                {icon}
+              </View>
+            )}
+
+            <Text style={[styles.text, textStyle]}>
+              {title}
+            </Text>
+
+            {icon && iconPosition === 'right' && (
+              <View style={styles.iconRight}>
+                {icon}
+              </View>
+            )}
+          </>
+        )}
+      </View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   button: {
-    width: wp(86),           // ~368px on 428px base width
-    height: hp(5.5),         // ~50px on 926px base height
+    width: wp(86),
+    height: hp(5.5),
     backgroundColor: colors.primary,
     borderRadius: moderateScale(10),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  content: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -49,6 +98,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: moderateScale(16),
     fontWeight: '600',
+  },
+
+  iconLeft: {
+    marginRight: moderateScale(8),
+  },
+
+  iconRight: {
+    marginLeft: moderateScale(8),
   },
 
   disabled: {
