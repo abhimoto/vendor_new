@@ -8,8 +8,8 @@ class SocketService {
     }
 
     this.socket = io(
-      'http://192.168.1.112:5000',
-      // 'https://stag.motohelpindia.com',
+      // 'http://192.168.1.112:5000',
+      'https://stag.motohelpindia.com',
       {
         auth: { token },
         transports: ['websocket'],

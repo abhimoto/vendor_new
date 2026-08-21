@@ -3,21 +3,24 @@ import {
   Text,
   TouchableOpacity,
   View,
+  RefreshControl,
   ActivityIndicator,
-    RefreshControl,
 } from 'react-native';
-import React, { useMemo, useState ,  useCallback,} from 'react';
+
+import React, {useMemo, useState, useCallback} from 'react';
 
 import commonstyles from '@utils/commonstyles';
+
 import AppHeader from '@components/custumcomponents/AppHeader';
 import SearchInput from '@components/custumcomponents/SearchInput';
 import CustomFlatList from '@components/custumcomponents/CustomFlatList';
-import { useGetunAssignedQuery } from '@app/redux/query/queryApi';
+
 import {
-  useNavigation,
-  useFocusEffect,
-} from '@react-navigation/native';
-import { HOME_ROUTES } from '@navigation/routes';
+  useGetunAssignedVehiclesQuery,
+} from '@app/redux/query/queryApi';
+
+import {useNavigation} from '@react-navigation/native';
+import {HOME_ROUTES} from '@navigation/routes';
 
 import {
   wp,
@@ -27,199 +30,239 @@ import {
 
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { useSelector } from 'react-redux';
-import { RootState } from '@app/redux';
 
 export default function DiscontinueVehicles() {
-  const vendorid = useSelector(
-    (state: RootState) => state.auth.user?.id,
-  );
-console.log(vendorid)
   const navigation = useNavigation<any>();
 
   const [search, setSearch] = useState('');
-const [refreshing, setRefreshing] =
-  useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // ---------------- API ----------------
 
   const {
-    data: unAssignedData,
-    isLoading,
-    error,
-    refetch,
-  } = useGetunAssignedQuery(
-    { vendorid },
-    {
-      skip: !vendorid,
-    },
-  );
-useFocusEffect(
-  useCallback(() => {
-    if (vendorid) {
-      refetch();
-    }
-  }, [vendorid]),
-);
-const onRefresh = useCallback(async () => {
-  try {
-    setRefreshing(true);
+    data: vehiclesData,
+    isLoading: vehiclesLoading,
+    error: vehiclesError,
+    refetch: refetchVehicles,
+  } = useGetunAssignedVehiclesQuery(undefined, {
+    pollingInterval: 30000,
+  });
 
-    await refetch();
-  } catch (e) {
-    console.log('Refresh Error:', e);
-  } finally {
-    setRefreshing(false);
-  }
-}, [refetch]);
-  /* ---------------- FILTERED DATA ---------------- */
+  console.log(vehiclesData, 'vehicles data');
+
+  // ---------------- VEHICLE DATA ----------------
+
+  const vehicles = useMemo(() => {
+    return vehiclesData?.data || [];
+  }, [vehiclesData]);
+
+  // ---------------- FILTER ----------------
 
   const filteredVehicles = useMemo(() => {
-    const vehicleList = unAssignedData?.data || [];
-
     if (!search.trim()) {
-      return vehicleList;
+      return vehicles;
     }
 
-    return vehicleList.filter((item: any) => {
-      const searchText = search.toLowerCase();
+    const searchText = search.toLowerCase().trim();
 
+    return vehicles.filter((item: any) => {
       return (
-        item?.registration_no
-          ?.toLowerCase()
-          ?.includes(searchText) ||
-        item?.full_name
-          ?.toLowerCase()
-          ?.includes(searchText) ||
-        item?.contact_no
-          ?.toLowerCase()
-          ?.includes(searchText) ||
-        item?.driver_id
-          ?.toLowerCase()
-          ?.includes(searchText)
+        item?.VehicleNo?.toLowerCase()?.includes(searchText) ||
+        item?.VehicleId?.toLowerCase()?.includes(searchText) ||
+        item?.VehicleType?.toLowerCase()?.includes(searchText) ||
+        item?.BodyType?.toLowerCase()?.includes(searchText)
       );
     });
-  }, [unAssignedData, search]);
+  }, [vehicles, search]);
 
-  /* ---------------- RENDER ITEM ---------------- */
+  // ---------------- REFRESH ----------------
 
-  const renderItem = ({ item }: any) => (
-    <TouchableOpacity
-      activeOpacity={0.85}
-      onPress={() =>
-        navigation.navigate(
-          HOME_ROUTES.VEHICLEDISCONTINUELIST,
-          {
-            vehicle: item,
-          },
-        )
-      }
-    >
-      <View style={styles.card}>
-        {/* ---------------- TOP ROW ---------------- */}
+  const onRefresh = useCallback(async () => {
+    try {
+      setRefreshing(true);
 
-        <View style={styles.topRow}>
-          {/* LEFT SIDE */}
+      await refetchVehicles();
+    } catch (error) {
+      console.log('Refresh Error:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetchVehicles]);
 
-          <View style={styles.leftSection}>
-            <View style={styles.row}>
-              <Icon
-                name="truck-outline"
-                size={18}
-                color="#000"
-              />
+  // ---------------- RENDER ITEM ----------------
 
-              <Text style={styles.vehicleNo}>
-                {item?.registration_no}
+  const renderItem = ({item}: any) => {
+    const status = item?.IsActive ? 'Active' : 'Inactive';
+
+    return (
+      <TouchableOpacity
+        activeOpacity={0.85}
+        onPress={() =>
+          navigation.navigate(
+            HOME_ROUTES.VEHICLEDISCONTINUELIST,
+            {
+              vehicle: item,
+            },
+          )
+        }>
+
+        <View style={styles.card}>
+
+          {/* ---------------- TOP ROW ---------------- */}
+
+          <View style={styles.topRow}>
+
+            {/* LEFT SIDE */}
+
+            <View style={styles.leftSection}>
+
+              {/* VEHICLE NUMBER */}
+
+              <View style={styles.row}>
+
+                <Icon
+                  name="truck-outline"
+                  size={18}
+                  color="#000"
+                />
+
+                <Text style={styles.vehicleNo}>
+                  {item?.VehicleNo || 'N/A'}
+                </Text>
+
+              </View>
+
+              {/* VEHICLE TYPE */}
+
+              <Text style={styles.vehicleInfo}>
+                Vehicle Type : {item?.VehicleType || 'N/A'}
               </Text>
+
+              {/* BODY TYPE */}
+
+              <Text style={styles.vehicleInfo}>
+                Body Type : {item?.BodyType || 'N/A'}
+              </Text>
+
             </View>
 
-            <Text style={styles.phone}>
-              {item?.contact_no}
-            </Text>
+            {/* RIGHT SIDE */}
 
-            <Text style={styles.driverName}>
-              {item?.full_name}
-            </Text>
-          </View>
+            <View style={styles.rightSection}>
 
-          {/* RIGHT SIDE */}
+              <View style={styles.row}>
 
-          <View style={styles.rightSection}>
-            <View style={styles.row}>
-              <Ionicons
-                name="card-outline"
-                size={18}
-                color="#000"
-              />
+                <Ionicons
+                  name="cube-outline"
+                  size={18}
+                  color="#000"
+                />
 
-              <Text style={styles.license}>
-                {item?.driver_id}
-              </Text>
+                <Text style={styles.license}>
+                  {item?.LoadingCapacity || '0'} KG
+                </Text>
+
+              </View>
+
             </View>
+
           </View>
+
+          {/* ---------------- DIVIDER ---------------- */}
+
+          <View style={styles.divider} />
+
+          {/* ---------------- BOTTOM ROW ---------------- */}
+
+          <View style={styles.bottomRow}>
+
+            <Text style={styles.expiry}>
+              Vehicle ID : {item?.VehicleId || 'N/A'}
+            </Text>
+
+            {/* STATUS */}
+
+            <View style={styles.statusWrapper}>
+
+              <View style={styles.checkCircle}>
+
+                <Text style={styles.checkText}>
+                  {item?.IsVerified ? '✓' : '!'}
+                </Text>
+
+              </View>
+
+              <View
+                style={[
+                  styles.statusButton,
+                  !item?.IsActive && styles.inactiveStatus,
+                ]}>
+
+                <Text style={styles.statusText}>
+                  {status}
+                </Text>
+
+              </View>
+
+            </View>
+
+          </View>
+
         </View>
 
-        {/* DIVIDER */}
+      </TouchableOpacity>
+    );
+  };
 
-        <View style={styles.divider} />
+  // ---------------- LOADING ----------------
 
-        {/* ---------------- BOTTOM ROW ---------------- */}
+  if (vehiclesLoading) {
+    return (
+      <View style={commonstyles.container}>
 
-        <View style={styles.bottomRow}>
-          <Text style={styles.expiry}>
-            Vehicle ID : {item?.vehicleid}
+        <AppHeader title="Discontinue Vehicle From App" />
+
+        <View style={styles.loaderContainer}>
+
+          <ActivityIndicator
+            size="large"
+          />
+
+        </View>
+
+      </View>
+    );
+  }
+
+  // ---------------- ERROR ----------------
+
+  if (vehiclesError) {
+    return (
+      <View style={commonstyles.container}>
+
+        <AppHeader title="Discontinue Vehicle From App" />
+
+        <View style={styles.loaderContainer}>
+
+          <Text>
+            Something went wrong
           </Text>
 
-          {/* STATUS */}
-
-          <View style={styles.statusWrapper}>
-            <View style={styles.checkCircle}>
-              <Text style={styles.checkText}>✓</Text>
-            </View>
-
-            <View style={styles.statusButton}>
-              <Text style={styles.statusText}>
-                {item?.Status || 'Active'}
-              </Text>
-            </View>
-          </View>
         </View>
-      </View>
-    </TouchableOpacity>
-  );
 
-  /* ---------------- LOADING ---------------- */
-
-  if (isLoading) {
-    return (
-      <View style={commonstyles.container}>
-        <AppHeader title="Discontinue Vehicle From App" />
-
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" />
-        </View>
       </View>
     );
   }
 
-  /* ---------------- ERROR ---------------- */
-
-  if (error) {
-    return (
-      <View style={commonstyles.container}>
-        <AppHeader title="Discontinue Vehicle From App" />
-
-        <View style={styles.loaderContainer}>
-          <Text>Something went wrong</Text>
-        </View>
-      </View>
-    );
-  }
+  // ---------------- UI ----------------
 
   return (
     <View style={commonstyles.container}>
+
       <AppHeader title="Discontinue Vehicle From App" />
 
       <View style={styles.container}>
+
         {/* SEARCH */}
 
         <SearchInput
@@ -231,25 +274,26 @@ const onRefresh = useCallback(async () => {
 
         {/* LIST */}
 
- <CustomFlatList
-  data={filteredVehicles}
-  renderItem={renderItem}
-  keyExtractor={(item: any, index: number) =>
-    item?.vehicleid?.toString() ||
-    index.toString()
-  }
-  emptyMessage="No vehicles found 🚚"
-  contentContainerStyle={{
-    paddingBottom: hp(3),
-  }}
-  refreshControl={
-    <RefreshControl
-      refreshing={refreshing}
-      onRefresh={onRefresh}
-    />
-  }
-/>
+        <CustomFlatList
+          data={filteredVehicles}
+          renderItem={renderItem}
+          keyExtractor={(item: any) =>
+            item?.VehicleId?.toString()
+          }
+          emptyMessage="No vehicles found 🚚"
+          contentContainerStyle={{
+            paddingBottom: hp(3),
+          }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+            />
+          }
+        />
+
       </View>
+
     </View>
   );
 }
@@ -270,7 +314,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  /* ---------------- CARD ---------------- */
+  // ---------------- CARD ----------------
 
   card: {
     backgroundColor: '#FFFFFF',
@@ -282,9 +326,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(4),
 
     marginBottom: hp(1.5),
+
+    borderRadius: 8,
   },
 
-  /* ---------------- TOP ROW ---------------- */
+  // ---------------- TOP ROW ----------------
 
   topRow: {
     flexDirection: 'row',
@@ -314,23 +360,14 @@ const styles = StyleSheet.create({
     color: '#2D2D2D',
   },
 
-  phone: {
-    marginTop: hp(0.4),
+  vehicleInfo: {
+    marginTop: hp(0.6),
+
     marginLeft: wp(7),
 
     fontSize: normalizeFont(12),
 
-    color: '#B0B0B0',
-  },
-
-  driverName: {
-    marginTop: hp(0.5),
-    marginLeft: wp(7),
-
-    fontSize: normalizeFont(12),
-    fontWeight: '600',
-
-    color: '#2D2D2D',
+    color: '#777',
   },
 
   license: {
@@ -342,52 +379,65 @@ const styles = StyleSheet.create({
     color: '#2D2D2D',
   },
 
-  /* ---------------- DIVIDER ---------------- */
+  // ---------------- DIVIDER ----------------
 
   divider: {
     height: 1,
+
     backgroundColor: '#E5E5E5',
 
     marginVertical: hp(1.8),
   },
 
-  /* ---------------- BOTTOM ROW ---------------- */
+  // ---------------- BOTTOM ROW ----------------
 
   bottomRow: {
     flexDirection: 'row',
+
     justifyContent: 'space-between',
+
     alignItems: 'center',
   },
 
   expiry: {
-    fontSize: normalizeFont(12),
+    flex: 1,
+
+    fontSize: normalizeFont(10),
+
     color: '#A5A5A5',
+
+    marginRight: wp(2),
   },
 
-  /* ---------------- STATUS ---------------- */
+  // ---------------- STATUS ----------------
 
   statusWrapper: {
     flexDirection: 'row',
+
     alignItems: 'center',
   },
 
   checkCircle: {
     width: wp(8),
+
     height: wp(8),
 
     borderRadius: wp(4),
 
     borderWidth: 2,
+
     borderColor: '#3F5C8A',
 
     backgroundColor: '#fff',
 
     alignItems: 'center',
+
     justifyContent: 'center',
 
     marginRight: -wp(2),
 
     zIndex: 10,
+
     elevation: 5,
   },
 
@@ -395,6 +445,7 @@ const styles = StyleSheet.create({
     color: '#3F5C8A',
 
     fontSize: normalizeFont(14),
+
     fontWeight: '700',
   },
 
@@ -404,6 +455,7 @@ const styles = StyleSheet.create({
     minWidth: wp(28),
 
     alignItems: 'center',
+
     justifyContent: 'center',
 
     paddingVertical: hp(0.8),
@@ -411,13 +463,19 @@ const styles = StyleSheet.create({
     borderRadius: 3,
 
     paddingLeft: wp(5),
+
     paddingRight: wp(4),
+  },
+
+  inactiveStatus: {
+    backgroundColor: '#999',
   },
 
   statusText: {
     color: '#fff',
 
     fontSize: normalizeFont(12),
+
     fontWeight: '700',
   },
 });

@@ -13,7 +13,10 @@ import commonstyles from '@utils/commonstyles';
 import AppHeader from '@components/custumcomponents/AppHeader';
 import SearchInput from '@components/custumcomponents/SearchInput';
 import CustomFlatList from '@components/custumcomponents/CustomFlatList';
-
+import {
+  useGetunAssignedDriversQuery,
+  useGetunAssignedVehiclesQuery
+} from '@app/redux/query/queryApi';
 import { HOME_ROUTES } from '@navigation/routes';
 
 import {
@@ -25,14 +28,6 @@ import {
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
-import { useGetunAssignedDriversQuery } from '@app/redux/query/queryApi';
-import { useSelector } from 'react-redux';
-import { RootState } from '@app/redux';
-import { useFocusEffect } from '@react-navigation/native';
-
-/* ---------------- DUMMY DATA ---------------- */
-
-
 
 export default function DriverDiscontinueList({
   navigation,
@@ -41,23 +36,17 @@ export default function DriverDiscontinueList({
   const [refreshing, setRefreshing] =
   useState(false);
 
-  const vendorid = useSelector(
-    (state: RootState) => state.auth.user?.id,
-  );
-
-  /* ---------------- API ---------------- */
-
   const {
     data: unassignedDrivers,
-    isLoading,
-    error,
-    refetch
-  } = useGetunAssignedDriversQuery(
-    { vendorid },
-    {
-      skip: !vendorid,
-    },
-  );
+    isLoading: driversLoading,
+    error: driversError,
+    refetch: refetchDrivers
+  } = useGetunAssignedDriversQuery(undefined, {
+    pollingInterval: 30000,
+  });
+  /* ---------------- API ---------------- */
+
+
 
 console.log(unassignedDrivers)
 
@@ -67,143 +56,101 @@ console.log(unassignedDrivers)
   return unassignedDrivers?.data || [];
 }, [unassignedDrivers]);
 
-  useFocusEffect(
-  useCallback(() => {
-    if (vendorid) {
-      refetch();
-    }
-  }, [vendorid]),
-);
+
 const onRefresh = useCallback(async () => {
   try {
     setRefreshing(true);
-
-    await refetch();
+    await refetchDrivers();
   } catch (e) {
     console.log('Refresh Error:', e);
   } finally {
     setRefreshing(false);
   }
-}, [refetch]);
+}, [refetchDrivers]);
   /* ---------------- FILTER DATA ---------------- */
 
-  const filteredData = useMemo(() => {
-    if (!search.trim()) {
-      return allDrivers;
-    }
+const filteredData = useMemo(() => {
+  if (!search.trim()) return allDrivers;
 
-    return allDrivers.filter((item: any) => {
-      const searchText =
-        search.toLowerCase();
+  const searchText = search.toLowerCase();
 
-      return (
-        item?.full_name
-          ?.toLowerCase()
-          ?.includes(searchText) ||
-        item?.contact_no?.includes(
-          searchText,
-        ) ||
-        item?.driver_id
-          ?.toLowerCase()
-          ?.includes(searchText) ||
-        item?.license_no
-          ?.toLowerCase()
-          ?.includes(searchText)
-      );
-    });
-  }, [allDrivers, search]);
+  return allDrivers.filter((item: any) =>
+    item.DriverName?.toLowerCase().includes(searchText) ||
+    item.MobileNo?.includes(searchText) ||
+    item.DriverCode?.toLowerCase().includes(searchText)
+  );
+}, [allDrivers, search]);
 
   /* ---------------- RENDER ITEM ---------------- */
 
-  const renderItem = ({ item }: any) => {
-    return (
-      <TouchableOpacity
-        activeOpacity={0.85}
-        onPress={() => {
-          navigation.navigate(
-            HOME_ROUTES.DISCONTINUEDRIVER,
-            { item },
-          );
-        }}
-      >
-        <View style={styles.card}>
-          {/* ---------------- TOP ROW ---------------- */}
+ const renderItem = ({ item }: any) => {
+  return (
+    <TouchableOpacity
+      activeOpacity={0.85}
+      onPress={() =>
+        navigation.navigate(HOME_ROUTES.DISCONTINUEDRIVER, { item })
+      }>
 
-          <View style={styles.topRow}>
-            {/* LEFT SIDE */}
-
-            <View style={styles.leftSection}>
-              <View style={styles.row}>
-                <MaterialIcons
-                  name="person-outline"
-                  size={18}
-                  color="#000"
-                />
-
-                <Text style={styles.name}>
-                  {item?.full_name}
-                </Text>
-              </View>
-
-              <Text style={styles.phone}>
-                {item?.contact_no}
+      <View style={styles.card}>
+        <View style={styles.topRow}>
+          <View style={styles.leftSection}>
+            <View style={styles.row}>
+              <MaterialIcons
+                name="person-outline"
+                size={18}
+                color="#000"
+              />
+              <Text style={styles.name}>
+                {item.DriverName}
               </Text>
             </View>
 
-            {/* RIGHT SIDE */}
-
-            <View style={styles.rightSection}>
-              <View style={styles.row}>
-                <Ionicons
-                  name="card-outline"
-                  size={18}
-                  color="#000"
-                />
-
-                <Text style={styles.license}>
-                  {item?.driver_id}
-                </Text>
-              </View>
-            </View>
+            <Text style={styles.phone}>
+              {item.MobileNo}
+            </Text>
           </View>
 
-          {/* DIVIDER */}
-
-          <View style={styles.divider} />
-
-          {/* ---------------- BOTTOM ROW ---------------- */}
-
-          <View style={styles.bottomRow}>
-            <Text style={styles.expiry}>
-              License :{' '}
-              {item?.driving_license_no || 'N/A'}
-            </Text>
-
-            {/* STATUS */}
-
-            <View style={styles.statusWrapper}>
-              <View style={styles.checkCircle}>
-                <Text style={styles.checkText}>
-                  ✓
-                </Text>
-              </View>
-
-              <View style={styles.statusButton}>
-                <Text style={styles.statusText}>
-                  {item?.Status ||
-                    'Inactive'}
-                </Text>
-              </View>
+          <View style={styles.rightSection}>
+            <View style={styles.row}>
+              <Ionicons
+                name="card-outline"
+                size={18}
+                color="#000"
+              />
+              <Text style={styles.license}>
+                {item.DriverCode}
+              </Text>
             </View>
           </View>
         </View>
-      </TouchableOpacity>
-    );
-  };
+
+        <View style={styles.divider} />
+
+        <View style={styles.bottomRow}>
+          <Text style={styles.expiry}>
+            Driver ID: {item.DriverProfileId}
+          </Text>
+
+          <View style={styles.statusWrapper}>
+            <View style={styles.checkCircle}>
+              <Text style={styles.checkText}>✓</Text>
+            </View>
+
+            <View style={styles.statusButton}>
+              <Text style={styles.statusText}>
+                {item.IsActive ? 'Active' : 'Inactive'}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+};
 
   /* ---------------- LOADING ---------------- */
 
-  if (isLoading) {
+  if (driversLoading) {
     return (
       <View style={commonstyles.container}>
         <AppHeader title="Driver Discontinue List" />
@@ -217,19 +164,7 @@ const onRefresh = useCallback(async () => {
 
   /* ---------------- ERROR ---------------- */
 
-  if (error) {
-    return (
-      <View style={commonstyles.container}>
-        <AppHeader title="Driver Discontinue List" />
 
-        <View style={styles.loaderContainer}>
-          <Text>
-            Something went wrong
-          </Text>
-        </View>
-      </View>
-    );
-  }
 
   return (
     <View style={commonstyles.container}>

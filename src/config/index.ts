@@ -1,6 +1,5 @@
-import dev from './env/dev';
-import prod from './env/prod';
+import dev from './env/dev'
 
-// const ENV = __DEV__ ? dev : prod;
 const ENV = dev;
+
 export default ENV;

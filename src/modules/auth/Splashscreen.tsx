@@ -9,6 +9,8 @@ import { useNavigation } from '@react-navigation/native';
 import { AUTH_ROUTES } from '@navigation/routes';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '@navigation/types';
+import SecondaryButton from '@components/buttons/SecondaryButton';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 type NavigationProp = NativeStackNavigationProp<AuthStackParamList>;
 export default function Splashscreen() {
@@ -48,12 +50,25 @@ export default function Splashscreen() {
 
       {/* Next Button */}
       <View style={styles.buttonContainer}>
-        <CustomButton
-          title="Next"
-          onPress={handleNext}
+        {/* <CustomButton
+        
           textStyle={styles.nextText}
           style={styles.nextBtn}
+        /> */}
+        <SecondaryButton
+
+          title="Next"
+          onPress={handleNext}
+          icon={
+            <Ionicons
+              name="arrow-forward"
+              size={20}
+              color="#FFFFFF"
+            />
+          }
+          iconPosition="right"
         />
+
         {/* <TouchableOpacity >
           <Text style={styles.nextText}></Text>
         </TouchableOpacity> */}
@@ -93,8 +108,6 @@ const styles = StyleSheet.create({
   },
   nextBtn: {
     backgroundColor: colors.primary,
-    width: 213,
-    height: 56,
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',

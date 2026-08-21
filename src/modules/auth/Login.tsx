@@ -17,6 +17,8 @@ import {
   setMobile as setMobileRedux,
 } from '@app/redux/slices/AuthSlice';
 import { useAppDispatch } from '@app/hooks/hooks';
+import SecondaryButton from '@components/buttons/SecondaryButton';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 type NavigationProp = NativeStackNavigationProp<AuthStackParamList>;
 
@@ -218,9 +220,9 @@ export default function Login() {
   return (
     <View
       style={[
-        commonstyles.container,
+        commonstyles.flex1,
         styles.container,
-        { backgroundColor: colors.background },
+        { backgroundColor: colors.background }
       ]}
     >
       {/* Title */}
@@ -250,10 +252,11 @@ export default function Login() {
       {/* Send OTP */}
       <CustomButton
         onPress={handleSendOtp}
-        title={sending ? 'Sending...' : 'Send OTP'}
+        title="Send OTP"
+        loading={sending}
         style={styles.loginbtn}
         textStyle={styles.VerifyText}
-        disabled={sending || mobile.length !== 10}
+        disabled={mobile.length !== 10}
       />
       <View style={styles.otpcontainer}>
         {/* OTP Section */}
@@ -288,13 +291,19 @@ export default function Login() {
               </Text>
             )}
 
-            {/* Verify */}
-            <CustomButton
+            <SecondaryButton
               onPress={handleVerify}
-              title={verifying ? 'Verifying...' : 'Verify'}
-              style={styles.loginbtn}
-              textStyle={styles.VerifyText}
-              disabled={verifying || otp.join('').length !== 4}
+              title="Verify"
+              loading={verifying}
+              disabled={otp.join('').length !== 4}
+              style={{ marginTop: 20 }}
+              icon={
+                <Ionicons
+                  name="checkmark-circle-outline"
+                  size={20}
+                  color="#FFFFFF"
+                />
+              }
             />
           </>
         )}
@@ -348,6 +357,7 @@ const styles = StyleSheet.create({
     borderColor: '#1B4AA5',
     borderRadius: 10,
     paddingHorizontal: 15,
+    backgroundColor: colors.background
   },
 
   otpRow: {
@@ -364,6 +374,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 18,
     marginRight: 10,
+    backgroundColor: colors.background
   },
 
   expireText: {

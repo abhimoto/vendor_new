@@ -42,19 +42,19 @@ export const queryApi = api.injectEndpoints({
         body,
       }),
     }),
-checkDuplicateVehicle: builder.query<any, string>({
-  query: (vehicleNo) => ({
-    url: '/vendor/check-duplicate',
-    method: 'GET',
-    params: { vehicleNo },
-  }),
-}),
-getCounts: builder.query<any, void>({
-  query: () => ({
-    url: '/vendor/dashboard/counts',
-    method: 'GET',
-  }),
-}),
+    checkDuplicateVehicle: builder.query<any, string>({
+      query: (vehicleNo) => ({
+        url: '/vendor/check-duplicate',
+        method: 'GET',
+        params: { vehicleNo },
+      }),
+    }),
+    getCounts: builder.query<any, void>({
+      query: () => ({
+        url: '/vendor/dashboard/counts',
+        method: 'GET',
+      }),
+    }),
     getavailabledrivers: builder.mutation<any, { vendorId: string }>({
       query: (body) => ({
         url: 'get_DriverAvailable',
@@ -122,9 +122,22 @@ getCounts: builder.query<any, void>({
         method: 'GET',
       }),
     }),
+    getvehiceimages: builder.query<any, { segmentCode: string }>({
+      query: ({ segmentCode }) => ({
+        url: '/vendor/vehicle/body-type-images',
+        method: 'GET',
+        params: { segmentCode },
+      }),
+    }),
     getunAssignedVehicles: builder.query<any, void>({
       query: () => ({
         url: '/vendor/vehicle/unassigned',
+        method: 'GET',
+      }),
+    }),
+        getProfiledetails: builder.query<any, void>({
+      query: () => ({
+        url: '/vendor/profile',
         method: 'GET',
       }),
     }),
@@ -168,6 +181,14 @@ getCounts: builder.query<any, void>({
         method: 'GET',
       }),
     }),
+    vehicletypedetailswithcapacity: builder.query<any, { LoadingCapacity: string }>({
+      query: ({ LoadingCapacity }) => ({
+        url: `/vendor/vehicle/vehicle-type-details-by-capacity?LoadingCapacity=${encodeURIComponent(
+          LoadingCapacity,
+        )}`,
+        method: 'GET',
+      }),
+    }),
     verifyDriverQr: builder.query<any, string>({
       query: (qrUrl) => ({
         url: qrUrl,
@@ -184,9 +205,9 @@ getCounts: builder.query<any, void>({
 export const {
   useGetvehicleMutation,
   useValidateVehicleMutation,
- useGetdriverdatabyscanQuery,
- useLazyGetdriverdatabyscanQuery,
- useGetCountsQuery,
+  useGetdriverdatabyscanQuery,
+  useLazyGetdriverdatabyscanQuery,
+  useGetCountsQuery,
   useGetdriverdetailsMutation,
   useGetavailabledriversMutation,
   useGetavailablevehiclesMutation,
@@ -209,6 +230,8 @@ export const {
   useGetDistrictsQuery,
   useLazyGetDistrictsQuery,
   useGetassigneddetailsQuery,
-  useLazyCheckDuplicateVehicleQuery
-
+  useLazyCheckDuplicateVehicleQuery,
+  useGetProfiledetailsQuery,
+  useGetvehiceimagesQuery,
+  useVehicletypedetailswithcapacityQuery
 } = queryApi;

@@ -1,4 +1,9 @@
-export default {
-  BASE_URL: 'https://prod.motohelpindia.com/vendor/v1/',
+const prod = {
+  BASE_URL: 'https://prod.motohelpindia.com/api/v1',
+
+  IMAGE_BASE_URL: 'https://prod.motohelpindia.com',
+
   SOCKET_URL: 'https://prod.motohelpindia.com',
 };
+
+export default prod;

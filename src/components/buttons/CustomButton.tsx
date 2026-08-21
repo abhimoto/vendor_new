@@ -6,6 +6,8 @@ import {
   StyleSheet,
   ViewStyle,
   TextStyle,
+  ActivityIndicator,
+  View,
 } from 'react-native';
 import { wp, hp, moderateScale } from '@utils/responsive';
 
@@ -15,6 +17,11 @@ type Props = {
   style?: ViewStyle;
   textStyle?: TextStyle;
   disabled?: boolean;
+
+  // New props
+  loading?: boolean;
+  icon?: React.ReactNode;
+  iconPosition?: 'left' | 'right';
 };
 
 export default function CustomButton({
@@ -23,22 +30,48 @@ export default function CustomButton({
   style,
   textStyle,
   disabled = false,
+  loading = false,
+  icon,
+  iconPosition = 'left',
 }: Props) {
+  const isDisabled = disabled || loading;
+
   return (
     <Pressable
-      style={[styles.button, style, disabled && styles.disabled]}
+      style={[styles.button, style, isDisabled && styles.disabled]}
       onPress={onPress}
-      disabled={disabled}
+      disabled={isDisabled}
     >
-      <Text style={[styles.text, textStyle]}>{title}</Text>
+      <View style={styles.content}>
+        {loading ? (
+          <ActivityIndicator
+            size="small"
+            color={colors.primary}
+          />
+        ) : (
+          <>
+            {icon && iconPosition === 'left' && (
+              <View style={styles.iconLeft}>{icon}</View>
+            )}
+
+            <Text style={[styles.text, textStyle]}>
+              {title}
+            </Text>
+
+            {icon && iconPosition === 'right' && (
+              <View style={styles.iconRight}>{icon}</View>
+            )}
+          </>
+        )}
+      </View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   button: {
-    width: wp(35),           // ~148px on 428px base width
-    height: hp(5.5),         // ~50px on 926px base height
+    width: wp(35),
+    height: hp(5.5),
     backgroundColor: '#FFFFFF',
     borderRadius: moderateScale(10),
     alignItems: 'center',
@@ -47,9 +80,23 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
 
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   text: {
     color: colors.primary,
-    fontSize: moderateScale(16)
+    fontSize: moderateScale(16),
+  },
+
+  iconLeft: {
+    marginRight: moderateScale(8),
+  },
+
+  iconRight: {
+    marginLeft: moderateScale(8),
   },
 
   disabled: {

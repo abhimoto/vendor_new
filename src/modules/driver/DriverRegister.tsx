@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, Text, Image } from 'react-native';
 import CustomInput from '@components/Inputs/CustomInput';
-import CustomImagePicker from '@components/imagepicker/ImagePicker';
 import { moderateScale } from '@utils/responsive';
 import spacing from '@utils/spacing';
 import CustomDatePicker from '@components/datepicker/CustomDatePicker';
@@ -13,6 +12,10 @@ type Props = {
 export default function DriverRegister({ values, setFieldValue }: Props) {
 
 
+const licenseFront = `https://stag.motohelpindia.com${values.licensefront}`;
+const licenseBack = `https://stag.motohelpindia.com${values.licenseback}`;
+
+console.log(licenseFront,licenseBack)
   return (
     <View style={styles.container}>
       {/* License Number */}
@@ -38,13 +41,11 @@ export default function DriverRegister({ values, setFieldValue }: Props) {
     </Text>
 
     {values?.licensefront ? (
-      <Image
-        source={{
-          uri: values.licensefront,
-        }}
-        style={styles.image}
-        resizeMode="cover"
-      />
+   <Image
+  source={{ uri: licenseFront }}
+  style={styles.image}
+  resizeMode="cover"
+/>
     ) : null}
 
     {/* <CustomImagePicker
@@ -65,13 +66,11 @@ export default function DriverRegister({ values, setFieldValue }: Props) {
     </Text>
 
     {values?.licenseback ? (
-      <Image
-        source={{
-          uri: values.licenseback,
-        }}
-        style={styles.image}
-        resizeMode="cover"
-      />
+    <Image
+  source={{ uri: licenseBack }}
+  style={styles.image}
+  resizeMode="cover"
+/>
     ) : null}
 
     {/* <CustomImagePicker

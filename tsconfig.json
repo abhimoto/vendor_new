@@ -6,6 +6,7 @@
     "paths": {
       "@app/*": ["src/app/*"],
       "@store": ["src/app/redux"],
+      "@config": ["src/config"],
       "@components/*": ["src/components/*"],
       "@modules/*": ["src/modules/*"],
       "@navigation/*": ["src/navigation/*"],
@@ -13,10 +14,8 @@
       "@utils/*": ["src/utils/*"],
       "@assets/*": ["src/assets/*"],
       "@translation/*": ["src/translation/*"],
-      "@redux/*": ["src/*"],
-      "@hooks/*": ["src/hooks*"],
-      "@socket": ["src/sockets/sockets/index.ts"],
-      // "@api/*":["src/"]
+      "@hooks/*": ["src/hooks/*"],
+      "@socket": ["src/sockets/sockets/index.ts"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx"],
