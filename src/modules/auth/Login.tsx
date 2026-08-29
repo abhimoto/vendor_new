@@ -6,7 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { colors } from '@utils/colors';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '@navigation/types';
-import { AUTH_ROUTES, HOME_ROUTES } from '@navigation/routes';
+import { AUTH_ROUTES } from '@navigation/routes';
 import {
   useSendOtpMutation,
   useVerifyOtpMutation,
@@ -116,7 +116,7 @@ export default function Login() {
     }
   };
 
-  // ✅ OTP change handler
+
   const handleOtpChange = (text: string, index: number) => {
     if (!/^\d?$/.test(text)) return; // only digits
 
@@ -138,85 +138,237 @@ export default function Login() {
 
 
 
-  const handleVerify = async () => {
-    const enteredOtp = otp.join("");
+  // const handleVerify = async () => {
+  //   const enteredOtp = otp.join("");
 
-    if (enteredOtp.length !== 4) {
-      showSnackbar("Enter valid OTP", "error");
+  //   if (enteredOtp.length !== 4) {
+  //     showSnackbar("Enter valid OTP", "error");
+  //     return;
+  //   }
+
+  //   try {
+  //     const res = await verifyOtp({
+  //       mobile,
+  //       otp: enteredOtp,
+  //       Role: "VENDOR",
+  //     }).unwrap();
+
+  //     console.log("Verify Response:", res);
+
+  //     // ---------------- Registration Required ----------------
+  //     if (res.status === "01" ) {
+  //       dispatch(
+  //         setAuthData({
+  //           token: res.data.accessToken,
+  //           refreshToken: res.data.refreshToken,
+  //           user: {
+  //             id: res.data.userId,
+  //             mobile: res.data.mobile,
+  //             role: res.data.role,
+  //           },
+  //           vendor_onboarded: false,
+  //           vehicle_verified: false,
+  //           kyc_verified: false,
+  //           isMpincreated:res.data.isMPINSet
+  //         }),
+  //       );
+
+  //       showSnackbar(res.message, "success");
+  //       navigation.replace(AUTH_ROUTES.VENDORONBOARDING);
+  //       return;
+  //     }
+
+
+  //     // ---------------- Login Success ----------------
+  //     if (res.status === "00") {
+  //       dispatch(
+  //         setAuthData({
+  //           token: res.data.accessToken,
+  //           refreshToken: res.data.refreshToken,
+  //           user: {
+  //             id: res.data.userId,
+  //             mobile: res.data.mobile,
+  //             role: res.data.role,
+  //           },
+  //           vendor_onboarded: res.data.isVendorProfileCreated ?? false,
+  //           vehicle_verified: res.data.isVehicleVerified ?? false,
+  //           kyc_verified: res.data.isKycVerified ?? false,
+  //           isMpincreated:res.data.isMPINSet ?? false
+  //         }),
+  //       );
+
+  //       showSnackbar(res.message, "success");
+
+  //       if (!res.data.isVendorProfileCreated) {
+  //         navigation.replace(AUTH_ROUTES.VENDORONBOARDING);
+  //       } else {
+  //         navigation.replace(HOME_ROUTES.DASHBOARD);
+  //       }
+
+  //       return;
+  //     }
+
+  //     showSnackbar(res.message || "OTP verification failed", "error");
+  //   } catch (err: any) {
+  //     console.log("Verify Error:", err);
+
+  //     showSnackbar(
+  //       err?.data?.message || "Invalid OTP",
+  //       "error"
+  //     );
+  //   }
+  // };
+
+const handleVerify = async () => {
+  const enteredOtp = otp.join('');
+
+  if (enteredOtp.length !== 4) {
+    showSnackbar('Enter valid OTP', 'error');
+    return;
+  }
+
+  try {
+    const res = await verifyOtp({
+      mobile,
+      otp: enteredOtp,
+      Role: 'VENDOR',
+    }).unwrap();
+
+    console.log('Verify Response:', res);
+
+    // ============================================
+    // OTP VERIFICATION FAILED
+    // ============================================
+
+    if (res.status !== '00' && res.status !== '01') {
+      showSnackbar(
+        res.message || 'OTP verification failed',
+        'error',
+      );
+
       return;
     }
 
-    try {
-      const res = await verifyOtp({
-        mobile,
-        otp: enteredOtp,
-        Role: "VENDOR",
-      }).unwrap();
+    // ============================================
+    // REGISTRATION REQUIRED
+    // ============================================
 
-      console.log("Verify Response:", res);
+    if (res.status === '01') {
+      dispatch(
+        setAuthData({
+          token: res.data.accessToken,
+          refreshToken: res.data.refreshToken,
 
-      // ---------------- Registration Required ----------------
-      if (res.status === "01") {
-        dispatch(
-          setAuthData({
-            token: res.data.accessToken,
-            refreshToken: res.data.refreshToken,
-            user: {
-              id: res.data.userId,
-              mobile: res.data.mobile,
-              role: res.data.role,
-            },
-            vendor_onboarded: false,
-            vehicle_verified: false,
-            kyc_verified: false,
-          }),
-        );
+          user: {
+            id: res.data.userId,
+            mobile: res.data.mobile,
+            role: res.data.role,
+          },
 
-        showSnackbar(res.message, "success");
-        navigation.replace(AUTH_ROUTES.VENDORONBOARDING);
-        return;
-      }
+          vendor_onboarded: false,
+          vehicle_verified: false,
+          kyc_verified: false,
 
-      // ---------------- Login Success ----------------
-      if (res.status === "00") {
-        dispatch(
-          setAuthData({
-            token: res.data.accessToken,
-            refreshToken: res.data.refreshToken,
-            user: {
-              id: res.data.userId,
-              mobile: res.data.mobile,
-              role: res.data.role,
-            },
-            vendor_onboarded: res.data.isVendorProfileCreated ?? false,
-            vehicle_verified: res.data.isVehicleVerified ?? false,
-            kyc_verified: res.data.isKycVerified ?? false,
-          }),
-        );
+          isMpincreated: false,
 
-        showSnackbar(res.message, "success");
-
-        if (!res.data.isVendorProfileCreated) {
-          navigation.replace(AUTH_ROUTES.VENDORONBOARDING);
-        } else {
-          navigation.replace(HOME_ROUTES.DASHBOARD);
-        }
-
-        return;
-      }
-
-      showSnackbar(res.message || "OTP verification failed", "error");
-    } catch (err: any) {
-      console.log("Verify Error:", err);
+          // OTP verified ≠ MPIN verified
+          isMpinVerified: false,
+        }),
+      );
 
       showSnackbar(
-        err?.data?.message || "Invalid OTP",
-        "error"
+        res.message || 'Registration required',
+        'success',
       );
+
+      // IMPORTANT:
+      // Do NOT navigation.replace()
+      //
+      // RootNavigator will see:
+      //
+      // isAuthenticated = true
+      // vendor_onboarded = false
+      //
+      // and render OnboardingNavigator.
+
+      return;
     }
-  };
+
+    // ============================================
+    // LOGIN SUCCESS
+    // ============================================
+
+    const data = res.data;
+
+    const isVendorOnboarded =
+      data.isVendorProfileCreated ?? false;
+
+    const isVehicleVerified =
+      data.isVehicleVerified ?? false;
+
+    const isKycVerified =
+      data.isKycVerified ?? false;
+
+    const isMpinSet =
+      data.isMPINSet ?? false;
+
+    dispatch(
+      setAuthData({
+        token: data.accessToken,
+
+        refreshToken:
+          data.refreshToken,
+
+        user: {
+          id: data.userId,
+          mobile: data.mobile,
+          role: data.role,
+
+          vendorId:
+            data.vendorId,
+
+          vendorCode:
+            data.vendorCode,
+        },
+
+        vendor_onboarded:
+          isVendorOnboarded,
+
+        vehicle_verified:
+          isVehicleVerified,
+
+        kyc_verified:
+          isKycVerified,
+
+        isMpincreated:
+          isMpinSet,
+
+ 
+        isMpinVerified: false,
+      }),
+    );
+
+    showSnackbar(
+      'OTP verified successfully',
+      'success',
+    );
 
 
+     
+  } catch (err: any) {
+    console.log(
+      'Verify Error:',
+      err,
+    );
+
+    showSnackbar(
+      err?.data?.message ||
+        err?.message ||
+        'Invalid OTP',
+      'error',
+    );
+  }
+};
   return (
     <View
       style={[

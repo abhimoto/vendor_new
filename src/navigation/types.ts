@@ -7,7 +7,9 @@ export type AuthStackParamList = {
   Splashscreen: undefined;
   Login: undefined;
   Signup: undefined;
+  CreateMpin: undefined;
   VendorOnboarding: undefined;
+  LoginMpin: undefined;
 };
 
 import { HOME_ROUTES } from './routes';

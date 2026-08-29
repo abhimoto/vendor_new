@@ -2,6 +2,8 @@ export const AUTH_ROUTES = {
   SPLASH: 'Splashscreen',
   LOGIN: 'Login',
   SIGNUP: 'Signup',
+  CREATE_MPIN :'CreateMpin',
+  LOGIN_MPIN:'LoginMpin',
   VENDORONBOARDING: 'VendorOnboarding',
 } as const;
 

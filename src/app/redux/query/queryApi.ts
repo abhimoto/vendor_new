@@ -55,6 +55,12 @@ export const queryApi = api.injectEndpoints({
         method: 'GET',
       }),
     }),
+    getvehicleExpiryDetails: builder.query<any, void>({
+      query: () => ({
+        url: '/vendor/vehicle/vehicle-expiry',
+        method: 'GET',
+      }),
+    }),
     getavailabledrivers: builder.mutation<any, { vendorId: string }>({
       query: (body) => ({
         url: 'get_DriverAvailable',
@@ -135,12 +141,24 @@ export const queryApi = api.injectEndpoints({
         method: 'GET',
       }),
     }),
-        getProfiledetails: builder.query<any, void>({
+    getProfiledetails: builder.query<any, void>({
       query: () => ({
         url: '/vendor/profile',
         method: 'GET',
       }),
     }),
+getTrackingloads: builder.query<any, void>({
+  query: () => ({
+    url: '/vendor/vehicle/tracking-loads',
+    method: 'GET',
+  }),
+}),
+getTrackingdetails: builder.query<any, string>({
+  query: (loadId) => ({
+    url: `/vendor/vehicle/load-tracking-history/${loadId}`,
+    method: 'GET',
+  }),
+}),
 
     getunAssignedDrivers: builder.query<any, void>({
       query: () => ({
@@ -223,6 +241,7 @@ export const {
   useGetvendorkycQuery,
   useLazyGetvendordetailsQuery,
   useVehicledetailsQuery,
+  useGetvehicleExpiryDetailsQuery,
   useLazyVerifyDriverQrQuery,
   useLazyGetPincodeQuery,
   useGetStateQuery,
@@ -233,5 +252,7 @@ export const {
   useLazyCheckDuplicateVehicleQuery,
   useGetProfiledetailsQuery,
   useGetvehiceimagesQuery,
-  useVehicletypedetailswithcapacityQuery
+  useVehicletypedetailswithcapacityQuery,
+  useGetTrackingdetailsQuery,
+  useGetTrackingloadsQuery
 } = queryApi;
