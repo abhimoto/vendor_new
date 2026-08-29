@@ -22,6 +22,7 @@ import { Accounttypes, bankOptions } from '@utils/constants';
 import { setKycVerified } from '@app/redux/slices/AuthSlice';
 import { useUploadDocumentMutation } from '@app/redux/mutation/authApi';
 import SecondaryButton from '@components/buttons/SecondaryButton';
+import { AUTH_ROUTES } from '@navigation/routes';
 
 export default function Bankdetails() {
   const [errors, setErrors] = useState<any>({});
@@ -39,7 +40,7 @@ export default function Bankdetails() {
     AccountType: '',
     PassbookPhoto: null as any,
   });
-  
+
   const validate = () => {
     let newErrors: any = {};
 
@@ -69,7 +70,7 @@ export default function Bankdetails() {
       [key]: value,
     }));
 
-  
+
     setErrors((prev: any) => ({
       ...prev,
       [key]: '',
@@ -117,13 +118,18 @@ export default function Bankdetails() {
       const resp = await bankdetails(payload).unwrap();
 
       if (resp.status === '00') {
+
         dispatch(setKycVerified(true));
 
         Alert.alert('Success', 'KYC Updated Successfully');
 
         navigation.reset({
           index: 0,
-          routes: [{ name: 'HomeController' }],
+          routes: [
+            {
+              name: AUTH_ROUTES.CREATE_MPIN,
+            },
+          ],
         });
       } else {
         Alert.alert(
@@ -167,7 +173,7 @@ export default function Bankdetails() {
           errorMessage={errors.AccountNumber}
         />
 
-    
+
         <LocalInput
           label="Confirm Account Number"
           value={values.ConfirmAccountNumber}
@@ -210,11 +216,11 @@ export default function Bankdetails() {
           ) : null}
         </View>
 
-    
-        <SecondaryButton 
-           title="Save"
+
+        <SecondaryButton
+          title="Save"
           onPress={handleSubmit}
-           style={styles.saveBtn}
+          style={styles.saveBtn}
         />
 
       </FormContainer>

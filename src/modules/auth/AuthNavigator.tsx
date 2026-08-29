@@ -7,19 +7,22 @@ import { AUTH_ROUTES } from '@navigation/routes';
 import { AuthStackParamList } from '@navigation/types';
 import VendorOnboarding from '@modules/user/onboarding/VendorOnboarding';
 
+
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 export default function AuthNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name={AUTH_ROUTES.SPLASH} component={Splashscreen} />
+
       <Stack.Screen name={AUTH_ROUTES.LOGIN} component={Login} />
       <Stack.Screen name={AUTH_ROUTES.SIGNUP} component={Signup} />
-         <Stack.Screen
+   
+      <Stack.Screen
         name={AUTH_ROUTES.VENDORONBOARDING}
         component={VendorOnboarding}
       />
-     
+
 
     </Stack.Navigator>
   );

@@ -1,91 +1,279 @@
-import { StyleSheet, Text, View } from 'react-native';
-import React, { useMemo, useState } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import React, {useMemo, useState} from 'react';
 import commonstyles from '@utils/commonstyles';
 import AppHeader from '@components/custumcomponents/AppHeader';
 import SearchInput from '@components/custumcomponents/SearchInput';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { moderateScale, wp, hp, normalizeFont } from '@utils/responsive';
+import {
+  moderateScale,
+  wp,
+  hp,
+  normalizeFont,
+} from '@utils/responsive';
 import CustomFlatList from '@components/custumcomponents/CustomFlatList';
-import { colors } from '@utils/colors';
-import { useGetexpiryAlertsQuery } from '@app/redux/query/queryApi';
-import { useSelector } from 'react-redux';
-import { RootState } from '@app/redux';
+import {colors} from '@utils/colors';
+import {useGetvehicleExpiryDetailsQuery} from '@app/redux/query/queryApi';
 
-// ===== TYPES =====
+
+// =============================
+// API TYPE
+// =============================
+
+interface VehicleExpiryResponse {
+  VehicleNumber: string;
+
+  RegistrationStatus: string | null;
+
+  PermitValidityDate: string | null;
+  PermitIssueDate: string | null;
+  PermitNumber: string | null;
+
+  PucUpto: string | null;
+  PucNumber: string | null;
+
+  InsuranceUpto: string | null;
+  InsurancePolicyNumber: string | null;
+  InsuranceCompany: string | null;
+
+  FitnessUpto: string | null;
+}
+
+interface ApiResponse {
+  status: string;
+  message: string;
+  data: VehicleExpiryResponse[];
+}
+
+
+// =============================
+// UI TYPE
+// =============================
+
 interface ExpiryAlertItem {
-  vehicleid: string;
-  vendorid: string;
-  registration_no: string;
-  expiry_type: string;
-  expiry_date: string;
-  days_left: number;
+  VehicleNumber: string;
+  expiryType: string;
+  expiryDate: string;
+  daysLeft: number;
   status: 'EXPIRED' | 'ACTIVE';
 }
+
+
+// =============================
+// DATE FORMAT
+// =============================
 
 const formatDate = (date: string) => {
   return new Date(date).toLocaleDateString('en-GB');
 };
 
+
+// =============================
+// DAYS CALCULATION
+// =============================
+
+const getDaysLeft = (date: string) => {
+  const expiryDate = new Date(date);
+
+  const today = new Date();
+
+  // Remove time portion
+  today.setHours(0, 0, 0, 0);
+  expiryDate.setHours(0, 0, 0, 0);
+
+  const difference =
+    expiryDate.getTime() - today.getTime();
+
+  return Math.ceil(
+    difference / (1000 * 60 * 60 * 24),
+  );
+};
+
+
+// =============================
+// COMPONENT
+// =============================
+
 export default function VehicleExpiry() {
   const [search, setSearch] = useState('');
 
-  const vendorid = useSelector(
-    (state: RootState) => state.auth.user?.id,
-  );
+  // =============================
+  // API
+  // =============================
 
-  // ===== API =====
   const {
     data: expiryData,
     isLoading,
     isError,
-  } = useGetexpiryAlertsQuery(
-    {
-      vendorid: vendorid || '',
-    },
-    {
-      skip: !vendorid,
-    },
-  );
+  } = useGetvehicleExpiryDetailsQuery();
 
-  // ===== FILTER + SORT =====
+
+  // =============================
+  // TRANSFORM API DATA
+  // =============================
+
+  const expiryAlerts = useMemo<ExpiryAlertItem[]>(() => {
+    if (!expiryData?.data) {
+      return [];
+    }
+
+    const alerts: ExpiryAlertItem[] = [];
+
+    expiryData.data.forEach(
+      (vehicle: VehicleExpiryResponse) => {
+
+        // -------------------------
+        // Permit
+        // -------------------------
+
+        if (vehicle.PermitValidityDate) {
+          const daysLeft = getDaysLeft(
+            vehicle.PermitValidityDate,
+          );
+
+          alerts.push({
+            VehicleNumber: vehicle.VehicleNumber,
+            expiryType: 'Permit',
+            expiryDate: vehicle.PermitValidityDate,
+            daysLeft,
+            status:
+              daysLeft < 0
+                ? 'EXPIRED'
+                : 'ACTIVE',
+          });
+        }
+
+        // -------------------------
+        // PUC
+        // -------------------------
+
+        if (vehicle.PucUpto) {
+          const daysLeft = getDaysLeft(
+            vehicle.PucUpto,
+          );
+
+          alerts.push({
+            VehicleNumber: vehicle.VehicleNumber,
+            expiryType: 'PUC',
+            expiryDate: vehicle.PucUpto,
+            daysLeft,
+            status:
+              daysLeft < 0
+                ? 'EXPIRED'
+                : 'ACTIVE',
+          });
+        }
+
+        // -------------------------
+        // Insurance
+        // -------------------------
+
+        if (vehicle.InsuranceUpto) {
+          const daysLeft = getDaysLeft(
+            vehicle.InsuranceUpto,
+          );
+
+          alerts.push({
+            VehicleNumber: vehicle.VehicleNumber,
+            expiryType: 'Insurance',
+            expiryDate: vehicle.InsuranceUpto,
+            daysLeft,
+            status:
+              daysLeft < 0
+                ? 'EXPIRED'
+                : 'ACTIVE',
+          });
+        }
+
+        // -------------------------
+        // Fitness
+        // -------------------------
+
+        if (vehicle.FitnessUpto) {
+          const daysLeft = getDaysLeft(
+            vehicle.FitnessUpto,
+          );
+
+          alerts.push({
+            VehicleNumber: vehicle.VehicleNumber,
+            expiryType: 'Fitness',
+            expiryDate: vehicle.FitnessUpto,
+            daysLeft,
+            status:
+              daysLeft < 0
+                ? 'EXPIRED'
+                : 'ACTIVE',
+          });
+        }
+      },
+    );
+
+    return alerts;
+  }, [expiryData]);
+
+
+  // =============================
+  // SEARCH + SORT
+  // =============================
+
   const filteredVehicles = useMemo(() => {
-    if (!expiryData?.data) return [];
-
-    return expiryData.data
-      .filter((item: ExpiryAlertItem) =>
-        item.registration_no
-          .toLowerCase()
+    return expiryAlerts
+      .filter(item =>
+        item.VehicleNumber
+          ?.toLowerCase()
           .includes(search.toLowerCase()),
       )
       .sort(
-        (a: ExpiryAlertItem, b: ExpiryAlertItem) =>
-          a.days_left - b.days_left,
+        (a, b) =>
+          a.daysLeft - b.daysLeft,
       );
-  }, [expiryData, search]);
+  }, [expiryAlerts, search]);
 
-  // ===== RENDER ITEM =====
-  const renderItem = ({ item }: { item: ExpiryAlertItem }) => {
-    const expired = item.status === 'EXPIRED';
+
+  // =============================
+  // RENDER ITEM
+  // =============================
+
+  const renderItem = ({
+    item,
+  }: {
+    item: ExpiryAlertItem;
+  }) => {
+
+    const expired =
+      item.status === 'EXPIRED';
 
     return (
       <View
         style={[
           styles.card,
-          expired && {
-            borderColor: 'red',
-            borderWidth: 1,
-          },
+          expired && styles.expiredCard,
         ]}
       >
-        {/* Top Row */}
+
+        {/* =====================
+            TOP ROW
+        ===================== */}
+
         <View style={styles.topRow}>
-          <Ionicons name="car-outline" size={18} color="#000" />
+
+          <Ionicons
+            name="car-outline"
+            size={18}
+            color="#000"
+          />
 
           <Text style={styles.vehicleNo}>
-            {item.registration_no}
+            {item.VehicleNumber}
           </Text>
 
-          {/* Badge */}
+          {/* =====================
+              BADGE
+          ===================== */}
+
           <View
             style={[
               styles.badge,
@@ -97,39 +285,59 @@ export default function VehicleExpiry() {
             ]}
           >
             <Text
-              style={{
-                color: expired ? 'red' : '#0D47A1',
-                fontSize: 11,
-                fontWeight: '600',
-              }}
+              style={[
+                styles.badgeText,
+                {
+                  color: expired
+                    ? 'red'
+                    : '#0D47A1',
+                },
+              ]}
             >
               {expired
                 ? 'Expired'
-                : `${item.days_left} days left`}
+                : `${item.daysLeft} days left`}
             </Text>
           </View>
+
         </View>
 
-        {/* Expiry Type */}
+
+        {/* =====================
+            EXPIRY TYPE
+        ===================== */}
+
         <Text style={styles.expiryType}>
-          {item.expiry_type.replace(/_/g, ' ')}
+          {item.expiryType}
         </Text>
 
-        {/* Expiry Date */}
+
+        {/* =====================
+            EXPIRY DATE
+        ===================== */}
+
         <Text
           style={[
             styles.expiryText,
             expired && styles.expiredText,
           ]}
         >
-          Expiry Date : {formatDate(item.expiry_date)}
+          Expiry Date :{' '}
+          {formatDate(item.expiryDate)}
         </Text>
+
       </View>
     );
   };
 
+
+  // =============================
+  // UI
+  // =============================
+
   return (
     <View style={commonstyles.container}>
+
       <AppHeader title="Vehicle Expiry" />
 
       <SearchInput
@@ -150,11 +358,18 @@ export default function VehicleExpiry() {
           padding: wp(4),
         }}
       />
+
     </View>
   );
 }
 
+
+// =============================
+// STYLES
+// =============================
+
 const styles = StyleSheet.create({
+
   card: {
     backgroundColor: colors.background,
     borderRadius: moderateScale(10),
@@ -163,6 +378,11 @@ const styles = StyleSheet.create({
     marginBottom: hp(1.5),
     borderWidth: 1,
     borderColor: colors.border,
+  },
+
+  expiredCard: {
+    borderColor: 'red',
+    borderWidth: 1,
   },
 
   topRow: {
@@ -185,6 +405,11 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
 
+  badgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+
   expiryType: {
     fontSize: normalizeFont(13),
     fontWeight: '500',
@@ -201,4 +426,5 @@ const styles = StyleSheet.create({
     color: 'red',
     fontWeight: '600',
   },
+
 });

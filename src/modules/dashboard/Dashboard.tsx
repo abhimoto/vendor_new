@@ -18,6 +18,7 @@ import { colors } from '@utils/colors';
 import MapView, { Marker } from 'react-native-maps';
 import DashboardAppHeader from '@components/header/DashboardAppHeader';
 import DashboardQuickActions from '@components/header/DashboardQuickActions';
+import {useGetProfiledetailsQuery} from '@app/redux/query/queryApi';
 import CustomButton from '@components/buttons/CustomButton';
 import VendorSocket from '../../sockets/VendorSocket';
 
@@ -31,7 +32,8 @@ const dashboardCards = [
         color="#385380"
       />
     ),
-    route: 'Tracking',
+    // route: 'Tracking',
+     route: 'TrackingLoads',
   },
   {
     title: 'Billing',
@@ -82,6 +84,16 @@ export default function Dashboard() {
     title: '',
     actions: [] as { label: string; value: string }[],
   });
+    const {
+    data,
+    isLoading,
+    isFetching,
+  } = useGetProfiledetailsQuery();
+
+   const profile = data?.data?.[0];
+
+const vendorName = profile?.OrganizationName ?? 'Vendor';
+const authorizedPerson = profile?.AuthorizedPerson ?? '';
   // console.log(drivers)
 
   return (
@@ -93,14 +105,14 @@ export default function Dashboard() {
         onMenuPress={() => navigation.openDrawer()}
         onNotificationPress={() => { }}
       /> */}
-           <DashboardAppHeader
-        isOnline={isOnline}
-        onToggle={setIsOnline}
-        driverName="Abhishek Vishwakarma"
-        vehicleNumber="MH46F5578"
-        profileImage="https://i.pravatar.cc/150?img=12"
-        onMenuPress={() => navigation.openDrawer()}
-      />
+     <DashboardAppHeader
+  isOnline={isOnline}
+  onToggle={setIsOnline}
+  driverName={vendorName}
+  vehicleNumber="MH46F5578"
+  profileImage="https://i.pravatar.cc/150?img=12"
+  onMenuPress={() => navigation.openDrawer()}
+/>
       <DashboardQuickActions />
 {/* <CustomButton title='onboard' onPress={()=>VendorSocket.onboardDriver("D7ABED47-D7CC-40E8-8A62-09D5D4B64C3B")} />
   <CustomButton title='offnboard' onPress={()=>VendorSocket.offboardDriver("D7ABED47-D7CC-40E8-8A62-09D5D4B64C3B")} />

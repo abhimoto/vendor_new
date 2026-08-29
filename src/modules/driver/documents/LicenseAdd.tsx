@@ -318,7 +318,6 @@ export default function LicenseAdd() {
         dl_number: values.licenseNo,
         dob: formatDate(values.dob),
       }).unwrap();
-
       if (
         resp?.status === '00' &&
         resp?.data?.verified

@@ -224,7 +224,7 @@ export default function AssignVehicle() {
       };
 
       const response = await assignVehicle(payload).unwrap();
-
+console.log(response,'assign')
       if (response?.status === '00') {
         await VendorSocket.vehicleAssignToDriver(
           searchDriver.driverUserId,

@@ -45,6 +45,8 @@ export default function VehicleDetailsCard() {
   }
 
   const details = data?.data?.[0];
+
+  console.log('detilasss',details)
   if (isLoading) {
     return (
       <View style={styles.center}>
@@ -60,8 +62,7 @@ export default function VehicleDetailsCard() {
     );
   }
   console.log('vehicle details', details)
-  const dhalasize = `Length - ${details.DhalaLength} ft x Width - ${details.DhalaWidth} ft x Height - ${details.DhalaHeight} ft`;
-  if (!details) {
+ if (!details) {
     return (
       <View style={styles.center}>
         <Text>No vehicle details available</Text>
@@ -90,7 +91,7 @@ export default function VehicleDetailsCard() {
           <View style={styles.infoRow}>
             <Text style={styles.label}>Make & Segment</Text>
             <Text style={styles.value}>
-              {details.VehicleCategory || '-'}
+              {details.Segment || '-'}
             </Text>
           </View>
 
