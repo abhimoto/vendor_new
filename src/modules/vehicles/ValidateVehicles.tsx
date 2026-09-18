@@ -87,6 +87,7 @@ export default function ValidateVehicles() {
       back_img: '',
       right_img: '',
       left_img: '',
+      dhfl_img: ''
     },
   });
   const bodyTypes = data?.data || [];
@@ -199,6 +200,7 @@ export default function ValidateVehicles() {
         values.vehiclePhotos.back_img,
         values.vehiclePhotos.right_img,
         values.vehiclePhotos.left_img,
+        values.vehiclePhotos.dhfl_img
       ];
 
       const uploadedImages = images.filter(
@@ -286,6 +288,10 @@ export default function ValidateVehicles() {
       appendImage(
         'RightImage',
         values.vehiclePhotos.right_img,
+      );
+      appendImage(
+        'DhalaFlaring',
+        values.vehiclePhotos.dhfl_img,
       );
 
 
@@ -599,7 +605,14 @@ export default function ValidateVehicles() {
                   containerStyle={styles.imagePicker}
                 />
               </View>
-
+              <CustomImagePicker
+                label="Dhala Flaring Image"
+                returnType="uri"
+                onImageSelected={image =>
+                  handleVehiclePhotoChange('dhfl_img')(image)
+                }
+                containerStyle={styles.imagePicker}
+              />
             </View>
 
           </CustomCard>
