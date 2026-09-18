@@ -32,27 +32,11 @@ export default function RootNavigator() {
 
   const isVendorOnboarded = vendor_onboarded;
 
-  console.log(isVendorOnboarded,'isvendoronboarded')
-
   const isVehicleAndKycCompleted =
     vehicle_verified && kyc_verified;
 
-      console.log(isVehicleAndKycCompleted,'isvendorandkycompleted')
 
-  const isOnboardingComplete =
-    isVendorOnboarded &&
-    isVehicleAndKycCompleted &&
-    isMpincreated;
 
-    
-      console.log(isVehicleAndKycCompleted,'isvendorandkycompleted')
-
-  /**
-   * ============================================
-   * SOCKET
-   * ============================================
-   */
-console.log(token)
   useEffect(() => {
     if (isAuthenticated && token && isMpinVerified) {
       socketService.connect(token);
@@ -70,30 +54,8 @@ console.log(token)
     isMpinVerified,
   ]);
 
-  /**
-   * ============================================
-   * DEBUG
-   * ============================================
-   */
 
-  console.log('ROOT NAVIGATION STATE', {
-    isAuthenticated,
-    vendor_onboarded,
-    vehicle_verified,
-    kyc_verified,
-    isMpincreated,
-    isMpinVerified,
 
-    isVendorOnboarded,
-    isVehicleAndKycCompleted,
-    isOnboardingComplete,
-  });
-
-  /**
-   * ============================================
-   * ROOT FLOW
-   * ============================================
-   */
 
   return (
     <Stack.Navigator
