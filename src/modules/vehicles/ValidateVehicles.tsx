@@ -87,7 +87,8 @@ export default function ValidateVehicles() {
       back_img: '',
       right_img: '',
       left_img: '',
-      dhfl_img: ''
+      dhfl_img: '',
+      extra_img: ''
     },
   });
   const bodyTypes = data?.data || [];
@@ -179,10 +180,11 @@ export default function ValidateVehicles() {
         return updated;
       });
     };
+
   const handleVehiclePhotoChange =
     (key: keyof VehicleForm['vehiclePhotos']) =>
       (image: any) => {
-        setValues(prev => ({
+        setValues((prev: { vehiclePhotos: any; }) => ({
           ...prev,
           vehiclePhotos: {
             ...prev.vehiclePhotos,
@@ -191,8 +193,6 @@ export default function ValidateVehicles() {
         }));
       };
 
-
-
   const handleSubmit = async () => {
     try {
       const images = [
@@ -200,7 +200,8 @@ export default function ValidateVehicles() {
         values.vehiclePhotos.back_img,
         values.vehiclePhotos.right_img,
         values.vehiclePhotos.left_img,
-        values.vehiclePhotos.dhfl_img
+        values.vehiclePhotos.dhfl_img,
+        values.vehiclePhotos.extra_img,
       ];
 
       const uploadedImages = images.filter(
@@ -257,8 +258,6 @@ export default function ValidateVehicles() {
       );
 
 
-      // Images
-
       const appendImage = (key: string, image: any) => {
         if (!image?.uri) return;
 
@@ -293,9 +292,11 @@ export default function ValidateVehicles() {
         'DhalaFlaring',
         values.vehiclePhotos.dhfl_img,
       );
+      appendImage(
+        'ExtraImage',
+        values.vehiclePhotos.extra_img,
+      );
 
-
-      // RTK Query unwrap
       const resp = await vehicleverify(formData).unwrap();
 
       console.log(formData, '=--')
@@ -423,6 +424,7 @@ export default function ValidateVehicles() {
                   onChangeText={handleVehicleTypeChange('length')}
                   keyboardType="number-pad"
                   placeholder=""
+                  editable={true}
                 />
                 {/* <CustomDropdown
                   data={segmentoptions}
@@ -605,14 +607,27 @@ export default function ValidateVehicles() {
                   containerStyle={styles.imagePicker}
                 />
               </View>
-              <CustomImagePicker
-                label="Dhala Flaring Image"
-                returnType="uri"
-                onImageSelected={image =>
-                  handleVehiclePhotoChange('dhfl_img')(image)
-                }
-                containerStyle={styles.imagePicker}
-              />
+              <View style={styles.imageItem}>
+                <CustomImagePicker
+                  label="Dhala Flaring Image"
+                  returnType="uri"
+                  onImageSelected={image =>
+                    handleVehiclePhotoChange('dhfl_img')(image)
+                  }
+                  containerStyle={styles.imagePicker}
+                />
+              </View>
+
+              <View style={styles.imageItem}>
+                <CustomImagePicker
+                  label="Extra Image"
+                  returnType="uri"
+                  onImageSelected={image =>
+                    handleVehiclePhotoChange('extra_img')(image)
+                  }
+                  containerStyle={styles.imagePicker}
+                />
+              </View>
             </View>
 
           </CustomCard>

@@ -483,38 +483,13 @@ export default function LegalDocuments({ onPrev }: Props) {
             />
           </View>
         </View>
-        <View
-          style={{
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 10,
-            borderColor:
-              currentStatus === 'error'
-                ? 'red'
-                : currentStatus === 'success'
-                  ? 'green'
-                  : 'transparent',
-            borderWidth: 1,
-            backgroundColor: '#E9EAED',
-            height: 56,
-            borderRadius: 12,
-            overflow: 'hidden',
-            alignSelf: 'stretch', // ✅ important
-          }}
-        >
-          <Text
-            style={[
-              styles.CompanyName,
-              {
-                color: currentStatus === 'error'
-                  ? 'red'
-                  : '#2A2A2A',
-              },
-            ]}
-          >
-            {currentName}
-          </Text>
-        </View>
+      {(gstStatus === 'success' || panStatus === 'success') && (
+  <View style={styles.companyNameContainer}>
+    <Text style={styles.CompanyName}>
+      {currentName}
+    </Text>
+  </View>
+)}
 
         {/* Validate Button */}
         {/* <CustomButton
@@ -830,6 +805,18 @@ const styles = StyleSheet.create({
   input: {
     height: moderateScale(40),
   },
+  companyNameContainer: {
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginBottom: 10,
+  borderColor: 'green',
+  borderWidth: 1,
+  backgroundColor: '#E9EAED',
+  height: 56,
+  borderRadius: 12,
+  overflow: 'hidden',
+  alignSelf: 'stretch',
+},
 
   addBtn: {
     width: moderateScale(40),

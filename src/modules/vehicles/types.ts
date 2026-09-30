@@ -17,5 +17,6 @@ export type VehicleForm = {
     right_img: string;
     left_img: string;
     dhfl_img:string;
+    extra_img:string;
   };
 };

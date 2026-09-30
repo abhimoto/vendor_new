@@ -5,6 +5,7 @@ import AppHeader from '@components/custumcomponents/AppHeader';
 import { useRoute } from '@react-navigation/native';
 import { useVehicledetailsQuery } from '@app/redux/query/queryApi';
 import Config from 'react-native-config';
+import { ScrollView } from 'react-native-gesture-handler';
 
 
 export default function VehicleDetailsCard() {
@@ -12,7 +13,6 @@ export default function VehicleDetailsCard() {
 
   const vehicle = route.params?.vehicle;
   const vehicleId = vehicle?.VehicleId;
-  console.log('Vehicle Data:', vehicle);
 
   const getImageUrl = (path?: string | null) => {
     if (!path) {
@@ -45,8 +45,6 @@ export default function VehicleDetailsCard() {
   }
 
   const details = data?.data?.[0];
-
-  console.log('detilasss',details)
   if (isLoading) {
     return (
       <View style={styles.center}>
@@ -61,20 +59,39 @@ export default function VehicleDetailsCard() {
       </View>
     );
   }
-  console.log('vehicle details', details)
- if (!details) {
-    return (
-      <View style={styles.center}>
-        <Text>No vehicle details available</Text>
-      </View>
-    );
-  }
+  
 
   return (
     <>
       <AppHeader title="Validate Vehicles" />
 
       <View style={styles.container}>
+        <ScrollView scrollEnabled >
+              
+
+        {/* Master / Sample Images */}
+        <View style={styles.imageGrid}>
+          {[
+            { label: 'Front', uri: getImageUrl(details.FrontImage) },
+            { label: 'Back', uri: getImageUrl(details.BackImage) },
+            { label: 'Left', uri: getImageUrl(details.LeftImage) },
+            { label: 'Right', uri: getImageUrl(details.RightImage) },
+          ]
+            .filter(item => item.uri)
+            .map((item, index) => (
+              <View key={index} style={styles.imageWrapper}>
+                <Image
+                  source={{ uri: item.uri }}
+                  style={styles.image}
+                  resizeMode="cover"
+                />
+
+                <Text style={styles.imageLabel}>
+                  {item.label}
+                </Text>
+              </View>
+            ))}
+        </View>
         <Text style={styles.vehicleNo}>
           Vehicle No : {details.VehicleNo}
         </Text>
@@ -139,33 +156,7 @@ export default function VehicleDetailsCard() {
             </View>
           </View>
         </View>
-        <Text style={styles.imageTitle}>
-          Body Type And Size
-        </Text>
 
-        {/* Master / Sample Images */}
-        <View style={styles.imageGrid}>
-          {[
-            { label: 'Front', uri: getImageUrl(details.FrontImage) },
-            { label: 'Back', uri: getImageUrl(details.BackImage) },
-            { label: 'Left', uri: getImageUrl(details.LeftImage) },
-            { label: 'Right', uri: getImageUrl(details.RightImage) },
-          ]
-            .filter(item => item.uri)
-            .map((item, index) => (
-              <View key={index} style={styles.imageWrapper}>
-                <Image
-                  source={{ uri: item.uri }}
-                  style={styles.image}
-                  resizeMode="cover"
-                />
-
-                <Text style={styles.imageLabel}>
-                  {item.label}
-                </Text>
-              </View>
-            ))}
-        </View>
 
         {/* Images */}
         <Text style={styles.imageTitle}>
@@ -216,6 +207,7 @@ export default function VehicleDetailsCard() {
               No vehicle images available
             </Text>
           )}
+          </ScrollView>
       </View>
     </>
   );
