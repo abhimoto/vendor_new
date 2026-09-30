@@ -27,6 +27,7 @@ import {
 
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useFocusEffect } from '@react-navigation/native';
 
 
 export default function DriverDiscontinueList({
@@ -56,6 +57,11 @@ console.log(unassignedDrivers)
   return unassignedDrivers?.data || [];
 }, [unassignedDrivers]);
 
+useFocusEffect(
+  useCallback(() => {
+    refetchDrivers();
+  }, [])
+);
 
 const onRefresh = useCallback(async () => {
   try {

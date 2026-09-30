@@ -61,7 +61,6 @@ export default function AddVehicle() {
 
   const [vehicleErrors, setVehicleErrors] = useState<Record<number, string>>({});
   const [addVehicle, { isLoading: isaddded }] = useAddvehicleMutation();
-  const vehicleDebounceRef = useRef<Record<number, any>>({});
   const [filter, setFilter] = useState<
     'verified' | 'pending' | 'all'
   >('pending');
@@ -70,6 +69,8 @@ export default function AddVehicle() {
   setSelectedVehicle(vehicle);
   setotpvisible(true);
 };
+
+
 
 const handlevehiclesubmit = (otp: string) => {
   console.log('OTP:', otp);
@@ -115,10 +116,6 @@ const handlevehiclesubmit = (otp: string) => {
       [index]: '',
     }));
 
-    if (vehicleDebounceRef.current[index]) {
-      clearTimeout(vehicleDebounceRef.current[index]);
-    }
-
 
   };
 
@@ -132,11 +129,12 @@ const handlevehiclesubmit = (otp: string) => {
 
 
 
-  useFocusEffect(
-    useCallback(() => {
-      getVehicle();
-    }, [])
-  );
+useFocusEffect(
+  useCallback(() => {
+    setotpvisible(false);
+    getVehicle();
+  }, [getVehicle])
+)
 
   /* ---------------- VEHICLE DATA ---------------- */
   const vehicleData = useMemo(() => {
@@ -188,7 +186,6 @@ const handlevehiclesubmit = (otp: string) => {
     });
   }, [vehicleData, skippedVehicles]);
 
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleBackPress = () => {
     if (!allCompleted && from === 'temporary_dashboard') {
@@ -279,7 +276,7 @@ const handlevehiclesubmit = (otp: string) => {
     <>
       <AppHeader
         title="Validate Vehicles"
-        onBackPress={handleBackPress}
+        // onBackPress={handleBackPress}
       />
 
       <View
@@ -492,7 +489,7 @@ const handlevehiclesubmit = (otp: string) => {
         </Text>
       </TouchableOpacity>
 
-      {from === 'temporary_dashboard' && (
+      {/* {from === 'temporary_dashboard' && (
         <TouchableOpacity
           activeOpacity={0.8}
           style={[
@@ -511,7 +508,7 @@ const handlevehiclesubmit = (otp: string) => {
             {isSkipped ? 'Skipped' : 'Skip'}
           </Text>
         </TouchableOpacity>
-      )}
+      )} */}
 
       <TouchableOpacity
         style={styles.editButton}
