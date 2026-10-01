@@ -11,9 +11,9 @@ import { RootState } from '@app/redux';
 // const BASE_URL = 'http://192.168.1.105:5000/api/v1';   
 
 
-export const BASE_URL = 'https://stag.motohelpindia.com/api/v1';  
+// export const BASE_URL = 'https://stag.motohelpindia.com/api/v1';  
 // THIS IS EMULTER IP
-// const BASE_URL = 'http://10.0.2.2:5000/api/v1';
+const BASE_URL = 'http://10.0.2.2:5000/api/v1';
 
 const rawBaseQuery = fetchBaseQuery({
   prepareHeaders: (headers, { getState }) => {
