@@ -18,8 +18,6 @@ const BASE_URL = 'http://10.0.2.2:5000/api/v1';
 const rawBaseQuery = fetchBaseQuery({
   prepareHeaders: (headers, { getState }) => {
     const token = (getState() as RootState).auth.token;
-    console.log(token)
-
     if (token) {
       headers.set('Authorization', `Bearer ${token}`);
     }

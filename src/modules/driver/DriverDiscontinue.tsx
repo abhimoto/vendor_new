@@ -9,6 +9,7 @@ import AppHeader from '@components/custumcomponents/AppHeader';
 import { useDiscontinueDriverMutation } from '@app/redux/mutation/authApi';
 import { useSelector } from 'react-redux';
 import { RootState } from '@app/redux';
+import VendorSocket from './../../sockets/VendorSocket';
 
 interface FormValues {
   drivername: string;
@@ -50,25 +51,48 @@ const [discontinueDriver, { isLoading }] =
     }));
   };
 
-  const handleSubmit = async () => {
-    try {
+
+const handleSubmit = async () => {
+  try {
     const payload = {
-  DriverProfileId: item?.DriverProfileId,
-  Remark: values.reason,
-  RatingValue: values.rating,
+      DriverProfileId: item?.DriverProfileId,
+      Remark: values.reason,
+      RatingValue: values.rating,
+    };
+
+    const response = await discontinueDriver(payload).unwrap();
+
+    console.log("Discontinue Driver Response:", response);
+
+    if (response.status === "00") {
+      const driverUserId = response.data?.DriverUserId;
+
+      console.log("Driver UserId:", driverUserId);
+
+      if (driverUserId) {
+        VendorSocket.offboardDriver(driverUserId);
+      }
+
+      Alert.alert(
+        "Success",
+        response.message || "Driver discontinued successfully."
+      );
+
+      navigation.goBack();
+    }
+
+  } catch (error: any) {
+    console.error("Discontinue Driver Error:", error);
+
+    Alert.alert(
+      "Error",
+      error?.data?.message ||
+      error?.message ||
+      "Unable to discontinue driver."
+    );
+  }
 };
 
-      const response = await discontinueDriver(payload).unwrap();
-
-      if(response.status ==='00')
-        Alert.alert(response.message)
-  
-       navigation.goBack();
-  
-    } catch (error) {
-      Alert.alert(error);
-    }
-  };
 
  
   return (

@@ -15,7 +15,6 @@ import {
   ProfileValues,
 } from '../types/profileTypes';
 
-import {profileStyles} from '../styles/profileStyles';
 import SecondaryButton from '@components/buttons/SecondaryButton';
 
 interface Props {

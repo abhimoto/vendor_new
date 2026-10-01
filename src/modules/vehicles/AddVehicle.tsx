@@ -33,6 +33,9 @@ import EditVehicles from './EditVehicles';
 import CustomButton from '@components/buttons/CustomButton';
 import LocalInput from '@components/Inputs/LocalInput';
 import { useAddvehicleMutation } from '@app/redux/mutation/authApi';
+import OtpVerification from '@components/otpverification/OtpVerification';
+
+
 
 
 type HomeStackParamList = {
@@ -40,9 +43,6 @@ type HomeStackParamList = {
 };
 
 export default function AddVehicle() {
-  // const VendorId = useSelector(
-  //   (state: RootState) => state.auth.user?.id,
-  // );
   const route = useRoute<any>();
   const from = route?.params?.from;
   console.log(from)
@@ -51,6 +51,7 @@ export default function AddVehicle() {
   const [search, setsearch] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<any>(null);
+  const [otpvisible,setotpvisible] = useState(false)
   const [vehicles, setVehicles] = useState([
     {
       registrationNumber: '',
@@ -60,11 +61,25 @@ export default function AddVehicle() {
 
   const [vehicleErrors, setVehicleErrors] = useState<Record<number, string>>({});
   const [addVehicle, { isLoading: isaddded }] = useAddvehicleMutation();
-  const vehicleDebounceRef = useRef<Record<number, any>>({});
   const [filter, setFilter] = useState<
     'verified' | 'pending' | 'all'
   >('pending');
   /* ---------------- API ---------------- */
+ const handleverify = (vehicle: any) => {
+  setSelectedVehicle(vehicle);
+  setotpvisible(true);
+};
+
+
+
+const handlevehiclesubmit = (otp: string) => {
+  console.log('OTP:', otp);
+  navigation.navigate(HOME_ROUTES.VALIDATE_VEHICLES, {
+    item: selectedVehicle,
+    from,
+    otp,
+  });
+};
   const addNewVehicle = () => {
     const last = vehicles[vehicles.length - 1];
 
@@ -101,10 +116,6 @@ export default function AddVehicle() {
       [index]: '',
     }));
 
-    if (vehicleDebounceRef.current[index]) {
-      clearTimeout(vehicleDebounceRef.current[index]);
-    }
-
 
   };
 
@@ -118,11 +129,12 @@ export default function AddVehicle() {
 
 
 
-  useFocusEffect(
-    useCallback(() => {
-      getVehicle();
-    }, [])
-  );
+useFocusEffect(
+  useCallback(() => {
+    setotpvisible(false);
+    getVehicle();
+  }, [getVehicle])
+)
 
   /* ---------------- VEHICLE DATA ---------------- */
   const vehicleData = useMemo(() => {
@@ -146,12 +158,12 @@ export default function AddVehicle() {
     if (from !== 'temporary_dashboard') return;
 
     const pendingVehicles = vehicleData.filter(
-      vehicle => !vehicle.IsVerified
+      (vehicle: { IsVerified: any; }) => !vehicle.IsVerified
     );
 
     const allSkipped =
       pendingVehicles.length > 0 &&
-      pendingVehicles.every(vehicle =>
+      pendingVehicles.every((vehicle: { id: string; }) =>
         skippedVehicles.includes(vehicle.id)
       );
 
@@ -166,7 +178,7 @@ export default function AddVehicle() {
   const allCompleted = useMemo(() => {
     if (vehicleData.length === 0) return false;
 
-    return vehicleData.every(vehicle => {
+    return vehicleData.every((vehicle: { IsVerified: any; id: string; }) => {
       const isVerified = vehicle.IsVerified;
       const isSkipped = skippedVehicles.includes(vehicle.id);
 
@@ -174,7 +186,6 @@ export default function AddVehicle() {
     });
   }, [vehicleData, skippedVehicles]);
 
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleBackPress = () => {
     if (!allCompleted && from === 'temporary_dashboard') {
@@ -245,7 +256,7 @@ export default function AddVehicle() {
   const filteredVehicles = useMemo(() => {
     const searchText = search.trim().toLowerCase();
 
-    return vehicleData.filter(vehicle => {
+    return vehicleData.filter((vehicle: { number: string; IsVerified: boolean; }) => {
       const matchesSearch = vehicle.number
         .toLowerCase()
         .includes(searchText);
@@ -265,7 +276,7 @@ export default function AddVehicle() {
     <>
       <AppHeader
         title="Validate Vehicles"
-        onBackPress={handleBackPress}
+        // onBackPress={handleBackPress}
       />
 
       <View
@@ -417,107 +428,106 @@ export default function AddVehicle() {
             const isSkipped = skippedVehicles.includes(item.id);
             const verified = item.IsVerified;
 
+
+
             return (
-              <View style={styles.card}>
-                {!verified && (
-                  <TouchableOpacity
-                    style={styles.editIcon}
-                    onPress={() => {
-                      setSelectedVehicle(item);
-                      setModalVisible(true);
-                    }}
-                  >
-                    <MaterialIcons name="edit" size={18} color="#3E5B93" />
-                  </TouchableOpacity>
-                )}
-                {/* LEFT SECTION */}
-                <View style={styles.leftContainer}>
-                  <Text style={styles.vehicleNumber}>
-                    {item.number}
-                  </Text>
+      <View style={styles.card}>
 
-                  <Text style={styles.subtitle}>
-                    {verified
-                      ? 'Vehicle Verified Successfully'
-                      : isSkipped
-                        ? 'Vehicle needs to be validated'
-                        : 'Vehicle needs to be validated'}
-                  </Text>
-                </View>
+  {/* VEHICLE NUMBER */}
+  <View style={styles.vehicleColumn}>
+    <Text style={styles.vehicleNumber}>
+      {item.number}
+    </Text>
+  </View>
 
-                {/* RIGHT SECTION */}
-                {verified ? (
-                  <TouchableOpacity
-                    activeOpacity={0.8}
-                    style={styles.verifiedContainer}
-                    onPress={() =>
-                      navigation.navigate(
-                        from === 'temporary_dashboard'
-                          ? HOME_ROUTES.VERIFIEDVEHICLES_ONBOARD
-                          : HOME_ROUTES.VERIFIES_VEHICLES,
-                        { vehicle: item }
-                      )
-                    }
-                  >
-                    <View style={styles.checkCircle}>
-                      <Text style={styles.checkText}>
-                        ✓
-                      </Text>
-                    </View>
+  {/* STATUS - CENTER */}
+  <View style={styles.statusColumn}>
+    <Text
+      style={[
+        styles.subtitle,
+        verified && styles.verifiedSubtitle,
+      ]}
+    >
+      {verified
+        ? '(Verified Successfully)'
+        : '(needs to be validated)'}
+    </Text>
+  </View>
 
-                    <View style={styles.verifiedButton}>
-                      <Text style={styles.statusText}>
-                        Verified
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                ) : (
-                  <View style={styles.pendingContainer}>
-                    {/* VALIDATE BUTTON */}
-                    <TouchableOpacity
-                      activeOpacity={0.8}
-                      style={[
-                        styles.validateButton,
-                        isSkipped && styles.disabledButton
-                      ]}
-                      disabled={isSkipped}
-                      onPress={() => {
-                        navigation.navigate(
-                          HOME_ROUTES.VALIDATE_VEHICLES,
-                          {
-                            item,
-                            from,
-                          },
-                        );
-                      }}
-                    >
-                      <Text style={styles.statusText}>
-                        Validate
-                      </Text>
-                    </TouchableOpacity>
+  {/* ACTION */}
+  {verified ? (
+    <TouchableOpacity
+      activeOpacity={0.8}
+      style={styles.verifiedButton}
+      onPress={() =>
+        navigation.navigate(
+          from === 'temporary_dashboard'
+            ? HOME_ROUTES.VERIFIEDVEHICLES_ONBOARD
+            : HOME_ROUTES.VERIFIES_VEHICLES,
+          {vehicle: item},
+        )
+      }
+    >
+      <Text style={styles.verifiedButtonText}>
+        Preview
+      </Text>
+    </TouchableOpacity>
+  ) : (
+    <View style={styles.pendingContainer}>
 
-                    {/* SHOW SKIP ONLY FOR TEMP DASHBOARD */}
-                    {from === 'temporary_dashboard' && (
-                      <TouchableOpacity
-                        activeOpacity={0.8}
-                        style={[
-                          styles.skipButton,
-                          isSkipped && styles.skippedButtonStyle
-                        ]}
-                        disabled={isSkipped}
-                        onPress={() => handleSkip(item.id)}
-                      >
-                        <Text style={[
-                          styles.skipText,
-                          isSkipped && styles.skippedTextStyle
-                        ]}>
-                          {isSkipped ? 'Skipped' : 'Skip'}
-                        </Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                )}
-              </View>
+      <TouchableOpacity
+        activeOpacity={0.8}
+        style={[
+          styles.validateButton,
+          isSkipped && styles.disabledButton,
+        ]}
+        disabled={isSkipped}
+       onPress={() => handleverify(item)}
+      >
+        <Text style={styles.statusText}>
+          Validate
+        </Text>
+      </TouchableOpacity>
+
+      {/* {from === 'temporary_dashboard' && (
+        <TouchableOpacity
+          activeOpacity={0.8}
+          style={[
+            styles.skipButton,
+            isSkipped && styles.skippedButtonStyle,
+          ]}
+          disabled={isSkipped}
+          onPress={() => handleSkip(item.id)}
+        >
+          <Text
+            style={[
+              styles.skipText,
+              isSkipped && styles.skippedTextStyle,
+            ]}
+          >
+            {isSkipped ? 'Skipped' : 'Skip'}
+          </Text>
+        </TouchableOpacity>
+      )} */}
+
+      <TouchableOpacity
+        style={styles.editButton}
+        onPress={() => {
+          setSelectedVehicle(item);
+          setModalVisible(true);
+        }}
+      >
+        <MaterialIcons
+          name="edit"
+          size={18}
+          color="#2E5A99"
+        />
+      </TouchableOpacity>
+
+    </View>
+  )}
+
+</View>
             );
           }}
         />
@@ -533,6 +543,10 @@ export default function AddVehicle() {
               getVehicle();
             }}
           />
+        </CustomModal>
+
+        <CustomModal visible={otpvisible} onClose={()=>setotpvisible(false)}>
+        <OtpVerification  expirySeconds={120} otpLength={4} onSubmit={handlevehiclesubmit} />
         </CustomModal>
       </View>
       </View>
@@ -554,34 +568,55 @@ const styles = StyleSheet.create({
   },
 
   /* ---------------- CARD ---------------- */
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
-    marginBottom: 15,
-    padding: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
+card: {
+  backgroundColor: '#fff',
+  borderRadius: 8,
+  borderWidth: 1,
+  borderColor: '#D9D9D9',
+  marginBottom: 15,
+  paddingHorizontal: 12,
+  paddingVertical: 12,
+
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+vehicleColumn: {
+  width: 120,
+  justifyContent: 'center',
+},
+statusColumn: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+
+subtitle: {
+  fontSize: normalizeFont(12),
+  color: '#FF0814',
+  textAlign: 'center',
+},
+
+verifiedSubtitle: {
+  color: '#46B955',
+},
+vehicleInfo: {
+  flex: 1,
+  justifyContent: 'center',
+  marginRight: 10,
+},
+
 
   leftContainer: {
-    flex: 1,
-    paddingRight: wp(3),
+    flex: 1
   },
 
-  vehicleNumber: {
-    fontSize: normalizeFont(18),
-    fontWeight: '700',
-    color: '#3E5B93',
-  },
+vehicleNumber: {
+  fontSize: normalizeFont(18),
+  fontWeight: '700',
+  color: '#000000',
+},
 
-  subtitle: {
-    marginTop: hp(0.5),
-    fontSize: normalizeFont(11),
-    color: '#A0A0A0',
-  },
+
 
   /* ---------------- VERIFIED ---------------- */
   text: {
@@ -624,16 +659,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  verifiedButtonText: {
+  color: '#ffffff',
+  fontSize: 12,
+  fontWeight: '700',
+},
 
-  /* ---------------- PENDING ---------------- */
 
-  pendingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+pendingContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+},
 
   validateButton: {
-    backgroundColor: '#3E5B93',
+    backgroundColor: '#DEE5F7',
     borderRadius: 3,
     width: 101,
     height: 25,
@@ -658,7 +697,7 @@ const styles = StyleSheet.create({
   },
 
   statusText: {
-    color: '#fff',
+    color: '#2E5A99',
     fontSize: normalizeFont(13),
     fontWeight: 'semibold',
   },
@@ -678,10 +717,11 @@ const styles = StyleSheet.create({
   },
 
   editIcon: {
-    position: 'absolute',
-    top: -2,
-    right: -3,
-    zIndex: 10,
+    flex:1
+    // position: 'absolute',
+    // top: -2,
+    // right: -3,
+    // zIndex: 10,
   },
 
   addCard: {
@@ -720,7 +760,13 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: 166
   },
-
+editButton: {
+  width: 35,
+  height: 35,
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginLeft: 5,
+},
   heading: {
     fontSize: 18,
     fontWeight: '700',
