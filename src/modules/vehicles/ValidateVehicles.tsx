@@ -117,14 +117,19 @@ export default function ValidateVehicles() {
     )}`;
   };
   const handleBodyTypeSelect = (bodyType: any) => {
-    setValues(prev => ({
-      ...prev,
-      vehicleDetails: {
-        ...prev.vehicleDetails,
-        bodyType: bodyType.bodytype,
-        segment: bodyType.vehiclesegment,
-      },
-    }));
+    setValues(prev => {
+      const isAlreadySelected =
+        prev.vehicleDetails.bodyType === bodyType.bodytype;
+
+      return {
+        ...prev,
+        vehicleDetails: {
+          ...prev.vehicleDetails,
+          bodyType: isAlreadySelected ? '' : bodyType.bodytype,
+          segment: isAlreadySelected ? '' : bodyType.vehiclesegment,
+        },
+      };
+    });
   };
 
 
@@ -448,7 +453,6 @@ export default function ValidateVehicles() {
             <Text style={styles.sectionLabel}>
               Body Type
             </Text>
-
             <View style={styles.bodyTypeGrid}>
               {isFetching ? (
                 <Text>
@@ -459,11 +463,22 @@ export default function ValidateVehicles() {
                   Unable to load body types
                 </Text>
               ) : bodyTypes.length ? (
-                bodyTypes.map(
-                  (bodyType: any) => {
+                bodyTypes
+                  .filter((bodyType: any) => {
+                    // No selection -> show all body types
+                    if (!values.vehicleDetails.bodyType) {
+                      return true;
+                    }
+
+                    // Selection -> show only selected body type
+                    return (
+                      bodyType.bodytype ===
+                      values.vehicleDetails.bodyType
+                    );
+                  })
+                  .map((bodyType: any) => {
                     const selected =
-                      values.vehicleDetails
-                        .bodyType ===
+                      values.vehicleDetails.bodyType ===
                       bodyType.bodytype;
 
                     return (
@@ -471,49 +486,39 @@ export default function ValidateVehicles() {
                         key={`${bodyType.bodytype}-${bodyType.vehiclesegment}`}
                         style={[
                           styles.bodyTypeCard,
-                          selected &&
-                          styles.selectedBodyTypeCard,
+                          selected && styles.selectedBodyTypeCard,
                         ]}
                         onPress={() =>
-                          handleBodyTypeSelect(
-                            bodyType,
-                          )
-                        }>
+                          handleBodyTypeSelect(bodyType)
+                        }
+                      >
                         <Image
                           source={{
                             uri: getImageUrl(
                               bodyType.front_image_url,
                             ),
                           }}
-                          style={
-                            styles.bodyTypeImage
-                          }
+                          style={styles.bodyTypeImage}
                           resizeMode="cover"
                         />
 
-                        <View
-                          style={
-                            styles.bodyTypeLabel
-                          }>
+                        <View style={styles.bodyTypeLabel}>
                           <Text
-                            style={
-                              styles.bodyTypeLabelText
-                            }>
-                            {
-                              bodyType.bodytype
-                            }
+                            style={styles.bodyTypeLabelText}
+                          >
+                            {bodyType.bodytype}
                           </Text>
                         </View>
                       </TouchableOpacity>
                     );
-                  },
-                )
+                  })
               ) : (
                 <Text>
                   No body types found
                 </Text>
               )}
             </View>
+
 
             {/* ================= DIVIDER ================= */}
             <View style={styles.divider} />
