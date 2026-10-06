@@ -120,7 +120,7 @@ const authorizedPerson = profile?.AuthorizedPerson ?? '';
       <CustomButton title='deassign' onPress={()=>VendorSocket.vehicleDeassignToDriver("D7ABED47-D7CC-40E8-8A62-09D5D4B64C3B","MH09EJ6943")} /> */}
       {/* Map (FULL SCREEN) */}
       <View style={styles.mapContainer}>
-        {/* <AdvancedMap
+        <AdvancedMap
           drivers={drivers}
           selectedDriver={selectedDriver}
           onMarkerPress={setSelectedDriver}
@@ -129,8 +129,8 @@ const authorizedPerson = profile?.AuthorizedPerson ?? '';
           eta={eta}
           distance={distance}
           showSearch={false}
-        /> */}
-        <MapView
+        />
+        {/* <MapView
           style={StyleSheet.absoluteFillObject}
           showsUserLocation
           showsMyLocationButton
@@ -149,7 +149,7 @@ const authorizedPerson = profile?.AuthorizedPerson ?? '';
             title="Bhandup"
             description="Bhandup West, Mumbai"
           />
-        </MapView>
+        </MapView> */}
       </View>
 
       {/* Bottom Overlay Cards */}

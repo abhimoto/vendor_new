@@ -66,7 +66,6 @@ export default function LegalDocuments({ onPrev }: Props) {
     ? panStatus === 'success'
     : gstStatus === 'success';
 
-  // ✅ Auto-fill PAN
   useEffect(() => {
     const gst = values.legaldocuments.gstnumber;
 
@@ -222,9 +221,7 @@ export default function LegalDocuments({ onPrev }: Props) {
           panData?.name_information?.pan_name_cleaned ||
           panData?.full_name ||
           'PAN Verified';
-
         setPanName(name);
-
         // Auto-fill company / owner name
         setFieldValue(
           'legaldocuments.companyName',

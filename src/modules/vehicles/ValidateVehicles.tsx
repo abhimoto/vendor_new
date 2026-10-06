@@ -9,7 +9,6 @@ import {
 import React, { useState, useEffect } from 'react';
 import AppHeader from '@components/custumcomponents/AppHeader';
 import CustomCard from '@components/cards/CustomCard';
-import CustomDropdown from '@components/dropdown/CustomDropdown';
 import commonstyles from '@utils/commonstyles';
 import { colors } from '@utils/colors';
 import { segmentoptions, vehicleWeightRanges } from '@utils/constants';
@@ -26,8 +25,6 @@ import { Alert } from 'react-native';
 import SecondaryButton from '@components/buttons/SecondaryButton';
 import ENV from './../../config/index'
 import Config from 'react-native-config';
-
-
 type RouteParams = {
   item: {
     VehicleId: string;
@@ -39,8 +36,6 @@ type RouteParams = {
 };
 
 export default function ValidateVehicles() {
-  console.log(ENV.IMAGE_BASE_URL, Config, 'environment')
-
   const dispatch = useAppDispatch();
   const route = useRoute();
   const navigation = useNavigation();
@@ -48,7 +43,7 @@ export default function ValidateVehicles() {
   const [vehicleverify] = useVehicleverifyMutation();
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  console.log(item)
+  // console.log(item)
   const {
     data,
     isFetching,
@@ -94,7 +89,7 @@ export default function ValidateVehicles() {
   const bodyTypes = data?.data || [];
   useEffect(() => {
     if (bodyTypes.length > 0) {
-      setValues(prev => ({
+      setValues((prev: { vehicleDetails: any; }) => ({
         ...prev,
         vehicleDetails: {
           ...prev.vehicleDetails,
@@ -117,7 +112,7 @@ export default function ValidateVehicles() {
     )}`;
   };
   const handleBodyTypeSelect = (bodyType: any) => {
-    setValues(prev => {
+    setValues((prev: { vehicleDetails: { bodyType: any; }; }) => {
       const isAlreadySelected =
         prev.vehicleDetails.bodyType === bodyType.bodytype;
 
@@ -141,7 +136,7 @@ export default function ValidateVehicles() {
         values.VehicleTypesDetails.VehicleWeight
       );
 
-      setValues(prev => ({
+      setValues((prev: { VehicleTypesDetails: any; }) => ({
         ...prev,
         VehicleTypesDetails: {
           ...prev.VehicleTypesDetails,
@@ -168,7 +163,7 @@ export default function ValidateVehicles() {
   // vehicle type details
   const handleVehicleTypeChange =
     (key: keyof VehicleForm['VehicleTypesDetails']) => (value: string) => {
-      setValues(prev => {
+      setValues((prev: { VehicleTypesDetails: any; }) => {
         const updated = {
           ...prev,
           VehicleTypesDetails: {
@@ -212,7 +207,6 @@ export default function ValidateVehicles() {
       const uploadedImages = images.filter(
         img => img && img.uri,
       );
-      console.log(values.vehiclePhotos);
       if (uploadedImages.length < 1) {
         Alert.alert(
           'Validation',
@@ -303,14 +297,10 @@ export default function ValidateVehicles() {
       );
 
       const resp = await vehicleverify(formData).unwrap();
-
-      console.log(formData, '=--')
-
-
-      console.log(
-        'Vehicle Verify Response:',
-        resp,
-      );
+      // console.log(
+      //   'Vehicle Verify Response:',
+      //   resp,
+      // );
 
 
       if (resp?.status === '00') {
@@ -359,10 +349,10 @@ export default function ValidateVehicles() {
       setStatus('error');
 
 
-      console.log(
-        'Vehicle Verify Error:',
-        error,
-      );
+      // console.log(
+      //   'Vehicle Verify Error:',
+      //   error,
+      //  );
 
 
       Alert.alert(
