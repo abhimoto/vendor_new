@@ -414,7 +414,7 @@ export default function ValidateVehicles() {
                 }
               /> */}
                 <LocalInput
-                  label="Dhala Length"
+                  label="Segment"
                   value={values.vehicleDetails.segment}
                   onChangeText={handleVehicleTypeChange('length')}
                   keyboardType="number-pad"

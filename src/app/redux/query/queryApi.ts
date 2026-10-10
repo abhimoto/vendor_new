@@ -42,13 +42,19 @@ export const queryApi = api.injectEndpoints({
         body,
       }),
     }),
+    // checkDuplicateVehicle: builder.query<any, string>({
+    //   query: (vehicleNo) => ({
+    //     url: 'vendor/vehicle/check-vehicle-exists/{VehicleNo}',
+    //     method: 'GET',
+    //     params: { vehicleNo },
+    //   }),
+    // }),
     checkDuplicateVehicle: builder.query<any, string>({
-      query: (vehicleNo) => ({
-        url: '/vendor/check-duplicate',
-        method: 'GET',
-        params: { vehicleNo },
-      }),
-    }),
+  query: (vehicleNo) => ({
+    url: `vendor/vehicle/check-vehicle-exists/${encodeURIComponent(vehicleNo)}`,
+    method: 'GET',
+  }),
+}),
     getCounts: builder.query<any, void>({
       query: () => ({
         url: '/vendor/dashboard/counts',

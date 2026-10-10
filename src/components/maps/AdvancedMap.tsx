@@ -65,7 +65,7 @@ const { hasPermission } = useCurrentLocation();
     pulsing={{
       isEnabled: true,
       color: '#007AFF',
-      radius: 50,
+      radius: 70,
     }}
   />
 )}

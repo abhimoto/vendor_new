@@ -75,28 +75,52 @@ export default function LegalDocuments({ onPrev }: Props) {
     }
   }, [values.legaldocuments.gstnumber]);
 
-  const checkDuplicateVehicle = async (
-    registrationNumber: string,
-    index: number,
-  ) => {
-    try {
-      const response = await checkDuplicateVehicleApi(registrationNumber).unwrap();
+const checkDuplicateVehicle = async (
+  registrationNumber: string,
+  index: number,
+) => {
+  try {
+    const response = await checkDuplicateVehicleApi(
+      registrationNumber,
+    ).unwrap();
 
-      if (response?.data?.isDuplicate) {
-        setVehicleErrors(prev => ({
-          ...prev,
-          [index]: 'Vehicle already exists',
-        }));
-      } else {
-        setVehicleErrors(prev => ({
-          ...prev,
-          [index]: '',
-        }));
-      }
-    } catch (error) {
-      console.log('Duplicate Vehicle API Error', error);
+    if (response?.data?.IsDuplicate === true) {
+      setVehicleErrors(prev => ({
+        ...prev,
+        [index]: 'Vehicle already exists',
+      }));
+    } else {
+      setVehicleErrors(prev => ({
+        ...prev,
+        [index]: '',
+      }));
     }
-  };
+  } catch (error) {
+    console.log('Duplicate Vehicle API Error', error);
+  }
+};
+  // const checkDuplicateVehicle = async (
+  //   registrationNumber: string,
+  //   index: number,
+  // ) => {
+  //   try {
+  //     const response = await checkDuplicateVehicleApi(registrationNumber).unwrap();
+
+  //     if (response?.data?.isDuplicate) {
+  //       setVehicleErrors(prev => ({
+  //         ...prev,
+  //         [index]: 'Vehicle already exists',
+  //       }));
+  //     } else {
+  //       setVehicleErrors(prev => ({
+  //         ...prev,
+  //         [index]: '',
+  //       }));
+  //     }
+  //   } catch (error) {
+  //     console.log('Duplicate Vehicle API Error', error);
+  //   }
+  // };
 
 
 
