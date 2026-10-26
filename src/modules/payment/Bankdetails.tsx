@@ -155,6 +155,8 @@ export default function Bankdetails() {
           label="IFSC Code"
           value={values.IFSCCode}
           onChangeText={handleChange('IFSCCode')}
+          maxLength={11}
+          style={{width: '50%'}}
         />
         <LocalInput
           label="Bank Name"

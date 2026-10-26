@@ -321,25 +321,25 @@ const checkDuplicateVehicle = async (
   //     newVehicle,
   //   ]);
   // };
-  const addNewVehicle = () => {
-    const lastVehicle = values.legaldocuments.vehicles.at(-1);
+const addNewVehicle = () => {
+  const vehicles = values.legaldocuments.vehicles;
+  const lastVehicle = vehicles[vehicles.length - 1];
 
-    if (!lastVehicle?.registrationNumber || !lastVehicle?.capacity) {
-      Alert.alert('Please fill vehicle details first');
-      return;
-    }
+  if (!lastVehicle?.registrationNumber?.trim()) {
+    Alert.alert('Required', 'Please enter Registration Number');
+    return;
+  }
 
-    setFieldValue('legaldocuments.vehicles', [
-      ...values.legaldocuments.vehicles,
-      { registrationNumber: '', capacity: '' },
-    ]);
-  };
-  const removeVehicle = (index: number) => {
-    const updated = values.legaldocuments.vehicles.filter(
-      (_, i) => i !== index,
-    );
-    setFieldValue('legaldocuments.vehicles', updated);
-  };
+  if (!lastVehicle?.capacity?.toString().trim()) {
+    Alert.alert('Required', 'Please enter Loading Capacity');
+    return;
+  }
+
+  setFieldValue('legaldocuments.vehicles', [
+    ...vehicles,
+    { registrationNumber: '', capacity: '' },
+  ]);
+};
 
   return (
     <View style={[commonstyles.flex1]}>

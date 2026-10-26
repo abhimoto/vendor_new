@@ -26,6 +26,7 @@ export default function LocalInput({
   errorMessage,
   labelStyle: customLabelStyle,
   inputStyle,
+    style, 
   multiline,
   ...props
 }: LocalInputProps) {
@@ -75,7 +76,7 @@ export default function LocalInput({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <View
         style={[
           styles.inputContainer,

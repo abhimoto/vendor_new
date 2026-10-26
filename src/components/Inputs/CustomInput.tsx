@@ -19,6 +19,7 @@ interface Props extends TextInputProps {
   customError?: string;
   forceUppercase?: boolean;
   formatType?: 'aadhaar' | 'none';
+  borderColor?: string;
 
 }
 
@@ -28,6 +29,7 @@ export default function CustomInput({
   label,
   status,
   customError,
+  borderColor,
   ...rest
 
 }: Props) {
@@ -78,18 +80,25 @@ export default function CustomInput({
     backgroundColor: '#fff',
     paddingHorizontal: spacing.xs,
   };
-  const borderColor =
-    status === 'error' || (meta.error && meta.touched)
+  const finalBorderColor =
+    borderColor ||
+    (status === 'error' || (meta.error && meta.touched)
       ? colors.error
       : status === 'success'
         ? 'green'
         : isFocused
           ? colors.primary
-          : '#ccc';
+          : '#ccc');
 
   return (
     <View style={styles.container}>
-      <View style={[styles.inputContainer, { borderColor }, rest.style]}>
+      <View
+        style={[
+          styles.inputContainer,
+          { borderColor: finalBorderColor },
+          rest.style,
+        ]}
+      >
         <Animated.Text style={labelStyle}>{label}</Animated.Text>
 
         <TextInput

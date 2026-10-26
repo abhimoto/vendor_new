@@ -101,6 +101,19 @@ export default function VendorOnboarding() {
   };
   const handleFinalSubmit = async (values: VendorFormValues) => {
     try {
+       const vehicles = values.legaldocuments.vehicles;
+        const hasEmptyVehicle = vehicles.some(
+      vehicle =>
+        !vehicle.registrationNumber?.trim() ||
+        !vehicle.capacity?.toString().trim(),
+    );
+       if (hasEmptyVehicle) {
+      showSnackbar(
+        'Please enter Registration Number and Loading Capacity for every vehicle.',
+        'error',
+      );
+      return;
+    }
       const payload = mapVendorPayload(values);
       const res = await onboarding(payload).unwrap();
       console.log('API Response:', res);

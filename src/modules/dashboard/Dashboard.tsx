@@ -230,7 +230,7 @@ const handleCardPress = (item: any, navigation: any, setSheetConfig: any) => {
       title: 'Vehicle',
       actions: [
         { label: 'Add / Verified', value: 'add' },
-        { label: 'Assign', value: 'assign' },
+        { label: 'Assign Driver ', value: 'assign' },
         { label: 'Maintainence', value: 'details' },
         { label: 'Information', value: 'vehicleinfo' },
         { label: 'Expiry', value: 'Expiry' },

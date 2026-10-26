@@ -3,16 +3,28 @@ import React, { useState } from 'react';
 import CustomInput from '@components/Inputs/CustomInput';
 import spacing from '@utils/spacing';
 import { moderateScale } from '@utils/responsive';
+import {
+  isValidAadhaar,
+  isValidPhone,
+  getValidationColor,
+} from './validations/validations';
+
+
+
+
 type Props = {
   values: any;
   setFieldValue: (field: string, value: any) => void;
 };
 
 
+
 export default function DriverDocument({ values, setFieldValue }: Props) {
-  const aadharFront = `https://stag.motohelpindia.com${values?.aadharfront || ''}`;
+const aadharFront = `https://stag.motohelpindia.com${values?.aadharfront || ''}`;
 const aadharBack = `https://stag.motohelpindia.com${values?.aadharback || ''}`;
-console.log(aadharFront,aadharBack)
+
+const aadhaarValid = isValidAadhaar(values?.aadharNumber);
+const phoneValid = isValidPhone(values?.referencePhone);
 
   return (
     <View style={styles.container}>
@@ -41,14 +53,17 @@ console.log(aadharFront,aadharBack)
       </View>
 
       {/* Aadhaar Number */}
-      <CustomInput
-        name="aadharNumber"
-        label="Aadhaar Card Number"
-        keyboardType="numeric"
-        editable={false}
-        formatType="aadhaar"
-
-      />
+   <CustomInput
+  name="aadharNumber"
+  label="Aadhaar Card Number"
+  keyboardType="numeric"
+  editable={false}
+  formatType="aadhaar"
+  borderColor={getValidationColor(
+    values?.aadharNumber,
+    aadhaarValid,
+  )}
+/>
 
       {/* Aadhaar Upload */}
       {/* Aadhaar Upload */}
@@ -116,12 +131,16 @@ console.log(aadharFront,aadharBack)
       {/* Row - Phone + Relation */}
       <View style={styles.row}>
         <View style={styles.half}>
-          <CustomInput
-            name="referencePhone"
-            label="Phone Number"
-            keyboardType="phone-pad"
-            editable={false}
-          />
+         <CustomInput
+  name="referencePhone"
+  label="Phone Number"
+  keyboardType="phone-pad"
+  editable={false}
+  borderColor={getValidationColor(
+    values?.referencePhone,
+    phoneValid,
+  )}
+/>
         </View>
 
         <View style={styles.half}>

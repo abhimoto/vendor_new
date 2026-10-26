@@ -14,8 +14,6 @@ export default function DriverRegister({ values, setFieldValue }: Props) {
 
 const licenseFront = `https://stag.motohelpindia.com${values.licensefront}`;
 const licenseBack = `https://stag.motohelpindia.com${values.licenseback}`;
-
-console.log(licenseFront,licenseBack)
   return (
     <View style={styles.container}>
       {/* License Number */}

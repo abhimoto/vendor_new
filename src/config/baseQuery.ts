@@ -9,12 +9,13 @@ import { RootState } from '@app/redux';
 // Single base URL
 // THIS IS COMPUTER IP
 
-// const BASE_URL = 'http://192.168.1.109:6000/api/v1';   
+// const BASE_URL = 'http://192.168.1.115:4000/api/v1'; /  
 
-
-export const BASE_URL = 'https://stag.motohelpindia.com/api/v1';  
+// http://192.168.1.115:4000/api/v1/vendor
+// export const BASE_URL = 'https://stag.motohelpindia.com/api/v1';  
+export const BASE_URL = 'https://appprod.motohelp.in/api/v1';
 // THIS IS EMULTER IP
-// const BASE_URL = 'http://10.0.2.2:5000/api/v1';
+// const BASE_URL = 'http://10.0.2.2:4000/api/v1';
 
 const rawBaseQuery = fetchBaseQuery({
   prepareHeaders: (headers, { getState }) => {

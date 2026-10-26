@@ -148,7 +148,7 @@ export default function TemporaryDashboard() {
             </View>
 
             {/* Status */}
-            <View style={styles.middleContent}>
+            {/* <View style={styles.middleContent}>
               <Text
                 style={[
                   styles.bankStatus,
@@ -161,27 +161,34 @@ export default function TemporaryDashboard() {
                   ? 'Unlocked'
                   : 'Locked'}
               </Text>
-            </View>
+            </View> */}
 
             {/* Unlock */}
-        <CustomButton
-  title="Unlock"
+ <CustomButton
+  title="Enter Bank Details"
   onPress={() =>
     navigation.navigate(HOME_ROUTES.ADDBANK_DETAILS)
   }
   disabled={!vehicle_verified}
   style={[
     styles.actionButton,
+    
     {
       backgroundColor: vehicle_verified
-        ? '#FFFFFF'
+        ? colors.primary
         : colors.primary,
+        marginLeft: '20%',
+        width: wp(50),
+        minWidth: moderateScale(125),
+        maxWidth: moderateScale(180),
     },
   ]}
   textStyle={{
     color: vehicle_verified
-      ? colors.primary
+      ? colors.background
       : colors.background,
+    fontSize: normalizeFont(11),
+    fontWeight: '600',
   }}
 />
           </View>
@@ -284,17 +291,15 @@ padding:hp(0.5)
     color: '#2A2A2A',
     marginBottom: hp(1),
   },
-
-  actionCard: {
-    width: '100%',
-    height: moderateScale(75),
-    backgroundColor: '#EAF1FE',
-    borderRadius: moderateScale(8),
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: wp(3.5),
-  },
-
+actionCard: {
+  width: '100%',
+  height: moderateScale(75),
+  backgroundColor: '#EAF1FE',
+  borderRadius: moderateScale(8),
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingHorizontal: wp(2),
+},
   /* =========================================
      ICON
   ========================================= */
@@ -347,14 +352,16 @@ padding:hp(0.5)
      BUTTON
   ========================================= */
 
-  actionButton: {
-    width: wp(26),
-    minWidth: moderateScale(76),
-    maxWidth: moderateScale(88),
-    height: moderateScale(30),
-    borderRadius: moderateScale(10),
-    backgroundColor:colors.primary
-  },
+actionButton: {
+marginLeft: 5,
+width: wp(50),
+minWidth: moderateScale(125),
+maxWidth: moderateScale(145),
+height: moderateScale(36),
+borderRadius: moderateScale(10),
+backgroundColor: colors.primary,
+paddingHorizontal: moderateScale(5),
+},
 
   /* =========================================
      STEPPER
@@ -403,20 +410,15 @@ padding:hp(0.5)
   pendingCircle: {
     width: moderateScale(40),
     height: moderateScale(40),
-
     borderRadius: moderateScale(20),
-
     backgroundColor: '#D9D9DF',
-
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   number: {
     fontSize: normalizeFont(17),
-
     fontWeight: '600',
-
     color: '#FFFFFF',
   },
 

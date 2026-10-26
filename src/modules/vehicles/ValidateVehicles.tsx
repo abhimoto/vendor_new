@@ -1,3 +1,6 @@
+
+import React, { useEffect, useState, useRef } from 'react';
+
 import {
   StyleSheet,
   Text,
@@ -5,26 +8,39 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
+  Alert,
+  ActivityIndicator,
+  Animated,
+  LayoutAnimation,
+  Platform,
+  UIManager,
 } from 'react-native';
-import React, { useState, useEffect } from 'react';
+
 import AppHeader from '@components/custumcomponents/AppHeader';
 import CustomCard from '@components/cards/CustomCard';
 import commonstyles from '@utils/commonstyles';
 import { colors } from '@utils/colors';
-import { segmentoptions, vehicleWeightRanges } from '@utils/constants';
+import { vehicleWeightRanges } from '@utils/constants';
 import LocalInput from '@components/Inputs/LocalInput';
 import { VehicleForm } from './types';
 import CustomImagePicker from '@components/imagepicker/ImagePicker';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAppDispatch } from '@app/hooks/hooks';
-import { wp, hp, moderateScale, normalizeFont } from '@utils/responsive';
+import { wp, moderateScale } from '@utils/responsive';
 import { useVehicleverifyMutation } from '@app/redux/mutation/authApi';
 import { useVehicletypedetailswithcapacityQuery } from '@app/redux/query/queryApi';
 import { setVehicleVerified } from '@app/redux/slices/AuthSlice';
-import { Alert } from 'react-native';
 import SecondaryButton from '@components/buttons/SecondaryButton';
-import ENV from './../../config/index'
-import Config from 'react-native-config';
+import ENV from './../../config/index';
+
+
+if (
+  Platform.OS === 'android' &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
 type RouteParams = {
   item: {
     VehicleId: string;
@@ -37,36 +53,32 @@ type RouteParams = {
 
 export default function ValidateVehicles() {
   const dispatch = useAppDispatch();
-  const route = useRoute();
-  const navigation = useNavigation();
+  const route = useRoute<any>();
+  const navigation = useNavigation<any>();
   const { item, from } = route.params as RouteParams;
   const [vehicleverify] = useVehicleverifyMutation();
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  // console.log(item)
-  const {
-    data,
-    isFetching,
-    error,
-  } = useVehicletypedetailswithcapacityQuery({
-    LoadingCapacity: item.LoadingCapacity,
-  });
+  const [hasSelectedBodyType, setHasSelectedBodyType] = useState(false);
+  const scaleAnim = useRef(new Animated.Value(0.85)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  const { data, isFetching, error } =
+    useVehicletypedetailswithcapacityQuery({
+      LoadingCapacity: item.LoadingCapacity,
+    });
 
 
-
-  const headerTitle = from === 'dashboard'
-    ? 'Add / Verified'
-    : 'Validate Vehicles'
+  const headerTitle =
+    from === 'dashboard' ? 'Add / Verified' : 'Validate Vehicles';
 
   const [values, setValues] = useState<any>({
     vehicleid: item?.VehicleId || '',
-
     vehicleDetails: {
       registrationNo: item?.VehicleNo || '',
       bodyType: '',
       segment: '',
     },
-
     VehicleTypesDetails: {
       VehicleWeight: item?.LoadingCapacity
         ? Number(item.LoadingCapacity)
@@ -76,67 +88,52 @@ export default function ValidateVehicles() {
       width: '',
       length: '',
     },
-
     vehiclePhotos: {
       front_img: '',
       back_img: '',
       right_img: '',
       left_img: '',
       dhfl_img: '',
-      extra_img: ''
+      extra_img: '',
     },
   });
-  const bodyTypes = data?.data || [];
-  useEffect(() => {
-    if (bodyTypes.length > 0) {
-      setValues((prev: { vehicleDetails: any; }) => ({
-        ...prev,
-        vehicleDetails: {
-          ...prev.vehicleDetails,
-          segment: bodyTypes[0].vehiclesegment,
-        },
-      }));
-    }
-  }, [bodyTypes]);
 
-  const getImageUrl = (imagePath: string) => {
-    if (!imagePath) {
-      return '';
+  const bodyTypes = data?.data || [];
+
+  // Vehicle image URL
+  const getImageUrl = (imagePath?: string) => {
+    if (!imagePath) return '';
+
+    if (
+      imagePath.startsWith('http://') ||
+      imagePath.startsWith('https://')
+    ) {
+      return imagePath;
     }
 
     const baseUrl = ENV?.IMAGE_BASE_URL || '';
 
-    return `${baseUrl.replace(/\/$/, '')}/${imagePath.replace(
-      /^\//,
-      '',
-    )}`;
-  };
-  const handleBodyTypeSelect = (bodyType: any) => {
-    setValues((prev: { vehicleDetails: { bodyType: any; }; }) => {
-      const isAlreadySelected =
-        prev.vehicleDetails.bodyType === bodyType.bodytype;
-
-      return {
-        ...prev,
-        vehicleDetails: {
-          ...prev.vehicleDetails,
-          bodyType: isAlreadySelected ? '' : bodyType.bodytype,
-          segment: isAlreadySelected ? '' : bodyType.vehiclesegment,
-        },
-      };
-    });
+    return `${baseUrl.replace(/\/$/, '')}/${imagePath.replace(/^\//, '')}`;
   };
 
+  // Vehicle type based on loading capacity
+  const getVehicleTypeByWeight = (weight: any) => {
+    const w = Number(weight);
 
+    const match = vehicleWeightRanges.find(
+      range => w >= range.min && w <= range.max,
+    );
 
+    return match?.vehicleType || '';
+  };
 
   useEffect(() => {
     if (values.VehicleTypesDetails.VehicleWeight) {
       const type = getVehicleTypeByWeight(
-        values.VehicleTypesDetails.VehicleWeight
+        values.VehicleTypesDetails.VehicleWeight,
       );
 
-      setValues((prev: { VehicleTypesDetails: any; }) => ({
+      setValues((prev: any) => ({
         ...prev,
         VehicleTypesDetails: {
           ...prev.VehicleTypesDetails,
@@ -146,55 +143,115 @@ export default function ValidateVehicles() {
     }
   }, []);
 
+  useEffect(() => {
+    if (!bodyTypes.length) return;
 
-  const getVehicleTypeByWeight = (weight: any) => {
-    const w = Number(weight);
+    const segment = bodyTypes[0].vehiclesegment || '';
 
-    const match = vehicleWeightRanges.find(
-      item => w >= item.min && w <= item.max,
+    setValues((prev: any) => ({
+      ...prev,
+      vehicleDetails: {
+        ...prev.vehicleDetails,
+        segment,
+      },
+    }));
+  }, [bodyTypes]);
+  // Select body type with animation
+  const handleBodyTypeSelect = (bodyType: any) => {
+    LayoutAnimation.configureNext({
+      duration: 350,
+      create: {
+        type: LayoutAnimation.Types.easeInEaseOut,
+        property: LayoutAnimation.Properties.opacity,
+      },
+      update: {
+        type: LayoutAnimation.Types.easeInEaseOut,
+      },
+      delete: {
+        type: LayoutAnimation.Types.easeInEaseOut,
+        property: LayoutAnimation.Properties.opacity,
+      },
+    });
+
+    setValues((prev: any) => ({
+      ...prev,
+      vehicleDetails: {
+        ...prev.vehicleDetails,
+        bodyType: bodyType.bodytype,
+        segment: bodyType.vehiclesegment || '',
+      },
+    }));
+
+    setHasSelectedBodyType(true);
+
+    // Reset animation
+    scaleAnim.setValue(0.85);
+    fadeAnim.setValue(0);
+
+    // Start animation
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 7,
+        tension: 55,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 350,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  // Return to all body types
+  const handleChangeBodyType = () => {
+    LayoutAnimation.configureNext(
+      LayoutAnimation.Presets.easeInEaseOut,
     );
 
-    return match?.vehicleType || '';
+    setHasSelectedBodyType(false);
   };
-  // vehicle details
 
+  // Selected body type
+  const selectedBodyType = bodyTypes.find(
+    (bodyType: any) =>
+      bodyType.bodytype === values.vehicleDetails.bodyType,
+  );
 
-
-  // vehicle type details
+  // Dimensions change
   const handleVehicleTypeChange =
-    (key: keyof VehicleForm['VehicleTypesDetails']) => (value: string) => {
-      setValues((prev: { VehicleTypesDetails: any; }) => {
-        const updated = {
+    (key: keyof VehicleForm['VehicleTypesDetails']) =>
+      (value: string) => {
+        setValues((prev: any) => ({
           ...prev,
           VehicleTypesDetails: {
             ...prev.VehicleTypesDetails,
             [key]: key === 'VehicleWeight' ? Number(value) : value,
           },
-        };
-
-        if (key === 'VehicleWeight') {
-          const type = getVehicleTypeByWeight(value);
-          updated.VehicleTypesDetails.vehicleType = type;
-        }
-
-        return updated;
-      });
-    };
-
-  const handleVehiclePhotoChange =
-    (key: keyof VehicleForm['vehiclePhotos']) =>
-      (image: any) => {
-        setValues((prev: { vehiclePhotos: any; }) => ({
-          ...prev,
-          vehiclePhotos: {
-            ...prev.vehiclePhotos,
-            [key]: image,
-          },
         }));
       };
 
+  // Vehicle photos change
+  const handleVehiclePhotoChange =
+    (key: keyof VehicleForm['vehiclePhotos']) => (image: any) => {
+      setValues((prev: any) => ({
+        ...prev,
+        vehiclePhotos: {
+          ...prev.vehiclePhotos,
+          [key]: image,
+        },
+      }));
+    };
+
+  // Submit vehicle verification
   const handleSubmit = async () => {
     try {
+      if (!values.vehicleDetails.bodyType) {
+        Alert.alert('Validation', 'Please select a body type');
+        return;
+      }
+
       const images = [
         values.vehiclePhotos.front_img,
         values.vehiclePhotos.back_img,
@@ -207,6 +264,7 @@ export default function ValidateVehicles() {
       const uploadedImages = images.filter(
         img => img && img.uri,
       );
+
       if (uploadedImages.length < 1) {
         Alert.alert(
           'Validation',
@@ -214,8 +272,6 @@ export default function ValidateVehicles() {
         );
         return;
       }
-
-
 
       setLoading(true);
       setStatus('idle');
@@ -241,6 +297,7 @@ export default function ValidateVehicles() {
         'Segment',
         values.vehicleDetails.segment,
       );
+
       formData.append(
         'DhalaLength',
         String(values.VehicleTypesDetails.length),
@@ -256,59 +313,32 @@ export default function ValidateVehicles() {
         String(values.VehicleTypesDetails.height),
       );
 
-
       const appendImage = (key: string, image: any) => {
         if (!image?.uri) return;
 
-        formData.append(key, {
-          uri: image.uri,
-          type: image.type || 'image/jpeg',
-          name: image.fileName || `${key}.jpg`,
-        } as any);
+        formData.append(
+          key,
+          {
+            uri: image.uri,
+            type: image.type || 'image/jpeg',
+            name: image.fileName || `${key}.jpg`,
+          } as any,
+        );
       };
 
-
-      appendImage(
-        'FrontImage',
-        values.vehiclePhotos.front_img,
-      );
-
-      appendImage(
-        'BackImage',
-        values.vehiclePhotos.back_img,
-      );
-
-      appendImage(
-        'LeftImage',
-        values.vehiclePhotos.left_img,
-      );
-
-      appendImage(
-        'RightImage',
-        values.vehiclePhotos.right_img,
-      );
-      appendImage(
-        'DhalaFlaring',
-        values.vehiclePhotos.dhfl_img,
-      );
-      appendImage(
-        'ExtraImage',
-        values.vehiclePhotos.extra_img,
-      );
+      appendImage('FrontImage', values.vehiclePhotos.front_img);
+      appendImage('BackImage', values.vehiclePhotos.back_img);
+      appendImage('LeftImage', values.vehiclePhotos.left_img);
+      appendImage('RightImage', values.vehiclePhotos.right_img);
+      appendImage('DhalaFlaring', values.vehiclePhotos.dhfl_img);
+      appendImage('ExtraImage', values.vehiclePhotos.extra_img);
 
       const resp = await vehicleverify(formData).unwrap();
-      // console.log(
-      //   'Vehicle Verify Response:',
-      //   resp,
-      // );
-
 
       if (resp?.status === '00') {
-
         setStatus('success');
 
         dispatch(setVehicleVerified(true));
-
 
         Alert.alert(
           'Success',
@@ -317,317 +347,260 @@ export default function ValidateVehicles() {
             {
               text: 'OK',
               onPress: () => {
-
                 if (from === 'temporary_dashboard') {
-
                   navigation.goBack();
-
-                }
-                else if (from === 'dashboard') {
-
+                } else if (from === 'dashboard') {
                   navigation.getParent()?.reset({
                     index: 0,
-                    routes: [
-                      {
-                        name: 'Dashboard',
-                      },
-                    ],
+                    routes: [{ name: 'Dashboard' }],
                   });
-
                 }
-
               },
             },
           ],
         );
-
+      } else {
+        Alert.alert(
+          'Verification Failed',
+          resp?.message || 'Unable to verify vehicle',
+        );
       }
-
-
-    } catch (error: any) {
-
+    } catch (err: any) {
       setStatus('error');
-
-
-      // console.log(
-      //   'Vehicle Verify Error:',
-      //   error,
-      //  );
-
 
       Alert.alert(
         'Verification Failed',
-        error?.data?.message ||
-        error?.message ||
+        err?.data?.message ||
+        err?.message ||
         'Unable to verify vehicle',
       );
-
-
     } finally {
-
       setLoading(false);
-
     }
   };
+
+  // Image picker
+  const renderImagePicker = (
+    label: string,
+    key: keyof VehicleForm['vehiclePhotos'],
+  ) => (
+    <View style={styles.imageItem}>
+      <CustomImagePicker
+        label={label}
+        returnType="uri"
+        onImageSelected={image =>
+          handleVehiclePhotoChange(key)(image)
+        }
+        containerStyle={styles.imagePicker}
+      />
+    </View>
+  );
+
   return (
-    <View style={[commonstyles.flex1, styles.validateconatiner]}>
+    <View style={[commonstyles.flex1, styles.validateContainer]}>
       <AppHeader title={headerTitle} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
       >
+        <Text style={styles.vehicleNumber}>
+          Vehicle No : {values.vehicleDetails.registrationNo}
+        </Text>
         <View style={styles.mainContainer}>
-          <CustomCard style={styles.formcontainer}>
+          <CustomCard style={styles.formContainer}>
 
-            {/* VEHICLE NUMBER */}
-            <Text style={styles.vehicleNumber}>
-              Vehicle No : {values?.vehicleDetails.registrationNo}
-            </Text>
+            {/* Vehicle Registration Number */}
 
-            {/* ================= TOP ROW ================= */}
+
+
+            {/* Loading Capacity and Segment */}
+
             <View style={styles.topRow}>
-
-              {/* Loading Capacity */}
-              <View style={styles.topField}>
-                <Text style={styles.topLabel}>
-                  Loading Capacity
-                  <Text style={styles.weightText}> (Weight)</Text>
-                </Text>
-
-                <Text
-                  style={styles.topValue}
-                  numberOfLines={1}
-                >
-                  {values.VehicleTypesDetails.VehicleWeight || ''}
+              <View style={styles.topInfoBox}>
+                <Text style={styles.topInfoText} numberOfLines={1}>
+                  Loading Capacity :{' '}
+                  {values.VehicleTypesDetails.VehicleWeight} kg
                 </Text>
               </View>
 
-              {/* Segment */}
-              <View style={styles.topField}>
-                {/* <CustomDropdown
-                data={truckBodyTypes}
-                value={values.vehicleDetails.bodyType}
-                placeholder="Segment"
-                onSelect={item =>
-                  handleVehicleDetailsChange('bodyType')(item.value)
-                }
-              /> */}
-                <LocalInput
-                  label="Segment"
-                  value={values.vehicleDetails.segment}
-                  onChangeText={handleVehicleTypeChange('length')}
-                  keyboardType="number-pad"
-                  placeholder=""
-                  editable={true}
-                />
-                {/* <CustomDropdown
-                  data={segmentoptions}
-                  value={values.vehicleDetails.segment}
-                  placeholder="Segment"
-                  onSelect={item =>
-                    setValues(prev => ({
-                      ...prev,
-                      vehicleDetails: {
-                        ...prev.vehicleDetails,
-                        segment: item.value,
-                        bodyType: '', 
-                      },
-                    }))
-                  }
-                /> */}
+              <View style={styles.topInfoBox}>
+                <Text style={styles.topInfoText} numberOfLines={1}>
+                  Segment : {values.vehicleDetails.segment || '-'}
+                </Text>
               </View>
             </View>
 
-            {/* ================= BODY TYPE ================= */}
+            {/* Body Type Selection */}
+
             <Text style={styles.sectionLabel}>
-              Body Type
+              {hasSelectedBodyType
+                ? 'Your Select Body Type'
+                : 'Select Body Type'}
             </Text>
-            <View style={styles.bodyTypeGrid}>
-              {isFetching ? (
-                <Text>
-                  Loading body types...
-                </Text>
-              ) : error ? (
-                <Text>
-                  Unable to load body types
-                </Text>
-              ) : bodyTypes.length ? (
-                bodyTypes
-                  .filter((bodyType: any) => {
-                    // No selection -> show all body types
-                    if (!values.vehicleDetails.bodyType) {
-                      return true;
-                    }
 
-                    // Selection -> show only selected body type
-                    return (
-                      bodyType.bodytype ===
-                      values.vehicleDetails.bodyType
-                    );
-                  })
-                  .map((bodyType: any) => {
-                    const selected =
-                      values.vehicleDetails.bodyType ===
-                      bodyType.bodytype;
-
-                    return (
+            {isFetching ? (
+              <View style={styles.stateContainer}>
+                <ActivityIndicator color={colors.primary} />
+              </View>
+            ) : error ? (
+              <Text style={styles.stateText}>
+                Unable to load body types
+              </Text>
+            ) : bodyTypes.length > 0 ? (
+              <>
+                {!hasSelectedBodyType ? (
+                  // Initial state: All body types
+                  <View style={styles.bodyTypeGrid}>
+                    {bodyTypes.map((bodyType: any, index: number) => (
                       <TouchableOpacity
-                        key={`${bodyType.bodytype}-${bodyType.vehiclesegment}`}
-                        style={[
-                          styles.bodyTypeCard,
-                          selected && styles.selectedBodyTypeCard,
-                        ]}
+                        key={`${bodyType.bodytype}-${index}`}
+                        activeOpacity={0.8}
+                        style={styles.bodyTypeCard}
                         onPress={() =>
                           handleBodyTypeSelect(bodyType)
                         }
                       >
                         <Image
                           source={{
-                            uri: getImageUrl(
-                              bodyType.front_image_url,
-                            ),
+                            uri: getImageUrl(bodyType.front_image_url),
                           }}
                           style={styles.bodyTypeImage}
-                          resizeMode="cover"
+                          resizeMode="contain"
                         />
-
-                        <View style={styles.bodyTypeLabel}>
-                          <Text
-                            style={styles.bodyTypeLabelText}
-                          >
-                            {bodyType.bodytype}
-                          </Text>
-                        </View>
                       </TouchableOpacity>
-                    );
-                  })
-              ) : (
-                <Text>
-                  No body types found
-                </Text>
-              )}
-            </View>
+                    ))}
+                  </View>
+                ) : (
+                  // Selected state: Large preview + thumbnails
+                  <>
+                    {selectedBodyType && (
+                      <Animated.View
+                        style={[
+                          styles.selectedBodyContainer,
+                          {
+                            opacity: fadeAnim,
+                            transform: [{ scale: scaleAnim }],
+                          },
+                        ]}
+                      >
+                        <Image
+                          source={{
+                            uri: getImageUrl(
+                              selectedBodyType.front_image_url,
+                            ),
+                          }}
+                          style={styles.selectedBodyImage}
+                          resizeMode="contain"
+                        />
+                      </Animated.View>
+                    )}
 
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      style={styles.changeBodyButton}
+                      onPress={handleChangeBodyType}
+                    >
+                      <Text style={styles.changeBodyText}>
+                        Click Here To Change The Body Type
+                      </Text>
+                    </TouchableOpacity>
 
-            {/* ================= DIVIDER ================= */}
-            <View style={styles.divider} />
+                    <View style={styles.bodyThumbnailContainer}>
+                      {bodyTypes
+                        .filter(
+                          (bodyType: any) =>
+                            bodyType.bodytype !==
+                            values.vehicleDetails.bodyType,
+                        )
+                        .map((bodyType: any, index: number) => (
+                          <TouchableOpacity
+                            key={`${bodyType.bodytype}-${index}`}
+                            activeOpacity={0.8}
+                            style={styles.bodyThumbnailCard}
+                            onPress={() =>
+                              handleBodyTypeSelect(bodyType)
+                            }
+                          >
+                            <Image
+                              source={{
+                                uri: getImageUrl(
+                                  bodyType.front_image_url,
+                                ),
+                              }}
+                              style={styles.bodyThumbnailImage}
+                              resizeMode="contain"
+                            />
+                          </TouchableOpacity>
+                        ))}
+                    </View>
+                  </>
+                )}
+              </>
+            ) : (
+              <Text style={styles.stateText}>
+                No body types found
+              </Text>
+            )}
 
-            {/* ================= DIMENSIONS ================= */}
+            {/* Dhala Dimensions */}
+            <Text style={styles.dimensionTitle}>
+              Vehicle Dhala ( Tray ) Size
+            </Text>
             <View style={styles.dimensionRow}>
-
               <View style={styles.dimensionBox}>
                 <LocalInput
-                  label="Dhala Length"
+                  label="Length (IN FT)"
                   value={values.VehicleTypesDetails.length}
                   onChangeText={handleVehicleTypeChange('length')}
-                  keyboardType="number-pad"
+                  keyboardType="decimal-pad"
                   placeholder=""
                 />
+                {/* <Text style={styles.dimensionUnit}>( IN FT )</Text> */}
               </View>
 
               <View style={styles.dimensionBox}>
                 <LocalInput
-                  label="Dhala Width"
+                  label="Width (IN FT)"
                   value={values.VehicleTypesDetails.width}
                   onChangeText={handleVehicleTypeChange('width')}
-                  keyboardType="number-pad"
+                  keyboardType="decimal-pad"
                   placeholder=""
                 />
+                {/* <Text style={styles.dimensionUnit}>( IN FT )</Text> */}
               </View>
 
               <View style={styles.dimensionBox}>
                 <LocalInput
-                  label="Dhala Height"
+                  label="Height (IN FT)"
                   value={values.VehicleTypesDetails.height}
                   onChangeText={handleVehicleTypeChange('height')}
-                  keyboardType="number-pad"
+                  keyboardType="decimal-pad"
                   placeholder=""
                 />
+                {/* <Text style={styles.dimensionUnit}>( IN FT )</Text> */}
               </View>
-
             </View>
 
-            {/* ================= REAL IMAGES ================= */}
+            {/* Vehicle Image Upload */}
+
             <Text style={styles.imageTitle}>
               Add Real Image Of Vehicle
             </Text>
 
             <View style={styles.imageGrid}>
-
-              {/* FRONT */}
-              <View style={styles.imageItem}>
-                <CustomImagePicker
-                  label="Add Front Side Image"
-                  returnType="uri"
-                  onImageSelected={image =>
-                    handleVehiclePhotoChange('front_img')(image)
-                  }
-                  containerStyle={styles.imagePicker}
-                />
-              </View>
-
-              {/* BACK */}
-              <View style={styles.imageItem}>
-                <CustomImagePicker
-                  label="Add Back Side Image"
-                  returnType="uri"
-                  onImageSelected={image =>
-                    handleVehiclePhotoChange('back_img')(image)
-                  }
-                  containerStyle={styles.imagePicker}
-                />
-              </View>
-
-              {/* RIGHT */}
-              <View style={styles.imageItem}>
-                <CustomImagePicker
-                  label="Add Right Side Image"
-                  returnType="uri"
-                  onImageSelected={image =>
-                    handleVehiclePhotoChange('right_img')(image)
-                  }
-                  containerStyle={styles.imagePicker}
-                />
-              </View>
-
-              {/* LEFT */}
-              <View style={styles.imageItem}>
-                <CustomImagePicker
-                  label="Add Left Side Image"
-                  returnType="uri"
-                  onImageSelected={image =>
-                    handleVehiclePhotoChange('left_img')(image)
-                  }
-                  containerStyle={styles.imagePicker}
-                />
-              </View>
-              <View style={styles.imageItem}>
-                <CustomImagePicker
-                  label="Dhala Flaring Image"
-                  returnType="uri"
-                  onImageSelected={image =>
-                    handleVehiclePhotoChange('dhfl_img')(image)
-                  }
-                  containerStyle={styles.imagePicker}
-                />
-              </View>
-
-              <View style={styles.imageItem}>
-                <CustomImagePicker
-                  label="Extra Image"
-                  returnType="uri"
-                  onImageSelected={image =>
-                    handleVehiclePhotoChange('extra_img')(image)
-                  }
-                  containerStyle={styles.imagePicker}
-                />
-              </View>
+              {renderImagePicker('Add Front Side Image', 'front_img')}
+              {renderImagePicker('Add Back Side Image', 'back_img')}
+              {renderImagePicker('Add Right Side Image', 'right_img')}
+              {renderImagePicker('Add Left Side Image', 'left_img')}
+              {renderImagePicker('Add Dhala Image', 'dhfl_img')}
+              {renderImagePicker('Add Extra Image', 'extra_img')}
             </View>
-
           </CustomCard>
 
-          {/* ================= VALIDATE BUTTON ================= */}
+          {/* Validate Button */}
+
           <SecondaryButton
             title={
               loading
@@ -637,7 +610,7 @@ export default function ValidateVehicles() {
                   : 'Validate'
             }
             onPress={handleSubmit}
-            textStyle={styles.buttontext}
+            textStyle={styles.buttonText}
             style={[
               styles.validateButton,
               status === 'success' && styles.successButton,
@@ -651,185 +624,259 @@ export default function ValidateVehicles() {
 }
 
 const styles = StyleSheet.create({
-  validateconatiner: {
+  validateContainer: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#FFFFFF',
   },
-
   scrollContent: {
-    paddingTop: moderateScale(10),
-    paddingBottom: moderateScale(30),
-  },
-  selectedBodyTypeCard: {
-    borderWidth: 3,
-    borderColor: colors.primary,
+    paddingTop: moderateScale(2),
+    paddingBottom: moderateScale(24),
   },
   mainContainer: {
     width: '100%',
     alignItems: 'center',
   },
-
-  formcontainer: {
+  formContainer: {
     width: wp(92),
     borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: moderateScale(10),
-    paddingHorizontal: moderateScale(12),
-    paddingVertical: moderateScale(12),
+    borderColor: '#5576A8',
+    borderRadius: moderateScale(8),
+    paddingHorizontal: moderateScale(9),
+    paddingVertical: moderateScale(9),
     alignSelf: 'center',
     backgroundColor: '#FFFFFF',
   },
-
   vehicleNumber: {
     color: colors.primary,
-    fontSize: moderateScale(12),
+    fontSize: moderateScale(14),
     fontWeight: '700',
     textAlign: 'center',
-    marginBottom: moderateScale(10),
+    marginBottom: moderateScale(8),
   },
-
   topRow: {
     flexDirection: 'row',
     width: '100%',
-    gap: moderateScale(8),
+    gap: moderateScale(3),
     marginBottom: moderateScale(12),
   },
 
-  topField: {
+  topInfoBox: {
     flex: 1,
-    minHeight: moderateScale(55),
-    borderWidth: 1,
-    borderColor: '#D9D9D9',
-    borderRadius: moderateScale(10),
+    minHeight: moderateScale(27),
+    backgroundColor: '#6C89B5',
+    alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: moderateScale(10),
-    paddingVertical: moderateScale(6),
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: moderateScale(3),
   },
 
-  topLabel: {
-    color: '#222222',
-    fontSize: moderateScale(11),
+  topInfoText: {
+    color: '#FFFFFF',
+    fontSize: moderateScale(9),
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  dimensionTitle:{
+    color: colors.primary,
     fontWeight: '700',
-  },
+    fontSize: moderateScale(14),
+    marginTop: moderateScale(12)
 
-  weightText: {
-    fontSize: moderateScale(8),
-    fontWeight: '400',
-  },
-
-  topValue: {
-    color: '#333333',
-    fontSize: moderateScale(11),
-    fontWeight: '500',
-    marginTop: moderateScale(4),
   },
 
   sectionLabel: {
     color: '#222222',
-    fontSize: moderateScale(12),
-    fontWeight: '700',
-    marginBottom: moderateScale(7),
+    fontSize: moderateScale(11),
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: moderateScale(5),
+    marginBottom: moderateScale(10),
   },
 
+  // Initial body type grid
   bodyTypeGrid: {
     width: '100%',
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    rowGap: moderateScale(8),
+    rowGap: moderateScale(5),
   },
 
   bodyTypeCard: {
     width: '48.5%',
-    height: moderateScale(80),
+    height: moderateScale(85),
     borderWidth: 1,
-    borderColor: '#6D8EBA',
-    borderRadius: moderateScale(6),
+    borderColor: '#BDBDBD',
+    borderRadius: moderateScale(5),
+    backgroundColor: '#FFFFFF',
     overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   bodyTypeImage: {
-    width: '100%',
-    height: '100%',
+    width: '95%',
+    height: '95%',
   },
 
-  bodyTypeLabel: {
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    paddingVertical: moderateScale(4),
-  },
-
-  bodyTypeLabelText: {
-    color: '#FFFFFF',
-    fontSize: moderateScale(10),
-    textAlign: 'center',
-    fontWeight: '600',
-  },
-
-  divider: {
-    height: 1,
-    backgroundColor: '#E2E2E2',
-    width: '90%',
+  // Selected large preview
+  selectedBodyContainer: {
+    width: '75%',
+    height: moderateScale(113),
+    borderWidth: 2,
+    borderColor: '#365F9B',
+    borderRadius: moderateScale(5),
     alignSelf: 'center',
-    marginVertical: moderateScale(12),
+    backgroundColor: '#FFFFFF',
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
+  selectedBodyImage: {
+    width: '95%',
+    height: '95%',
+  },
+
+  // Change body type
+  changeBodyButton: {
+    alignSelf: 'center',
+    marginTop: moderateScale(10),
+    marginBottom: moderateScale(17),
+    borderBottomWidth: 1,
+    borderBottomColor: '#365F9B',
+    paddingBottom: moderateScale(2),
+  },
+
+  changeBodyText: {
+    color: '#365F9B',
+    fontSize: moderateScale(11),
+    fontStyle: 'italic',
+    fontWeight: '500',
+  },
+
+  // Other body type thumbnails
+  bodyThumbnailContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: moderateScale(6),
+  },
+
+  bodyThumbnailCard: {
+    width: '31.5%',
+    height: moderateScale(79),
+    borderWidth: 1,
+    borderColor: '#BDBDBD',
+    borderRadius: moderateScale(5),
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+
+  bodyThumbnailImage: {
+    width: '95%',
+    height: '95%',
+  },
+
+  stateContainer: {
+    width: '100%',
+    paddingVertical: moderateScale(15),
+    alignItems: 'center',
+  },
+
+  stateText: {
+    width: '100%',
+    textAlign: 'center',
+    color: '#777777',
+    fontSize: moderateScale(11),
+    paddingVertical: moderateScale(12),
+  },
+
+  // Dimensions
   dimensionRow: {
     flexDirection: 'row',
     width: '100%',
     justifyContent: 'space-between',
-    gap: moderateScale(7),
-    marginBottom: moderateScale(10),
+    gap: moderateScale(5),
+    marginTop: moderateScale(20),
+    marginBottom: moderateScale(8),
   },
 
   dimensionBox: {
     flex: 1,
+    minWidth: 0,
     minHeight: moderateScale(52),
+    borderWidth: 1,
+    borderColor: '#D6D6D6',
+    borderRadius: moderateScale(9),
+    paddingHorizontal: moderateScale(3),
+    paddingTop: moderateScale(3),
+    justifyContent: 'center',
   },
 
+  dimensionUnit: {
+    textAlign: 'center',
+    color: '#555555',
+    fontSize: moderateScale(8),
+    marginTop: moderateScale(-3),
+    marginBottom: moderateScale(3),
+  },
+
+  // Image upload
   imageTitle: {
     color: colors.primary,
     fontWeight: '700',
-    fontSize: moderateScale(12),
+    fontSize: moderateScale(10),
+    marginTop: moderateScale(8),
     marginBottom: moderateScale(7),
   },
 
   imageGrid: {
     width: '100%',
     flexDirection: 'row',
+    paddingHorizontal: moderateScale(2),
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    rowGap: moderateScale(8),
+    rowGap: moderateScale(4),
   },
 
   imageItem: {
     width: '48.5%',
     minWidth: 0,
+    height: moderateScale(50),
+    borderWidth: 1,
+    borderColor: '#D6D6D6',
+    borderRadius: moderateScale(9),
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   imagePicker: {
     width: '100%',
-    height: moderateScale(38),
+    height: moderateScale(50),
     marginBottom: 0,
   },
 
+  // Validate button
   validateButton: {
-    marginTop: moderateScale(16),
-    width: wp(80),
-    minHeight: moderateScale(45),
-    borderRadius: moderateScale(9),
+    marginTop: moderateScale(13),
+    width: wp(84),
+    minHeight: moderateScale(43),
+    borderRadius: moderateScale(6),
     alignSelf: 'center',
+    backgroundColor: '#365F9B',
   },
 
   successButton: {
     backgroundColor: 'green',
   },
 
-  buttontext: {
-    fontSize: moderateScale(15),
+  buttonText: {
+    fontSize: moderateScale(22),
     fontWeight: '700',
+    color: '#FFFFFF',
   },
 });

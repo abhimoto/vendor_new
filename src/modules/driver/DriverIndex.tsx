@@ -338,7 +338,7 @@ scrollContent: {
 bottomButtonContainer: {
   width: '100%',
   paddingHorizontal: spacing.xl,
-  paddingTop: moderateScale(10),
+  marginBottom: moderateScale(10),
   paddingBottom: moderateScale(20),
   backgroundColor: '#fff',
   alignItems: 'center',

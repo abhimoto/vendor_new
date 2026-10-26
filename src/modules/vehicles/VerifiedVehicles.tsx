@@ -1,11 +1,20 @@
-import React, { useEffect } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  Image,
+  StyleSheet,
+  Text,
+  View,
+  Modal,
+  TouchableOpacity,
+  Pressable,
+  ScrollView,
+} from 'react-native';
 import { colors } from '@utils/colors';
 import AppHeader from '@components/custumcomponents/AppHeader';
 import { useRoute } from '@react-navigation/native';
 import { useVehicledetailsQuery } from '@app/redux/query/queryApi';
 import Config from 'react-native-config';
-import { ScrollView } from 'react-native-gesture-handler';
+
 
 
 export default function VehicleDetailsCard() {
@@ -13,7 +22,7 @@ export default function VehicleDetailsCard() {
 
   const vehicle = route.params?.vehicle;
   const vehicleId = vehicle?.VehicleId;
-
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const getImageUrl = (path?: string | null) => {
     if (!path) {
       return undefined;
@@ -26,7 +35,6 @@ export default function VehicleDetailsCard() {
 
     return url;
   };
-  console.log(getImageUrl)
   const {
     data,
     isLoading,
@@ -59,7 +67,7 @@ export default function VehicleDetailsCard() {
       </View>
     );
   }
-  
+
 
   return (
     <>
@@ -67,147 +75,183 @@ export default function VehicleDetailsCard() {
 
       <View style={styles.container}>
         <ScrollView scrollEnabled >
-              
+          <Text style={styles.vehicleNo}>
+            Vehicle No : {details.VehicleNo}
+          </Text>
 
-        {/* Master / Sample Images */}
-        <View style={styles.imageGrid}>
-          {[
-            { label: 'Front', uri: getImageUrl(details.FrontImage) },
-            { label: 'Back', uri: getImageUrl(details.BackImage) },
-            { label: 'Left', uri: getImageUrl(details.LeftImage) },
-            { label: 'Right', uri: getImageUrl(details.RightImage) },
-          ]
-            .filter(item => item.uri)
-            .map((item, index) => (
-              <View key={index} style={styles.imageWrapper}>
-                <Image
-                  source={{ uri: item.uri }}
-                  style={styles.image}
-                  resizeMode="cover"
-                />
+          {/* Master / Sample Images */}
+          <View style={styles.imageGrid}>
+            {[
+              { label: 'Front', uri: getImageUrl(details.FrontImage) },
+              { label: 'Back', uri: getImageUrl(details.BackImage) },
+              { label: 'Left', uri: getImageUrl(details.LeftImage) },
+              { label: 'Right', uri: getImageUrl(details.RightImage) },
+            ]
+              .filter(item => item.uri)
+              .map((item, index) => (
+                <View key={index} style={styles.imageWrapper}>
+                  <Image
+                    source={{ uri: item.uri }}
+                    style={styles.image}
+                    resizeMode="cover"
+                  />
 
-                <Text style={styles.imageLabel}>
-                  {item.label}
-                </Text>
-              </View>
-            ))}
-        </View>
-        <Text style={styles.vehicleNo}>
-          Vehicle No : {details.VehicleNo}
-        </Text>
-
-        {/* Details Card */}
-        <View style={styles.card}>
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Loading Capacity</Text>
-            <Text style={styles.value}>
-              {details.LoadingCapacity} kg
-            </Text>
+                  <Text style={styles.imageLabel}>
+                    {item.label}
+                  </Text>
+                </View>
+              ))}
           </View>
 
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Make & Segment</Text>
-            <Text style={styles.value}>
-              {details.Segment || '-'}
-            </Text>
-          </View>
 
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Body Type</Text>
-            <Text style={styles.value}>
-              {details.BodyType}
-            </Text>
-          </View>
-
-          {/* Dhala Size */}
-          <View style={styles.dhalaContainer}>
-            <View style={styles.dhalaLabel}>
-              <Text style={styles.label}>
-                Dhala Size
+          {/* Details Card */}
+          <View style={styles.card}>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Loading Capacity</Text>
+              <Text style={styles.value}>
+                {details.LoadingCapacity} kg
               </Text>
             </View>
 
-            <View style={styles.dhalaTable}>
-              <View style={styles.tableHeader}>
-                <Text style={styles.tableHeading}>
-                  Length
-                </Text>
-                <Text style={styles.tableHeading}>
-                  Width
-                </Text>
-                <Text style={styles.tableHeading}>
-                  Height
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Make & Segment</Text>
+              <Text style={styles.value}>
+                {details.Segment || '-'}
+              </Text>
+            </View>
+
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Body Type</Text>
+              <Text style={styles.value}>
+                {details.BodyType}
+              </Text>
+            </View>
+
+            {/* Dhala Size */}
+            <View style={styles.dhalaContainer}>
+              <View style={styles.dhalaLabel}>
+                <Text style={styles.label}>
+                  Dhala Size
                 </Text>
               </View>
 
-              <View style={styles.tableRow}>
-                <Text style={styles.tableValue}>
-                  {details.DhalaLength} ft
-                </Text>
+              <View style={styles.dhalaTable}>
+                <View style={styles.tableHeader}>
+                  <Text style={styles.tableHeading}>
+                    Length
+                  </Text>
+                  <Text style={styles.tableHeading}>
+                    Width
+                  </Text>
+                  <Text style={styles.tableHeading}>
+                    Height
+                  </Text>
+                </View>
 
-                <Text style={styles.tableValue}>
-                  {details.DhalaWidth} ft
-                </Text>
+                <View style={styles.tableRow}>
+                  <Text style={styles.tableValue}>
+                    {details.DhalaLength} ft
+                  </Text>
 
-                <Text style={styles.tableValue}>
-                  {details.DhalaHeight} ft
-                </Text>
+                  <Text style={styles.tableValue}>
+                    {details.DhalaWidth} ft
+                  </Text>
+
+                  <Text style={styles.tableValue}>
+                    {details.DhalaHeight} ft
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
-        </View>
 
 
-        {/* Images */}
-        <Text style={styles.imageTitle}>
-          Real Image Of Vehicle
+   {/* Real Vehicle Images */}
+<Text style={styles.imageTitle}>
+  Real Image Of Vehicle
+</Text>
+
+<View style={styles.imageGrid}>
+  {[
+    {
+      label: 'Front',
+      uri: getImageUrl(details.UploadedFrontImage),
+    },
+    {
+      label: 'Back',
+      uri: getImageUrl(details.UploadedBackImage),
+    },
+    {
+      label: 'Left',
+      uri: getImageUrl(details.UploadedLeftImage),
+    },
+    {
+      label: 'Right',
+      uri: getImageUrl(details.UploadedRightImage),
+    },
+  ]
+    .filter(item => item.uri)
+    .map((item, index) => (
+      <TouchableOpacity
+        key={index}
+        style={styles.realImageWrapper}
+        activeOpacity={0.8}
+        onPress={() => setPreviewImage(item.uri!)}
+      >
+        <Image
+          source={{ uri: item.uri }}
+          style={styles.realVehicleImage}
+          resizeMode="cover"
+        />
+
+        <Text style={styles.imageLabel}>
+          {item.label}
         </Text>
+      </TouchableOpacity>
+    ))}
+</View>
 
-        {/* Actual Uploaded Vehicle Images */}
-        <View style={styles.imageGrid}>
-          {[
-            {
-              label: 'Front',
-              uri: details.UploadedFrontImage,
-            },
-            {
-              label: 'Back',
-              uri: details.UploadedBackImage,
-            },
-            {
-              label: 'Left',
-              uri: details.UploadedLeftImage,
-            },
-            {
-              label: 'Right',
-              uri: details.UploadedRightImage,
-            },
-          ]
-            .filter(item => item.uri)
-            .map((item, index) => (
-              <View key={index} style={styles.imageWrapper}>
-                <Image
-                  source={{ uri: item.uri }}
-                  style={styles.image}
-                  resizeMode="cover"
-                />
+{!details.UploadedFrontImage &&
+  !details.UploadedBackImage &&
+  !details.UploadedLeftImage &&
+  !details.UploadedRightImage && (
+    <Text style={styles.noImage}>
+      No vehicle images available
+    </Text>
+  )}
 
-                <Text style={styles.imageLabel}>
-                  {item.label}
-                </Text>
-              </View>
-            ))}
-        </View>
+{/* Full Screen Image Preview */}
+<Modal
+  visible={!!previewImage}
+  transparent
+  animationType="fade"
+  onRequestClose={() => setPreviewImage(null)}
+>
+  <View style={styles.previewContainer}>
 
-        {!details.UploadedFrontImage &&
-          !details.UploadedBackImage &&
-          !details.UploadedLeftImage &&
-          !details.UploadedRightImage && (
-            <Text style={styles.noImage}>
-              No vehicle images available
-            </Text>
-          )}
-          </ScrollView>
+    <TouchableOpacity
+      style={styles.closeButton}
+      onPress={() => setPreviewImage(null)}
+    >
+      <Text style={styles.closeButtonText}>✕</Text>
+    </TouchableOpacity>
+
+    {previewImage && (
+      <Pressable
+        style={styles.previewImageContainer}
+        onPress={() => setPreviewImage(null)}
+      >
+        <Image
+          source={{ uri: previewImage }}
+          style={styles.fullPreviewImage}
+          resizeMode="contain"
+        />
+      </Pressable>
+    )}
+
+  </View>
+</Modal>
+        </ScrollView>
       </View>
     </>
   );
@@ -230,7 +274,7 @@ const styles = StyleSheet.create({
   vehicleNo: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.text,
+    color: '#2E5A99',
     alignSelf: 'center',
     marginBottom: 15,
   },
@@ -348,4 +392,57 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#999',
   },
+  // Small real vehicle image thumbnails
+realImageWrapper: {
+  width: '23%',
+  marginBottom: 14,
+},
+
+realVehicleImage: {
+  width: '100%',
+  height: 85,
+  borderRadius: 8,
+  borderWidth: 1,
+  borderColor: '#D8D8D8',
+  backgroundColor: '#F5F5F5',
+},
+
+// Full-screen preview
+previewContainer: {
+  flex: 1,
+  backgroundColor: 'rgba(0,0,0,0.95)',
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+
+previewImageContainer: {
+  width: '100%',
+  height: '80%',
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+
+fullPreviewImage: {
+  width: '100%',
+  height: '100%',
+},
+
+closeButton: {
+  position: 'absolute',
+  top: 45,
+  right: 20,
+  zIndex: 10,
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  backgroundColor: '#333',
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+
+closeButtonText: {
+  color: '#fff',
+  fontSize: 22,
+  fontWeight: '600',
+},
 });
