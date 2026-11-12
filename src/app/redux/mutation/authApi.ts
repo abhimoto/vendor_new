@@ -18,6 +18,20 @@ export const authApi = api.injectEndpoints({
         body,
       }),
     }),
+    CreateMpin: builder.mutation<any, any>({
+      query: body => ({
+        url: '/vendor/create-mpin',
+        method: 'POST',
+        body,
+      }),
+    }),
+    LoginMpin: builder.mutation<any, any>({
+      query: body => ({
+        url: '/vendor/login-mpin',
+        method: 'POST',
+        body
+      })
+    }),
 
     onboarding: builder.mutation<any, any>({
       query: body => ({
@@ -26,7 +40,7 @@ export const authApi = api.injectEndpoints({
         body,
       }),
     }),
-       updateprofile: builder.mutation<any, any>({
+    updateprofile: builder.mutation<any, any>({
       query: body => ({
         url: '/vendor/profile/update',
         method: 'POST',
@@ -99,7 +113,7 @@ export const authApi = api.injectEndpoints({
         body,
       }),
     }),
-        DessignVehicle: builder.mutation<any, any>({
+    DessignVehicle: builder.mutation<any, any>({
       query: body => ({
         url: '/vendor/vehicle/deassign-vehicle',
         method: 'POST',
@@ -127,35 +141,35 @@ export const authApi = api.injectEndpoints({
       }),
     }),
 
-deletevehicle: builder.mutation<
-  any,
-  {
-    VehicleId: string;
-    Remark: string;
-    RatingValue: number;
-  }
->({
-  query: body => ({
-    url: '/vendor/vehicle/discontinue-vehicle',
-    method: 'POST',
-    body,
-  }),
-}),
+    deletevehicle: builder.mutation<
+      any,
+      {
+        VehicleId: string;
+        Remark: string;
+        RatingValue: number;
+      }
+    >({
+      query: body => ({
+        url: '/vendor/vehicle/discontinue-vehicle',
+        method: 'POST',
+        body,
+      }),
+    }),
 
-discontinueDriver: builder.mutation<
-  any,
-  {
-    DriverProfileId: string;
-    Remark: string;
-    RatingValue: number;
-  }
->({
-  query: body => ({
-    url: '/vendor/vehicle/discontinue-driver',
-    method: 'POST',
-    body,
-  }),
-}),
+    discontinueDriver: builder.mutation<
+      any,
+      {
+        DriverProfileId: string;
+        Remark: string;
+        RatingValue: number;
+      }
+    >({
+      query: body => ({
+        url: '/vendor/vehicle/discontinue-driver',
+        method: 'POST',
+        body,
+      }),
+    }),
 
     updatevendordetails: builder.mutation<any, any>({
       query: body => ({
@@ -172,38 +186,38 @@ discontinueDriver: builder.mutation<
         body,
       }),
     }),
-uploadDocument: builder.mutation<
-  any,
-  {
-    documentType: string;
-    file: any;
-    vehicleId?: string;
-    loadId?: string;
-    rcNumber?: string;
-  }>({
-  query: ({ documentType, file, vehicleId, loadId, rcNumber }) => {
-    const formData = new FormData();
+    uploadDocument: builder.mutation<
+      any,
+      {
+        documentType: string;
+        file: any;
+        vehicleId?: string;
+        loadId?: string;
+        rcNumber?: string;
+      }>({
+        query: ({ documentType, file, vehicleId, loadId, rcNumber }) => {
+          const formData = new FormData();
 
-    formData.append('documentType', documentType);
+          formData.append('documentType', documentType);
 
-    if (vehicleId) formData.append('vehicleId', vehicleId);
-    if (loadId) formData.append('loadId', loadId);
-    if (rcNumber) formData.append('rcNumber', rcNumber);
+          if (vehicleId) formData.append('vehicleId', vehicleId);
+          if (loadId) formData.append('loadId', loadId);
+          if (rcNumber) formData.append('rcNumber', rcNumber);
 
-    formData.append('file', {
-      uri: file.uri,
-      name: file.fileName || 'document.jpg',
-      type: file.type || 'image/jpeg',
-    } as any);
+          formData.append('file', {
+            uri: file.uri,
+            name: file.fileName || 'document.jpg',
+            type: file.type || 'image/jpeg',
+          } as any);
 
 
-    return {
-      url: '/vendor/upload-document',
-      method: 'POST',
-      body: formData,
-    };
-  },
-}),
+          return {
+            url: '/vendor/upload-document',
+            method: 'POST',
+            body: formData,
+          };
+        },
+      }),
 
     duplicatevehicle: builder.mutation<any, any>({
       query: body => ({
@@ -228,7 +242,7 @@ export const {
   useDeleteassignvehicleMutation,
   useUpdateassignvehicleMutation,
   useDeletevehicleMutation,
- useDiscontinueDriverMutation,
+  useDiscontinueDriverMutation,
   useVehicleeditMutation,
   useUpdatevendordetailsMutation,
   useUpdatevendorkycMutation,
@@ -236,5 +250,7 @@ export const {
   useAddvehicleMutation,
   useDessignVehicleMutation,
   useUploadDocumentMutation,
-  useUpdateprofileMutation
+  useUpdateprofileMutation,
+  useLoginMpinMutation,
+  useCreateMpinMutation
 } = authApi;

@@ -9,11 +9,9 @@ import {
 import LocalInput from '@components/Inputs/LocalInput';
 import commonstyles from '@utils/commonstyles';
 
-import {
-  Vehicle,
-} from '../types/profileTypes';
-
+import {Vehicle} from '../types/profileTypes';
 import {profileStyles} from '../styles/profileStyles';
+import {useVehicleActions} from '../hooks/useVehicleActions';
 
 interface Props {
   vehicles: Vehicle[];
@@ -30,17 +28,21 @@ export default function VehicleInformation({
   setVehicles,
   vendorid,
 }: Props) {
+  const {
+    addVehicles,
+    isAddingVehicle,
+  } = useVehicleActions();
+
+  /* ---------------- ADD VEHICLE ROW ---------------- */
 
   const addVehicle = () => {
-
     const lastVehicle =
       vehicles[vehicles.length - 1];
 
     if (
-      !lastVehicle.registrationNo ||
-      !lastVehicle.vehicleWeight
+      !lastVehicle.registrationNo?.trim() ||
+      !lastVehicle.vehicleWeight?.trim()
     ) {
-
       Alert.alert(
         'Validation',
         'Please enter vehicle details first.',
@@ -52,24 +54,18 @@ export default function VehicleInformation({
     setVehicles(prev => [
       ...prev,
       {
-        vehicleid:
-          `VEH00${prev.length + 1}`,
-
+        vehicleid: `VEH00${prev.length + 1}`,
         vendorid,
-
         vehicleWeight: '',
-
         registrationNo: '',
       },
     ]);
   };
 
-  const removeVehicle = (
-    index: number,
-  ) => {
+  /* ---------------- REMOVE VEHICLE ---------------- */
 
+  const removeVehicle = (index: number) => {
     if (vehicles.length === 1) {
-
       Alert.alert(
         'Vehicle',
         'At least one vehicle is required.',
@@ -79,41 +75,114 @@ export default function VehicleInformation({
     }
 
     setVehicles(prev =>
-      prev.filter(
-        (_, i) => i !== index,
-      ),
+      prev.filter((_, i) => i !== index),
     );
   };
+
+  /* ---------------- UPDATE VEHICLE ---------------- */
 
   const updateVehicle = (
     index: number,
     key: keyof Vehicle,
     value: string,
   ) => {
-
     setVehicles(prev =>
-      prev.map(
-        (vehicle, i) =>
-          i === index
-            ? {
-                ...vehicle,
-                [key]: value,
-              }
-            : vehicle,
+      prev.map((vehicle, i) =>
+        i === index
+          ? {
+              ...vehicle,
+              [key]: value,
+            }
+          : vehicle,
       ),
     );
   };
 
-  const handleUpdate = () => {
+  /* ---------------- UPDATE API ---------------- */
 
-    console.log(
-      'Vehicle Update:',
+  const handleUpdate = async () => {
+    /*
+     * Validate empty fields
+     */
+    const hasEmptyVehicle = vehicles.some(
+      vehicle =>
+        !vehicle.registrationNo?.trim() ||
+        !vehicle.vehicleWeight?.trim(),
+    );
+
+    if (hasEmptyVehicle) {
+      Alert.alert(
+        'Validation',
+        'Please enter registration number and loading capacity for all vehicles.',
+      );
+
+      return;
+    }
+
+    /*
+     * Validate loading capacity
+     */
+    const hasInvalidCapacity = vehicles.some(
+      vehicle => {
+        const capacity = Number(
+          vehicle.vehicleWeight,
+        );
+
+        return (
+          !Number.isFinite(capacity) ||
+          capacity <= 0
+        );
+      },
+    );
+
+    if (hasInvalidCapacity) {
+      Alert.alert(
+        'Validation',
+        'Please enter a valid loading capacity.',
+      );
+
+      return;
+    }
+
+    /*
+     * Call custom hook
+     */
+    const result = await addVehicles(
       vehicles,
     );
 
+    /*
+     * API success
+     */
+    if (result.success) {
+      Alert.alert(
+        'Success',
+        result.data?.message ||
+          'Vehicles added successfully.',
+      );
+
+      /*
+       * Reset form
+       */
+      setVehicles([
+        {
+          vehicleid: 'VEH001',
+          vendorid,
+          vehicleWeight: '',
+          registrationNo: '',
+        },
+      ]);
+
+      return;
+    }
+
+    /*
+     * API error
+     */
     Alert.alert(
-      'Success',
-      'Vehicles Updated Successfully',
+      'Error',
+      result.error ||
+        'Unable to add vehicles.',
     );
   };
 
@@ -124,7 +193,7 @@ export default function VehicleInformation({
         commonstyles.p20,
       ]}>
 
-      {/* HEADER */}
+      {/* ---------------- HEADER ---------------- */}
 
       <View
         style={[
@@ -156,11 +225,10 @@ export default function VehicleInformation({
 
       </View>
 
-      {/* VEHICLES */}
+      {/* ---------------- VEHICLES ---------------- */}
 
       {vehicles.map(
         (vehicle, index) => {
-
           const isLast =
             index ===
             vehicles.length - 1;
@@ -174,6 +242,8 @@ export default function VehicleInformation({
               style={
                 profileStyles.row
               }>
+
+              {/* REGISTRATION NUMBER */}
 
               <View
                 style={
@@ -190,12 +260,19 @@ export default function VehicleInformation({
                     updateVehicle(
                       index,
                       'registrationNo',
-                      text.toUpperCase(),
+                      text
+                        .toUpperCase()
+                        .replace(
+                          /[^A-Z0-9]/g,
+                          '',
+                        ),
                     )
                   }
                 />
 
               </View>
+
+              {/* LOADING CAPACITY */}
 
               <View
                 style={
@@ -213,12 +290,17 @@ export default function VehicleInformation({
                     updateVehicle(
                       index,
                       'vehicleWeight',
-                      text,
+                      text.replace(
+                        /[^0-9.]/g,
+                        '',
+                      ),
                     )
                   }
                 />
 
               </View>
+
+              {/* ADD / DELETE */}
 
               <View
                 style={
@@ -226,9 +308,11 @@ export default function VehicleInformation({
                 }>
 
                 {isLast ? (
-
                   <TouchableOpacity
-                    onPress={addVehicle}>
+                    onPress={addVehicle}
+                    disabled={
+                      isAddingVehicle
+                    }>
 
                     <Text
                       style={
@@ -238,14 +322,15 @@ export default function VehicleInformation({
                     </Text>
 
                   </TouchableOpacity>
-
                 ) : (
-
                   <TouchableOpacity
                     onPress={() =>
                       removeVehicle(
                         index,
                       )
+                    }
+                    disabled={
+                      isAddingVehicle
                     }>
 
                     <Text
@@ -256,7 +341,6 @@ export default function VehicleInformation({
                     </Text>
 
                   </TouchableOpacity>
-
                 )}
 
               </View>
@@ -266,19 +350,25 @@ export default function VehicleInformation({
         },
       )}
 
-      {/* UPDATE */}
+      {/* ---------------- UPDATE ---------------- */}
 
       <TouchableOpacity
-        style={
-          profileStyles.updateButton
-        }
-        onPress={handleUpdate}>
+        style={[
+          profileStyles.updateButton,
+          isAddingVehicle && {
+            opacity: 0.6,
+          },
+        ]}
+        onPress={handleUpdate}
+        disabled={isAddingVehicle}>
 
         <Text
           style={
             profileStyles.updateButtonText
           }>
-          Update Vehicles
+          {isAddingVehicle
+            ? 'Adding Vehicles...'
+            : 'Update Vehicles'}
         </Text>
 
       </TouchableOpacity>

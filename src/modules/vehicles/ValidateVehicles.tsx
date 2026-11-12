@@ -87,6 +87,8 @@ export default function ValidateVehicles() {
       back_img: '',
       right_img: '',
       left_img: '',
+      dhfl_img: '',
+      extra_img: ''
     },
   });
   const bodyTypes = data?.data || [];
@@ -115,14 +117,19 @@ export default function ValidateVehicles() {
     )}`;
   };
   const handleBodyTypeSelect = (bodyType: any) => {
-    setValues(prev => ({
-      ...prev,
-      vehicleDetails: {
-        ...prev.vehicleDetails,
-        bodyType: bodyType.bodytype,
-        segment: bodyType.vehiclesegment,
-      },
-    }));
+    setValues(prev => {
+      const isAlreadySelected =
+        prev.vehicleDetails.bodyType === bodyType.bodytype;
+
+      return {
+        ...prev,
+        vehicleDetails: {
+          ...prev.vehicleDetails,
+          bodyType: isAlreadySelected ? '' : bodyType.bodytype,
+          segment: isAlreadySelected ? '' : bodyType.vehiclesegment,
+        },
+      };
+    });
   };
 
 
@@ -178,10 +185,11 @@ export default function ValidateVehicles() {
         return updated;
       });
     };
+
   const handleVehiclePhotoChange =
     (key: keyof VehicleForm['vehiclePhotos']) =>
       (image: any) => {
-        setValues(prev => ({
+        setValues((prev: { vehiclePhotos: any; }) => ({
           ...prev,
           vehiclePhotos: {
             ...prev.vehiclePhotos,
@@ -190,8 +198,6 @@ export default function ValidateVehicles() {
         }));
       };
 
-
-
   const handleSubmit = async () => {
     try {
       const images = [
@@ -199,6 +205,8 @@ export default function ValidateVehicles() {
         values.vehiclePhotos.back_img,
         values.vehiclePhotos.right_img,
         values.vehiclePhotos.left_img,
+        values.vehiclePhotos.dhfl_img,
+        values.vehiclePhotos.extra_img,
       ];
 
       const uploadedImages = images.filter(
@@ -255,8 +263,6 @@ export default function ValidateVehicles() {
       );
 
 
-      // Images
-
       const appendImage = (key: string, image: any) => {
         if (!image?.uri) return;
 
@@ -287,9 +293,15 @@ export default function ValidateVehicles() {
         'RightImage',
         values.vehiclePhotos.right_img,
       );
+      appendImage(
+        'DhalaFlaring',
+        values.vehiclePhotos.dhfl_img,
+      );
+      appendImage(
+        'ExtraImage',
+        values.vehiclePhotos.extra_img,
+      );
 
-
-      // RTK Query unwrap
       const resp = await vehicleverify(formData).unwrap();
 
       console.log(formData, '=--')
@@ -417,6 +429,7 @@ export default function ValidateVehicles() {
                   onChangeText={handleVehicleTypeChange('length')}
                   keyboardType="number-pad"
                   placeholder=""
+                  editable={true}
                 />
                 {/* <CustomDropdown
                   data={segmentoptions}
@@ -440,7 +453,6 @@ export default function ValidateVehicles() {
             <Text style={styles.sectionLabel}>
               Body Type
             </Text>
-
             <View style={styles.bodyTypeGrid}>
               {isFetching ? (
                 <Text>
@@ -451,11 +463,22 @@ export default function ValidateVehicles() {
                   Unable to load body types
                 </Text>
               ) : bodyTypes.length ? (
-                bodyTypes.map(
-                  (bodyType: any) => {
+                bodyTypes
+                  .filter((bodyType: any) => {
+                    // No selection -> show all body types
+                    if (!values.vehicleDetails.bodyType) {
+                      return true;
+                    }
+
+                    // Selection -> show only selected body type
+                    return (
+                      bodyType.bodytype ===
+                      values.vehicleDetails.bodyType
+                    );
+                  })
+                  .map((bodyType: any) => {
                     const selected =
-                      values.vehicleDetails
-                        .bodyType ===
+                      values.vehicleDetails.bodyType ===
                       bodyType.bodytype;
 
                     return (
@@ -463,49 +486,39 @@ export default function ValidateVehicles() {
                         key={`${bodyType.bodytype}-${bodyType.vehiclesegment}`}
                         style={[
                           styles.bodyTypeCard,
-                          selected &&
-                          styles.selectedBodyTypeCard,
+                          selected && styles.selectedBodyTypeCard,
                         ]}
                         onPress={() =>
-                          handleBodyTypeSelect(
-                            bodyType,
-                          )
-                        }>
+                          handleBodyTypeSelect(bodyType)
+                        }
+                      >
                         <Image
                           source={{
                             uri: getImageUrl(
                               bodyType.front_image_url,
                             ),
                           }}
-                          style={
-                            styles.bodyTypeImage
-                          }
+                          style={styles.bodyTypeImage}
                           resizeMode="cover"
                         />
 
-                        <View
-                          style={
-                            styles.bodyTypeLabel
-                          }>
+                        <View style={styles.bodyTypeLabel}>
                           <Text
-                            style={
-                              styles.bodyTypeLabelText
-                            }>
-                            {
-                              bodyType.bodytype
-                            }
+                            style={styles.bodyTypeLabelText}
+                          >
+                            {bodyType.bodytype}
                           </Text>
                         </View>
                       </TouchableOpacity>
                     );
-                  },
-                )
+                  })
               ) : (
                 <Text>
                   No body types found
                 </Text>
               )}
             </View>
+
 
             {/* ================= DIVIDER ================= */}
             <View style={styles.divider} />
@@ -599,7 +612,27 @@ export default function ValidateVehicles() {
                   containerStyle={styles.imagePicker}
                 />
               </View>
+              <View style={styles.imageItem}>
+                <CustomImagePicker
+                  label="Dhala Flaring Image"
+                  returnType="uri"
+                  onImageSelected={image =>
+                    handleVehiclePhotoChange('dhfl_img')(image)
+                  }
+                  containerStyle={styles.imagePicker}
+                />
+              </View>
 
+              <View style={styles.imageItem}>
+                <CustomImagePicker
+                  label="Extra Image"
+                  returnType="uri"
+                  onImageSelected={image =>
+                    handleVehiclePhotoChange('extra_img')(image)
+                  }
+                  containerStyle={styles.imagePicker}
+                />
+              </View>
             </View>
 
           </CustomCard>

@@ -22,6 +22,8 @@ export interface AuthState {
   kyc_verified: boolean;      
   vehicle_verified: boolean;   
   vendor_onboarded: boolean;  
+  isMpincreated:boolean;
+  isMpinVerified: boolean;
 }
 
 export type DashboardState = {

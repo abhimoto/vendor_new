@@ -39,7 +39,7 @@ type Vehicle = {
   vehicleType: string;
   driverName: string;
   driverLicenseNo: string;
-  Driveruserid: string;
+  driverUserId: string;
   driverId: string;
   vehicleId: string;
   status: string;
@@ -93,7 +93,7 @@ export default function AssignVehicle() {
     pollingInterval: 30000,
   });
 
-  console.log(assignedData,'assigneddataaaa')
+  // console.log(assignedData,'assigneddataaaa')
   const refreshAll = useCallback(async () => {
     await Promise.all([
       refetchAssigned(),
@@ -119,12 +119,13 @@ export default function AssignVehicle() {
       driversData?.data?.map((d: any) => ({
         label: `${d.DriverName} (${d.MobileNo})`,
         value: d.DriverProfileId,
-        driverUserId: d.Driveruserid,
+        driverUserId: d.DriverUserId,
         driverName: d.DriverName,
       })) ?? [],
     [driversData]
   );
 
+  console.log('driversdata',driversData)
 
 
 
@@ -139,49 +140,51 @@ export default function AssignVehicle() {
         })) ?? [],
     [vehiclesData]
   );
-  
-  const assignedList = useMemo(() => {
-    if (assignedError || !assignedData?.data) return [];
+  console.log('assigndata',assignedData?.data)
+ const assignedList = useMemo(() => {
+  if (assignedError || !assignedData?.data) return [];
 
-    return assignedData.data.map((item: any) => ({
-      id: item.AssignmentId,
-      tripId: item.AssignmentId,
+  return assignedData.data.map((item: any) => ({
+    id: item.AssignmentId,
+    tripId: item.AssignmentId,
 
-      vehicleNumber: item.VehicleNo || 'N/A',
+    vehicleNumber: item.VehicleNo || 'N/A',
 
-      vehicleType:
-        item.VehicleType ||
-        item.BodyType ||
-        'Goods carrier',
+    vehicleType:
+      item.VehicleType ||
+      item.BodyType ||
+      'Goods carrier',
 
-      driverName: item.DriverName || 'N/A',
+    driverName: item.DriverName || 'N/A',
 
-      driverLicenseNo:
-        item.license_number || 'N/A',
+    driverLicenseNo:
+      item.license_number || 'N/A',
 
-      driverId: item.DriverProfileId,
-     Driveruserid: item.DriverUserid,
-      vehicleId: item.VehicleId,
+    driverId: item.DriverProfileId,
 
-      date: item.AssignedAt
-        ? new Date(item.AssignedAt).toLocaleDateString('en-GB', {
+    // IMPORTANT
+    driverUserId: item.DriverUserId,
+
+    vehicleId: item.VehicleId,
+
+    date: item.AssignedAt
+      ? new Date(item.AssignedAt).toLocaleDateString('en-GB', {
           day: '2-digit',
           month: 'short',
           year: 'numeric',
         })
-        : 'N/A',
+      : 'N/A',
 
-      status: item.IsActive ? 'Active' : 'Inactive',
+    status: item.IsActive ? 'Active' : 'Inactive',
 
-      type: item.IsActive ? 'assign' : 'deassign',
-    }));
-  }, [assignedData, assignedError]);
-
+    type: item.IsActive ? 'assign' : 'deassign',
+  }));
+}, [assignedData, assignedError]);
 
   const filteredList = useMemo(() => {
     const query = searchText.toLowerCase().trim();
 
-    const tabData = assignedList.filter(item =>
+    const tabData = assignedList.filter((item: { status: string; }) =>
       selectedTab === 'assign'
         ? item.status === 'Active'
         : item.status === 'Inactive'
@@ -189,12 +192,14 @@ export default function AssignVehicle() {
 
     if (!query) return tabData;
 
-    return tabData.filter(item =>
+    return tabData.filter((item: { vehicleNumber: string; driverName: string; }) =>
       item.vehicleNumber
         ?.toLowerCase()
         .includes(query) ||
       item.driverName
         ?.toLowerCase()
+
+
         .includes(query)
     );
   }, [searchText, assignedList, selectedTab]);
@@ -212,6 +217,7 @@ export default function AssignVehicle() {
   };
 
   const handleAssign = async () => {
+    console.log('searchdrier',searchDriver)
     if (!searchVehicle || !searchDriver) {
       Alert.alert('Validation Error', 'Please select both vehicle and driver');
       return;
@@ -224,7 +230,6 @@ export default function AssignVehicle() {
       };
 
       const response = await assignVehicle(payload).unwrap();
-
       if (response?.status === '00') {
         await VendorSocket.vehicleAssignToDriver(
           searchDriver.driverUserId,
@@ -255,13 +260,7 @@ export default function AssignVehicle() {
 
   const handleDeassign = async (item: Vehicle) => {
   try {
-    console.log('DEASSIGN ITEM:', item);
-    console.log('DriverProfileId:', item.driverId);
-    console.log('Driveruserid:', item.Driveruserid);
-    console.log('VehicleId:', item.vehicleId);
-    console.log('VehicleNumber:', item.vehicleNumber);
-
-    if (!item.Driveruserid) {
+    if (!item.driverUserId) {
       Alert.alert(
         'Error',
         'Driver User ID is missing. Please refresh the list.',
@@ -278,14 +277,14 @@ export default function AssignVehicle() {
 
     if (response?.status === '00') {
       await VendorSocket.vehicleDeassignToDriver(
-        item.Driveruserid,
+        item.driverUserId,
         item.vehicleNumber,
       );
 
       Alert.alert(
         'Success',
         `Vehicle ${item.vehicleNumber} has been deassigned successfully`,
-      );
+      );  
 
       await Promise.all([
         refetchAssigned(),
@@ -310,53 +309,53 @@ export default function AssignVehicle() {
   }
 };
 
-  const handleUpdate = async (item: Vehicle) => {
-    Alert.alert(
-      'Update Assignment',
-      `Update assignment for ${item.vehicleNumber}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Update',
-          onPress: async () => {
-            try {
-              const payload = {
-                DriverProfileId: item.driverId,
-                VehicleId: item.vehicleId,
-              };
+  // const handleUpdate = async (item: Vehicle) => {
+  //   Alert.alert(
+  //     'Update Assignment',
+  //     `Update assignment for ${item.vehicleNumber}?`,
+  //     [
+  //       { text: 'Cancel', style: 'cancel' },
+  //       {
+  //         text: 'Update',
+  //         onPress: async () => {
+  //           try {
+  //             const payload = {
+  //               DriverProfileId: item.driverId,
+  //               VehicleId: item.vehicleId,
+  //             };
 
-              console.log('Update Payload:', payload);
+  //             console.log('Update Payload:', payload);
 
-              const response = await deassign(payload).unwrap();
+  //             const response = await deassign(payload).unwrap();
 
-              if (response?.status === '00') {
-                Alert.alert(
-                  'Success',
-                  'Vehicle Deassign  Successfully'
-                );
+  //             if (response?.status === '00') {
+  //               Alert.alert(
+  //                 'Success',
+  //                 'Vehicle Deassign  Successfully'
+  //               );
 
-                refreshAll()
-              } else {
-                Alert.alert(
-                  'Update Failed',
-                  response?.message || 'Something went wrong'
-                );
-              }
-            } catch (err: any) {
-              console.error('Update Error:', err);
+  //               refreshAll()
+  //             } else {
+  //               Alert.alert(
+  //                 'Update Failed',
+  //                 response?.message || 'Something went wrong'
+  //               );
+  //             }
+  //           } catch (err: any) {
+  //             console.error('Update Error:', err);
 
-              Alert.alert(
-                'Error',
-                err?.data?.message ||
-                err?.message ||
-                'Failed to update assignment'
-              );
-            }
-          },
-        },
-      ]
-    );
-  };
+  //             Alert.alert(
+  //               'Error',
+  //               err?.data?.message ||
+  //               err?.message ||
+  //               'Failed to update assignment'
+  //             );
+  //           }
+  //         },
+  //       },
+  //     ]
+  //   );
+  // };
 
 
   const confirmDeassign = (item: Vehicle) => {

@@ -80,6 +80,7 @@ const debouncedPincode = useMemo(
         name="mobileNumber"
         label="Mobile Number"
         keyboardType="phone-pad"
+        editable={false}
       />
 
       <CustomInput name="building" label="Building / Apartment / Plot No" />

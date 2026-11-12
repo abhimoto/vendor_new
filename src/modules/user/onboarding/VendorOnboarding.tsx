@@ -16,12 +16,15 @@ import VendorForm from './Registeration';
 import LegalDocuments from './LegalDocuments';
 import { colors } from '@utils/colors';
 import { useDispatch, useSelector } from 'react-redux';
-import {  setVendorOnboarded, updateUser } from '@app/redux/slices/AuthSlice';
+import { setVendorOnboarded, updateUser } from '@app/redux/slices/AuthSlice';
 import { wp, hp, moderateScale } from '@utils/responsive';
 import { useOnboardingMutation } from '@app/redux/mutation/authApi';
 import AppSnackbar from '@components/custumcomponents/AppSnackbar';
 import { RootState, store } from '@app/redux';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { AuthStackParamList } from '@navigation/types';
+type NavigationProp = NativeStackNavigationProp<AuthStackParamList>;
 
 const mapVendorPayload = (values: VendorFormValues) => {
   return {
@@ -53,6 +56,7 @@ const mapVendorPayload = (values: VendorFormValues) => {
   };
 };
 export default function VendorOnboarding() {
+  const navigation = useNavigation<NavigationProp>();
   const mobile = useSelector((state: RootState) => state.auth.user?.mobile);
   const initialValues: VendorFormValues = {
     companyName: '',
@@ -95,7 +99,6 @@ export default function VendorOnboarding() {
       type,
     });
   };
-
   const handleFinalSubmit = async (values: VendorFormValues) => {
     try {
       const payload = mapVendorPayload(values);
@@ -103,6 +106,7 @@ export default function VendorOnboarding() {
       console.log('API Response:', res);
 
       if (res?.status === '00') {
+         dispatch(setVendorOnboarded(true));
         showSnackbar(
           res?.message || 'Vendor registered successfully',
           'success',
@@ -116,7 +120,7 @@ export default function VendorOnboarding() {
             role: res.data.Role,
           }),
         );
-        dispatch(setVendorOnboarded(true));
+       
 
       } else {
         showSnackbar(res?.message || 'Registration failed', 'error');
@@ -133,6 +137,53 @@ export default function VendorOnboarding() {
     }
   };
 
+  // const handleFinalSubmit = async (values: VendorFormValues) => {
+  //   try {
+  //     const payload = mapVendorPayload(values);
+
+  //     const res = await onboarding(payload).unwrap();
+
+  //     console.log('API Response:', res);
+
+  //     if (res?.status === '00') {
+  //       showSnackbar(
+  //         res?.message || 'Vendor registered successfully',
+  //         'success',
+  //       );
+
+  //       dispatch(
+  //         updateUser({
+  //           id: res.data.UserId,
+  //           vendorId: res.data.VendorId || '',
+  //           vendorCode: res.data.VendorCode,
+  //           mobile: res.data.Mobile,
+  //           role: res.data.Role,
+  //         }),
+  //       );
+
+  //       // Vendor onboarding is now completed
+  //       dispatch(setVendorOnboarded(true));
+
+  //       // mPIN was not created before onboarding
+       
+
+  //     }
+
+  //     showSnackbar(
+  //       res?.message || 'Registration failed',
+  //       'error',
+  //     );
+  //   } catch (error: any) {
+  //     console.log('Onboarding Error:', error);
+
+  //     showSnackbar(
+  //       error?.data?.message?.message ||
+  //       error?.data?.message ||
+  //       'Registration failed',
+  //       'error',
+  //     );
+  //   }
+  // };
   const handleNext = () => setStep(prev => Math.min(prev + 1, 4));
   const handlePrev = () => setStep(prev => Math.max(prev - 1, 1));
 
@@ -206,7 +257,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: wp(4),
     paddingVertical: hp(2),
-    backgroundColor:'#FBFBF8'
+    backgroundColor: '#FBFBF8'
   },
 
   title: {
