@@ -551,10 +551,11 @@ export default function ValidateVehicles() {
             <View style={styles.dimensionRow}>
               <View style={styles.dimensionBox}>
                 <LocalInput
-                  label="Length (IN FT)"
+                  label="Dhala Length(IN FT)"
                   value={values.VehicleTypesDetails.length}
                   onChangeText={handleVehicleTypeChange('length')}
                   keyboardType="decimal-pad"
+                  labelSize={8}
                   placeholder=""
                 />
                 {/* <Text style={styles.dimensionUnit}>( IN FT )</Text> */}
@@ -562,8 +563,9 @@ export default function ValidateVehicles() {
 
               <View style={styles.dimensionBox}>
                 <LocalInput
-                  label="Width (IN FT)"
+                  label="Dhala Width(IN FT)"
                   value={values.VehicleTypesDetails.width}
+                  labelSize={8}
                   onChangeText={handleVehicleTypeChange('width')}
                   keyboardType="decimal-pad"
                   placeholder=""
@@ -573,8 +575,9 @@ export default function ValidateVehicles() {
 
               <View style={styles.dimensionBox}>
                 <LocalInput
-                  label="Height (IN FT)"
+                  label="Dhala Height(IN FT)"
                   value={values.VehicleTypesDetails.height}
+                  labelSize={8}
                   onChangeText={handleVehicleTypeChange('height')}
                   keyboardType="decimal-pad"
                   placeholder=""
@@ -804,31 +807,16 @@ const styles = StyleSheet.create({
     marginBottom: moderateScale(8),
   },
 
-  dimensionBox: {
-    flex: 1,
-    minWidth: 0,
-    minHeight: moderateScale(52),
-    borderWidth: 1,
-    borderColor: '#D6D6D6',
-    borderRadius: moderateScale(9),
-    paddingHorizontal: moderateScale(3),
-    paddingTop: moderateScale(3),
-    justifyContent: 'center',
-  },
-
-  dimensionUnit: {
-    textAlign: 'center',
-    color: '#555555',
-    fontSize: moderateScale(8),
-    marginTop: moderateScale(-3),
-    marginBottom: moderateScale(3),
-  },
-
+dimensionBox: {
+  flex: 1,
+  minWidth: 0,
+  justifyContent: 'center',
+},
   // Image upload
   imageTitle: {
     color: colors.primary,
-    fontWeight: '700',
-    fontSize: moderateScale(10),
+    fontWeight: 'semibold',
+    fontSize: moderateScale(14),
     marginTop: moderateScale(8),
     marginBottom: moderateScale(7),
   },

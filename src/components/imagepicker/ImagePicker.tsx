@@ -189,10 +189,10 @@ const handleRemove = () => {
             </TouchableOpacity>
           </>
         ) : (
-          <View style={styles.placeholderContainer}>
-            <Icon name="camera-outline" size={24} color="#777" />
-            <Text style={styles.placeholder}>{label}</Text>
-          </View>
+         <View style={styles.placeholderContainer}>
+  <Text style={styles.placeholder}>{label}</Text>
+  <Icon name="camera-outline" size={20} color="#777" />
+</View>
         )}
       </TouchableOpacity>
 
@@ -256,16 +256,19 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
 
-  placeholderContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
+placeholderContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 8,
+},
 
-  placeholder: {
-    fontSize: 12,
-    color: '#777',
-  },
+
+placeholder: {
+  fontSize: 12,
+  color: '#777',
+  fontWeight: '500',
+},
 
   removeBtn: {
     position: 'absolute',

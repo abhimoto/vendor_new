@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.primary,
     marginBottom: spacing.lg,
-    textAlign: 'center',
+    textAlign: 'left',
   },
 
   /* ==========================================================
@@ -415,8 +415,7 @@ const styles = StyleSheet.create({
   ========================================================== */
 
   capacityContainer: {
-    width: '38%',
-    marginRight: moderateScale(6),
+    width: '40%'
   },
 
   /* ==========================================================

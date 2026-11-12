@@ -64,12 +64,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)', // backdrop
     justifyContent: 'center',
     alignItems: 'center',
-    // padding: spacing.lg,
+    padding: spacing.lg,
   },
 
   modalContainer: {
-    width: '92%', // 🔥 almost full width
-    maxWidth: 600, // optional (for tablets)
+    width: '95%', // 🔥 almost full width
+    maxWidth: 700, // optional (for tablets)
     backgroundColor: '#fff',
     borderRadius: moderateScale(16),
 

@@ -25,6 +25,7 @@ import {
 import {
   initializeNotificationListeners,
 } from '@services/notification/notificationHandler';
+import VendorOnboarding from '@modules/user/onboarding/VendorOnboarding';
 
 function AppContent() {
   const dispatch = useAppDispatch();
@@ -75,7 +76,8 @@ export default function App() {
         <PaperProvider theme={theme}>
           <SafeAreaProvider>
             <NavigationContainer>
-              <AppContent />
+              <VendorOnboarding/>
+              {/* <AppContent /> */}
             </NavigationContainer>
           </SafeAreaProvider>
         </PaperProvider>

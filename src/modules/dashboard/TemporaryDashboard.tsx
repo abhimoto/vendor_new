@@ -186,7 +186,7 @@ export default function TemporaryDashboard() {
   textStyle={{
     color: vehicle_verified
       ? colors.background
-      : colors.background,
+      : colors.primary,
     fontSize: normalizeFont(11),
     fontWeight: '600',
   }}

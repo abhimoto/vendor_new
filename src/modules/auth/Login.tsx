@@ -19,6 +19,7 @@ import {
 import { useAppDispatch } from '@app/hooks/hooks';
 import SecondaryButton from '@components/buttons/SecondaryButton';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { moderateScale, scale } from '@utils/responsive';
 
 type NavigationProp = NativeStackNavigationProp<AuthStackParamList>;
 
@@ -26,10 +27,9 @@ export default function Login() {
   const navigation = useNavigation<NavigationProp>();
   const dispatch = useAppDispatch();
   const inputRefs = useRef<TextInput[]>([]);
-
   const [mobile, setMobile] = useState('');
   const [otp, setOtp] = useState(['', '', '', '']);
-  const [otpSent, setOtpSent] = useState(false);
+  const [otpSent, setOtpSent] = useState(true);
   const [timer, setTimer] = useState(60);
 
   const [snackbar, setSnackbar] = useState({
@@ -219,156 +219,156 @@ export default function Login() {
   //   }
   // };
 
-const handleVerify = async () => {
-  const enteredOtp = otp.join('');
+  const handleVerify = async () => {
+    const enteredOtp = otp.join('');
 
-  if (enteredOtp.length !== 4) {
-    showSnackbar('Enter valid OTP', 'error');
-    return;
-  }
-
-  try {
-    const res = await verifyOtp({
-      mobile,
-      otp: enteredOtp,
-      Role: 'VENDOR',
-    }).unwrap();
-
-    console.log('Verify Response:', res);
-
-    // ============================================
-    // OTP VERIFICATION FAILED
-    // ============================================
-
-    if (res.status !== '00' && res.status !== '01') {
-      showSnackbar(
-        res.message || 'OTP verification failed',
-        'error',
-      );
-
+    if (enteredOtp.length !== 4) {
+      showSnackbar('Enter valid OTP', 'error');
       return;
     }
 
-    // ============================================
-    // REGISTRATION REQUIRED
-    // ============================================
+    try {
+      const res = await verifyOtp({
+        mobile,
+        otp: enteredOtp,
+        Role: 'VENDOR',
+      }).unwrap();
 
-    if (res.status === '01') {
+      console.log('Verify Response:', res);
+
+      // ============================================
+      // OTP VERIFICATION FAILED
+      // ============================================
+
+      if (res.status !== '00' && res.status !== '01') {
+        showSnackbar(
+          res.message || 'OTP verification failed',
+          'error',
+        );
+
+        return;
+      }
+
+      // ============================================
+      // REGISTRATION REQUIRED
+      // ============================================
+
+      if (res.status === '01') {
+        dispatch(
+          setAuthData({
+            token: res.data.accessToken,
+            refreshToken: res.data.refreshToken,
+
+            user: {
+              id: res.data.userId,
+              mobile: res.data.mobile,
+              role: res.data.role,
+            },
+
+            vendor_onboarded: false,
+            vehicle_verified: false,
+            kyc_verified: false,
+
+            isMpincreated: false,
+
+            // OTP verified ≠ MPIN verified
+            isMpinVerified: false,
+          }),
+        );
+
+        showSnackbar(
+          res.message || 'Registration required',
+          'success',
+        );
+
+        // IMPORTANT:
+        // Do NOT navigation.replace()
+        //
+        // RootNavigator will see:
+        //
+        // isAuthenticated = true
+        // vendor_onboarded = false
+        //
+        // and render OnboardingNavigator.
+
+        return;
+      }
+
+      // ============================================
+      // LOGIN SUCCESS
+      // ============================================
+
+      const data = res.data;
+
+      const isVendorOnboarded =
+        data.isVendorProfileCreated ?? false;
+
+      const isVehicleVerified =
+        data.isVehicleVerified ?? false;
+
+      const isKycVerified =
+        data.isKycVerified ?? false;
+
+      const isMpinSet =
+        data.isMPINSet ?? false;
+
       dispatch(
         setAuthData({
-          token: res.data.accessToken,
-          refreshToken: res.data.refreshToken,
+          token: data.accessToken,
+
+          refreshToken:
+            data.refreshToken,
 
           user: {
-            id: res.data.userId,
-            mobile: res.data.mobile,
-            role: res.data.role,
+            id: data.userId,
+            mobile: data.mobile,
+            role: data.role,
+
+            vendorId:
+              data.vendorId,
+
+            vendorCode:
+              data.vendorCode,
           },
 
-          vendor_onboarded: false,
-          vehicle_verified: false,
-          kyc_verified: false,
+          vendor_onboarded:
+            isVendorOnboarded,
 
-          isMpincreated: false,
+          vehicle_verified:
+            isVehicleVerified,
 
-          // OTP verified ≠ MPIN verified
+          kyc_verified:
+            isKycVerified,
+
+          isMpincreated:
+            isMpinSet,
+
+
           isMpinVerified: false,
         }),
       );
 
       showSnackbar(
-        res.message || 'Registration required',
+        'OTP verified successfully',
         'success',
       );
 
-      // IMPORTANT:
-      // Do NOT navigation.replace()
-      //
-      // RootNavigator will see:
-      //
-      // isAuthenticated = true
-      // vendor_onboarded = false
-      //
-      // and render OnboardingNavigator.
-
-      return;
-    }
-
-    // ============================================
-    // LOGIN SUCCESS
-    // ============================================
-
-    const data = res.data;
-
-    const isVendorOnboarded =
-      data.isVendorProfileCreated ?? false;
-
-    const isVehicleVerified =
-      data.isVehicleVerified ?? false;
-
-    const isKycVerified =
-      data.isKycVerified ?? false;
-
-    const isMpinSet =
-      data.isMPINSet ?? false;
-
-    dispatch(
-      setAuthData({
-        token: data.accessToken,
-
-        refreshToken:
-          data.refreshToken,
-
-        user: {
-          id: data.userId,
-          mobile: data.mobile,
-          role: data.role,
-
-          vendorId:
-            data.vendorId,
-
-          vendorCode:
-            data.vendorCode,
-        },
-
-        vendor_onboarded:
-          isVendorOnboarded,
-
-        vehicle_verified:
-          isVehicleVerified,
-
-        kyc_verified:
-          isKycVerified,
-
-        isMpincreated:
-          isMpinSet,
-
- 
-        isMpinVerified: false,
-      }),
-    );
-
-    showSnackbar(
-      'OTP verified successfully',
-      'success',
-    );
 
 
-     
-  } catch (err: any) {
-    console.log(
-      'Verify Error:',
-      err,
-    );
+    } catch (err: any) {
+      console.log(
+        'Verify Error:',
+        err,
+      );
 
-    showSnackbar(
-      err?.data?.message ||
+      showSnackbar(
+        err?.data?.message ||
         err?.message ||
         'Invalid OTP',
-      'error',
-    );
-  }
-};
+        'error',
+      );
+    }
+  };
   return (
     <View
       style={[
@@ -433,7 +433,7 @@ const handleVerify = async () => {
 
             {/* Timer / Resend */}
             {timer > 0 ? (
-              <Text style={styles.expireText}>OTP expires in {timer} sec</Text>
+              <Text style={styles.expireText}>Your OTP will expire within {timer} seconds</Text>
             ) : (
               <Text
                 style={[styles.expireText, { color: colors.primary }]}
@@ -447,14 +447,8 @@ const handleVerify = async () => {
               onPress={handleVerify}
               title="Verify"
               loading={verifying}
-              disabled={otp.join('').length !== 4}
-              style={{ marginTop: 20 }}
-              icon={
-                <Ionicons
-                  name="checkmark-circle-outline"
-                  size={20}
-                  color="#FFFFFF"
-                />
+              // disabled={otp.join('').length !== 4}
+              style={{ marginTop: '10%' }
               }
             />
           </>
@@ -485,68 +479,75 @@ const styles = StyleSheet.create({
 
   label: {
     color: colors.text,
-    fontWeight: '600',
+    fontWeight: 'bold',
+    alignSelf: 'flex-start',
     marginTop: 25,
-    fontSize: 14,
+    fontSize: moderateScale(14),
   },
 
-  mobileRow: {
-    flexDirection: 'row',
-    marginTop: 10,
-  },
-
-  countryBox: {
-    borderWidth: 1,
-    borderColor: '#1B4AA5',
-    borderRadius: 10,
-    padding: 12,
-    marginRight: 10,
-  },
-
-  mobileInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#1B4AA5',
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    backgroundColor: colors.background
-  },
+mobileRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginTop: '10%',
+},
+countryBox: {
+  borderWidth: 1,
+  borderColor: '#1B4AA5',
+  borderRadius: moderateScale(10),
+  padding: moderateScale(12),
+  marginRight: moderateScale(10),
+},
+mobileInput: {
+  width: scale(211),
+  height: scale(50),
+  borderWidth: 1,
+  borderColor: '#1B4AA5',
+  borderRadius: moderateScale(10),
+  paddingHorizontal: moderateScale(15),
+  backgroundColor: colors.background,
+  fontSize: moderateScale(14),
+},
 
   otpRow: {
     flexDirection: 'row',
-    marginTop: 15,
+    marginTop: '10%',
   },
 
   otpBox: {
-    width: 55,
-    height: 55,
+    width: scale(42),
+    height: scale(40),
     borderWidth: 1,
     borderColor: '#1B4AA5',
-    borderRadius: 10,
+    borderRadius: moderateScale(10),
     textAlign: 'center',
-    fontSize: 18,
-    marginRight: 10,
+    fontSize: moderateScale(18),
+    marginRight: moderateScale(10),
     backgroundColor: colors.background
   },
 
   expireText: {
-    marginTop: 10,
-    fontSize: 12,
+    marginTop: moderateScale(10),
+    fontSize: moderateScale(12),
     color: 'gray',
   },
   loginbtn: {
+    maxWidth: scale(211),
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 15,
+    marginTop: '10%',
     alignSelf: 'center',
-    borderRadius: 10,
-    padding: 10
+    borderRadius: moderateScale(10),
+    padding: moderateScale(10)
   },
   otpcontainer: {
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: '10%',
   },
   VerifyText: {
-    fontSize: 24
+    fontSize: moderateScale(16),
+    fontWeight: '600',
+    fontFamily: 'poppins-semibold',
+    color: '#2E5A99'
   }
 });

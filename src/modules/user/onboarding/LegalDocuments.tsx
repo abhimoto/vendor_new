@@ -18,9 +18,10 @@ import { useGstverifyMutation } from '@app/redux/mutation/authApi';
 import { useGetpancardMutation } from '@app/redux/query/queryApi';
 import { Checkbox } from 'react-native-paper';
 import { GST_REGEX, PAN_REGEX } from '@utils/constants';
-import { moderateScale, normalizeFont, wp } from '@utils/responsive';
+import { moderateScale, normalizeFont, wp ,scale} from '@utils/responsive';
 import { useLazyCheckDuplicateVehicleQuery } from '@app/redux/query/queryApi';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+
 type Props = {
   onPrev: () => void;
 };
@@ -269,6 +270,32 @@ const checkDuplicateVehicle = async (
       setLoading(false);
     }
   };
+
+  const removeVehicle = (index: number) => {
+  const vehicles = values.legaldocuments.vehicles;
+
+  if (vehicles.length <= 1) {
+    Alert.alert('Required', 'At least one vehicle is required');
+    return;
+  }
+
+  // Clear pending duplicate-check timers
+  Object.values(vehicleDebounceRef.current).forEach(timer => {
+    clearTimeout(timer);
+  });
+
+  vehicleDebounceRef.current = {};
+
+  // Remove selected vehicle
+  const updatedVehicles = vehicles.filter(
+    (_, vehicleIndex) => vehicleIndex !== index,
+  );
+
+  setFieldValue('legaldocuments.vehicles', updatedVehicles);
+
+  // Reset vehicle errors
+  setVehicleErrors({});
+};
   useEffect(() => {
     if (!values.legaldocuments.vehicles.length) {
       setFieldValue('legaldocuments.vehicles', [
@@ -343,7 +370,7 @@ const addNewVehicle = () => {
 
   return (
     <View style={[commonstyles.flex1]}>
-      <Text style={styles.header}>Kyc Validation</Text>
+      <Text style={styles.header}>KYC Validation</Text>
 
       <ScrollView showsVerticalScrollIndicator={false}>
 
@@ -534,95 +561,105 @@ const addNewVehicle = () => {
         />
 
         <View style={styles.divider} />
-        <Text style={styles.sectionTitle}>Add Vehicles</Text>
-        {/* Vehicles */}
-        {/* Show label only once */}
-        <View style={[commonstyles.row, styles.labelRow]}>
-          <Text style={[commonstyles.flex1, styles.tableLabel]}>
-            Registration Number
-          </Text>
-          <Text style={[commonstyles.flex1, styles.tableLabel]}>
-            Loading Capacity
-          </Text>
-          <View style={{ width: 50 }} />
+       <Text style={styles.sectionTitle}>Add Vehicles</Text>
+
+{/* Table Header */}
+<View style={styles.vehicleHeader}>
+  <Text style={styles.registrationLabel}>
+    Vehicle Number
+  </Text>
+
+  <Text style={styles.capacityLabel}>
+    Loading Capacity
+  </Text>
+</View>
+
+{/* Vehicle Rows */}
+{values.legaldocuments.vehicles.map((vehicle, index) => {
+  const isLast =
+    index === values.legaldocuments.vehicles.length - 1;
+
+  return (
+    <View key={index} style={styles.rowContainer}>
+
+      {/* Registration Number */}
+      <View style={styles.registrationInput}>
+        <CustomInput
+          label=""
+          name={`legaldocuments.vehicles[${index}].registrationNumber`}
+          placeholder="eg MH02JM2623"
+          forceUppercase
+          autoCapitalize="characters"
+          autoCorrect={false}
+          autoComplete="off"
+          importantForAutofill="no"
+          keyboardType="default"
+          customError={vehicleErrors[index]}
+          style={styles.vehicleInput}
+          onChangeText={(text: string) => {
+            const formatted = text
+              .toUpperCase()
+              .replace(/[^A-Z0-9]/g, '');
+
+            setFieldValue(
+              `legaldocuments.vehicles[${index}].registrationNumber`,
+              formatted,
+            );
+
+            setVehicleErrors(prev => ({
+              ...prev,
+              [index]: '',
+            }));
+
+            if (vehicleDebounceRef.current[index]) {
+              clearTimeout(vehicleDebounceRef.current[index]);
+            }
+
+            if (formatted.length >= 6) {
+              vehicleDebounceRef.current[index] = setTimeout(() => {
+                checkDuplicateVehicle(formatted, index);
+              }, 700);
+            }
+          }}
+        />
+      </View>
+
+      {/* Loading Capacity */}
+      <View style={styles.capacityContainer}>
+        <View style={styles.capacityInput}>
+          <CustomInput
+            label=""
+            name={`legaldocuments.vehicles[${index}].capacity`}
+            placeholder="20,000"
+            keyboardType="numeric"
+            style={styles.vehicleInput}
+          />
         </View>
 
-        {values.legaldocuments.vehicles.map((_, index) => {
-          const isLast = index === values.legaldocuments.vehicles.length - 1;
+        <Text style={styles.kgText}>KG</Text>
+      </View>
 
-          return (
-            <View key={index} style={styles.rowContainer}>
+      {/* Add / Remove */}
+      <TouchableOpacity
+        style={styles.iconWrapper}
+        onPress={() => {
+          if (isLast) {
+            addNewVehicle();
+          } else {
+            removeVehicle(index);
+          }
+        }}
+      >
+        <MaterialIcons
+          name={isLast ? 'add' : 'delete'}
+          size={moderateScale(20)}
+          color={isLast ? colors.primary : 'red'}
+        />
+      </TouchableOpacity>
 
-              <View style={{ flex: 1, width: 136, height: 56 }}>
-                <CustomInput
-                label=''
-                  name={`legaldocuments.vehicles[${index}].registrationNumber`}
-                  placeholder="eg MH02J123"
-                  forceUppercase
-                  autoCapitalize="characters"
-                  autoCorrect={false}
-                  autoComplete="off"
-                  importantForAutofill="no"
-                  keyboardType="default"
-                  customError={vehicleErrors[index]}
-                  onChangeText={(text: string) => {
-                    const formatted = text
-                      .toUpperCase()
-                      .replace(/[^A-Z0-9]/g, '');
-
-                    setFieldValue(
-                      `legaldocuments.vehicles[${index}].registrationNumber`,
-                      formatted,
-                    );
-
-                    setVehicleErrors(prev => ({
-                      ...prev,
-                      [index]: '',
-                    }));
-
-                    if (vehicleDebounceRef.current[index]) {
-                      clearTimeout(vehicleDebounceRef.current[index]);
-                    }
-
-                    if (formatted.length >= 6) {
-                      vehicleDebounceRef.current[index] = setTimeout(() => {
-                        checkDuplicateVehicle(formatted, index);
-                      }, 700);
-                    }
-                  }}
-                />
-              </View>
-
-              <View style={{ flex: 1, width: 136, height: 56 }}>
-                <CustomInput
-                label=''
-                  name={`legaldocuments.vehicles[${index}].capacity`}
-                  placeholder="2000KG"
-                  keyboardType="numeric"
-                />
-              </View>
-
-              {/* Add / Remove Button */}
-              <View >
-                {isLast ? (
-                  <TouchableOpacity
-                    style={styles.iconWrapper}
-                    onPress={addNewVehicle}
-                  >
-                    <MaterialIcons name="add" size={20} color={colors.primary} />
-                  </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity
-                    style={styles.iconWrapper}
-                    onPress={() => removeVehicle(index)}
-                  >
-                    <MaterialIcons name="delete" size={20} color="red" />
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
-          );
-        })}
+    </View>
+  );
+})}
 
       </ScrollView>
 
@@ -662,7 +699,66 @@ const styles = StyleSheet.create({
     color: colors.primary,
     marginBottom: moderateScale(20),
   },
+vehicleHeader: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: moderateScale(12),
+},
+registrationLabel: {
+  width: scale(156),
+  fontSize: normalizeFont(14),
+  fontWeight: '700',
+  color: '#333333',
+},
+capacityLabel: {
+  marginLeft: scale(50),
+  fontSize: normalizeFont(14),
+  fontWeight: '700',
+  color: '#333333',
+},
 
+rowContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: moderateScale(12),
+},
+
+registrationInput: {
+  width: scale(156),
+  marginRight: scale(30),
+},
+
+capacityContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  width: scale(116),
+},
+
+capacityInput: {
+  width: scale(90),
+},
+
+vehicleInput: {
+  width: '100%',
+  height: scale(56),
+},
+
+kgText: {
+  marginLeft: scale(5),
+  fontSize: normalizeFont(14),
+  color: '#999999',
+},
+
+iconWrapper: {
+  width: scale(36),
+  height: scale(36),
+  marginLeft: scale(18),
+  justifyContent: 'center',
+  alignItems: 'center',
+  borderColor: colors.primary,
+  borderWidth: 1.5,
+  borderRadius: moderateScale(5),
+},
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

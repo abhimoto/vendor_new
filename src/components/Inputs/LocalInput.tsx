@@ -17,6 +17,8 @@ interface LocalInputProps extends TextInputProps {
   errorMessage?: string;
   inputStyle?: TextStyle;
   labelStyle?: TextStyle;
+  labelSize?: number;
+
 }
 
 export default function LocalInput({
@@ -25,6 +27,7 @@ export default function LocalInput({
   error,
   errorMessage,
   labelStyle: customLabelStyle,
+  labelSize = 12,
   inputStyle,
     style, 
   multiline,
@@ -66,11 +69,10 @@ export default function LocalInput({
       outputRange: [18, -8],
     }),
 
-    fontSize: animatedValue.interpolate({
-      inputRange: [0, 1],
-      outputRange: [14, 11],
-    }),
-
+   fontSize: animatedValue.interpolate({
+  inputRange: [0, 1],
+  outputRange: [14, labelSize],
+}),
     fontWeight: '600',
     color: labelColor,
   };

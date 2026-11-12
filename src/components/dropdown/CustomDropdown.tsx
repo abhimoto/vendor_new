@@ -249,10 +249,12 @@ const styles = StyleSheet.create({
   marginBottom: spacing.md,
 },
   label: {
+    marginRight: 20,
     marginBottom: 6,
     fontWeight: '600',
     fontSize: 14,
     color: '#333',
+     marginLeft: moderateScale(5),
   },
 dropdown: {
   borderWidth: 1,

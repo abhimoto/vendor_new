@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   vehicleNo: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#2E5A99',
+    color: '#040404',
     alignSelf: 'center',
     marginBottom: 15,
   },
@@ -382,9 +382,6 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     aspectRatio: 1.2,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#D8D8D8',
   },
 
   noImage: {

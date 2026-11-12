@@ -9,7 +9,11 @@ import {
   ActivityIndicator,
   View,
 } from 'react-native';
-import { wp, hp, moderateScale } from '@utils/responsive';
+
+import {
+  scale,
+  moderateScale,
+} from '@utils/responsive';
 
 type Props = {
   title: string;
@@ -17,11 +21,7 @@ type Props = {
   style?: ViewStyle;
   textStyle?: TextStyle;
   disabled?: boolean;
-
-  // Optional loading state
   loading?: boolean;
-
-  // Optional icon
   icon?: React.ReactNode;
   iconPosition?: 'left' | 'right';
 };
@@ -50,16 +50,11 @@ export default function SecondaryButton({
     >
       <View style={styles.content}>
         {loading ? (
-          <ActivityIndicator
-            size="small"
-            color="#FFFFFF"
-          />
+          <ActivityIndicator size="small" color="#FFFFFF" />
         ) : (
           <>
             {icon && iconPosition === 'left' && (
-              <View style={styles.iconLeft}>
-                {icon}
-              </View>
+              <View style={styles.iconLeft}>{icon}</View>
             )}
 
             <Text style={[styles.text, textStyle]}>
@@ -67,9 +62,7 @@ export default function SecondaryButton({
             </Text>
 
             {icon && iconPosition === 'right' && (
-              <View style={styles.iconRight}>
-                {icon}
-              </View>
+              <View style={styles.iconRight}>{icon}</View>
             )}
           </>
         )}
@@ -80,8 +73,8 @@ export default function SecondaryButton({
 
 const styles = StyleSheet.create({
   button: {
-    width: wp(86),
-    height: hp(5.5),
+    width: scale(362),
+    height: scale(50),
     backgroundColor: colors.primary,
     borderRadius: moderateScale(10),
     alignItems: 'center',
@@ -96,8 +89,9 @@ const styles = StyleSheet.create({
 
   text: {
     color: '#FFFFFF',
-    fontSize: moderateScale(16),
+    fontSize: moderateScale(22),
     fontWeight: '600',
+    textAlign: 'center',
   },
 
   iconLeft: {

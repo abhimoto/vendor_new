@@ -22,6 +22,7 @@ type Props = {
   loading?: boolean;
   icon?: React.ReactNode;
   iconPosition?: 'left' | 'right';
+    width?: number | string;
 };
 
 export default function CustomButton({
@@ -33,30 +34,31 @@ export default function CustomButton({
   loading = false,
   icon,
   iconPosition = 'left',
+  width = 120,
 }: Props) {
   const isDisabled = disabled || loading;
 
   return (
     <Pressable
-      style={[styles.button, style, isDisabled && styles.disabled]}
+      style={[
+        styles.button,
+        { width },
+        style,
+        isDisabled && styles.disabled,
+      ]}
       onPress={onPress}
       disabled={isDisabled}
     >
       <View style={styles.content}>
         {loading ? (
-          <ActivityIndicator
-            size="small"
-            color={colors.primary}
-          />
+          <ActivityIndicator size="small" color={colors.primary} />
         ) : (
           <>
             {icon && iconPosition === 'left' && (
               <View style={styles.iconLeft}>{icon}</View>
             )}
 
-            <Text style={[styles.text, textStyle]}>
-              {title}
-            </Text>
+            <Text style={[styles.text, textStyle]}>{title}</Text>
 
             {icon && iconPosition === 'right' && (
               <View style={styles.iconRight}>{icon}</View>
@@ -67,7 +69,6 @@ export default function CustomButton({
     </Pressable>
   );
 }
-
 const styles = StyleSheet.create({
   button: {
     width: wp(35),

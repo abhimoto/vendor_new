@@ -213,7 +213,7 @@ export default function Bankdetails() {
 
           {values.PassbookPhoto ? (
             <Text style={{ marginTop: 8, fontSize: 12 }}>
-              Image Selected ✅
+              Image Selected 
             </Text>
           ) : null}
         </View>
